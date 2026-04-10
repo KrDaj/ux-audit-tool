@@ -3,265 +3,373 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>UX / UI Audit Tool</title>
+  <title>UX Audit — Multi-model Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
     :root{
-      --bg:#fff;--bg2:#f5f5f3;--bg3:#efefec;
-      --text:#1a1a18;--text2:#5a5a56;--text3:#9a9a94;
-      --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
-      --r:10px;--rs:6px;--font:-apple-system,'Segoe UI',sans-serif;
-      --green:#1D9E75;--amber:#BA7517;--red:#D85A30;
+      --red:#DC0018;
+      --red-dark:#A8000F;
+      --bg:#FAFAF8;
+      --bg2:#F2F2EE;
+      --bg3:#E8E8E2;
+      --surface:#FFFFFF;
+      --text:#1A1916;
+      --text2:#52504A;
+      --text3:#8A8880;
+      --border:rgba(0,0,0,0.08);
+      --border2:rgba(0,0,0,0.16);
+      --accent:#DC0018;
+      --green:#1A7A4A;
+      --green-bg:#EBF5EF;
+      --amber:#8A5800;
+      --amber-bg:#FFF4E0;
+      --r:3px;
+      --rs:2px;
+      --font:'Source Sans 3','Helvetica Neue',Helvetica,Arial,sans-serif;
     }
+
     @media(prefers-color-scheme:dark){:root{
-      --bg:#1c1c1a;--bg2:#242422;--bg3:#2c2c2a;
-      --text:#f0f0ec;--text2:#a0a09a;--text3:#606058;
-      --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);
+      --bg:#141412;--bg2:#1E1E1A;--bg3:#252520;
+      --surface:#1E1E1A;
+      --text:#F0EFE8;--text2:#A0A098;--text3:#606058;
+      --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);
+      --green:#2AA862;--green-bg:#0D2E1A;
+      --amber:#D4940A;--amber-bg:#2A1E00;
     }}
-    body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh;padding:2rem 1rem 4rem}
-    .wrap{max-width:900px;margin:0 auto}
-    header{margin-bottom:2rem}
-    header h1{font-size:26px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
-    header p{font-size:15px;color:var(--text2)}
-    .badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;margin-bottom:12px;background:#E1F5EE;color:#0F6E56}
-    .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem}
-    input[type=url],input[type=password]{height:40px;padding:0 14px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg);color:var(--text);outline:none;font-family:var(--font);width:100%}
-    input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12)}
+
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:16px;line-height:1.5}
+
+    /* ── Top bar ── */
+    .topbar{background:var(--red);height:4px;width:100%}
+
+    /* ── Nav ── */
+    .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem}
+    .nav-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;height:56px;gap:2rem}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo-mark{width:28px;height:28px;background:var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .nav-logo-mark svg{width:16px;height:16px;fill:#fff}
+    .nav-logo-text{font-size:14px;font-weight:600;color:var(--text);letter-spacing:0.01em}
+    .nav-logo-sub{font-size:11px;color:var(--text3);font-weight:400}
+    .nav-spacer{flex:1}
+    .nav-tag{font-size:11px;color:var(--text3);border:1px solid var(--border2);padding:3px 10px;border-radius:20px}
+
+    /* ── Hero ── */
+    .hero{background:var(--surface);border-bottom:1px solid var(--border);padding:3rem 2rem 2.5rem}
+    .hero-inner{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:end}
+    @media(max-width:640px){.hero-inner{grid-template-columns:1fr}}
+    .hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:12px}
+    .hero h1{font-size:36px;font-weight:300;line-height:1.15;letter-spacing:-0.01em;color:var(--text);margin-bottom:12px}
+    .hero h1 strong{font-weight:600}
+    .hero-desc{font-size:15px;color:var(--text2);line-height:1.6;max-width:520px}
+    .hero-meta{display:flex;gap:16px;flex-wrap:wrap}
+    .hero-pill{font-size:11px;padding:4px 12px;border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;gap:5px}
+    .hero-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+    /* ── Main layout ── */
+    .main{max-width:1000px;margin:0 auto;padding:2rem}
+
+    /* ── Section label ── */
+    .section-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* ── Input card ── */
+    .input-card{background:var(--surface);border:1px solid var(--border);margin-bottom:1.5rem;overflow:hidden}
+    .input-card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+    .input-card-num{width:22px;height:22px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .input-card-title{font-size:13px;font-weight:600;color:var(--text)}
+    .input-card-desc{font-size:12px;color:var(--text3);margin-left:auto}
+    .input-card-body{padding:1.25rem}
+
+    /* ── Inputs ── */
+    input[type=url],input[type=password],textarea{
+      font-family:var(--font);background:var(--bg);color:var(--text);
+      border:1px solid var(--border2);outline:none;width:100%;
+      transition:border-color 0.15s,box-shadow 0.15s;
+    }
+    input[type=url],input[type=password]{height:40px;padding:0 12px;font-size:14px;border-radius:var(--r)}
+    input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,0,24,0.08)}
+
     .url-row{display:flex;gap:8px;margin-bottom:1rem}
     .url-row input{flex:1}
-    .upload-row{margin-bottom:1.25rem}
+
+    /* ── Upload ── */
     .upload-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;display:block}
-    .upload-area{border:1.5px dashed var(--border2);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;transition:border-color 0.15s;background:var(--bg2)}
-    .upload-area:hover,.upload-area.drag{border-color:var(--green);background:rgba(29,158,117,0.04)}
+    .upload-area{border:2px dashed var(--border2);padding:24px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg);border-radius:var(--r)}
+    .upload-area:hover,.upload-area.drag{border-color:var(--red);background:rgba(220,0,24,0.02)}
     .upload-area input{display:none}
-    .upload-icon{font-size:24px;margin-bottom:6px;color:var(--text3)}
+    .upload-icon{font-size:22px;margin-bottom:8px;color:var(--text3)}
     .upload-text{font-size:13px;color:var(--text2)}
-    .upload-text span{color:var(--green);font-weight:500}
-    .preview-wrap{position:relative;display:inline-block;margin-top:10px}
-    .preview-img{max-width:100%;max-height:200px;border-radius:var(--rs);border:0.5px solid var(--border)}
-    .preview-clear{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;line-height:1}
-    .models-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px}
-    .model-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+    .upload-text span{color:var(--red);font-weight:600}
+    .preview-wrap{position:relative;display:inline-block;margin-top:12px}
+    .preview-img{max-width:100%;max-height:180px;border:1px solid var(--border)}
+    .preview-clear{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+
+    /* ── Model grid ── */
+    .models-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:0.04em;text-transform:uppercase}
+    .model-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem}
     @media(max-width:540px){.model-grid{grid-template-columns:1fr}}
-    .model-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:var(--rs);padding:10px 12px;border:0.5px solid var(--border)}
-    .model-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .model-row{display:flex;align-items:center;gap:10px;background:var(--bg);padding:10px 12px;border:1px solid var(--border)}
+    .model-dot{width:8px;height:8px;flex-shrink:0}
     .model-info{flex:0 0 90px}
-    .model-name{font-size:12px;font-weight:500;color:var(--text)}
+    .model-name{font-size:12px;font-weight:600;color:var(--text)}
     .model-sub{font-size:10px;color:var(--text3);line-height:1.3}
-    .model-cap{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-top:2px;display:inline-block}
-    .cap-vision{background:#E6F1FB;color:#185FA5}
-    .cap-text{background:#F1EFE8;color:#5F5E5A}
-    .model-row input{flex:1;height:32px;font-size:12px;padding:0 10px;background:var(--bg)}
-    .btn-run{height:40px;padding:0 24px;background:var(--text);color:var(--bg);border:none;border-radius:var(--rs);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:opacity 0.15s}
-    .btn-run:hover{opacity:0.82}
+    .model-cap{font-size:9px;font-weight:700;padding:1px 5px;margin-top:3px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase}
+    .cap-vision{background:rgba(220,0,24,0.08);color:var(--red)}
+    .cap-text{background:var(--bg2);color:var(--text3)}
+    .model-row input{flex:1;height:32px;font-size:12px;padding:0 10px}
+
+    /* ── Run button ── */
+    .btn-run{height:44px;padding:0 28px;background:var(--red);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);letter-spacing:0.02em;transition:background 0.15s;border-radius:var(--r)}
+    .btn-run:hover{background:var(--red-dark)}
     .btn-run:disabled{opacity:0.35;cursor:not-allowed}
+    .run-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
+
+    /* ── Info note ── */
     .info-note{font-size:12px;color:var(--text3);line-height:1.6}
-    .info-note a{color:var(--text2)}
-    .error-msg{margin-top:10px;font-size:13px;color:var(--red)}
-    .progress-section{display:none;margin-top:1.25rem}
+    .info-note a{color:var(--text2);text-decoration:underline;text-underline-offset:2px}
+    .error-msg{margin-top:10px;font-size:13px;color:var(--red);font-weight:500}
+
+    /* ── Progress ── */
+    .progress-section{display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border)}
     .step-list{display:flex;flex-direction:column;gap:8px}
     .step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3)}
     .step.done{color:var(--green)}
-    .step.active{color:var(--text)}
-    .sdot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0}
+    .step.active{color:var(--text);font-weight:500}
+    .sdot{width:7px;height:7px;background:var(--border2);flex-shrink:0}
     .step.done .sdot{background:var(--green)}
-    .step.active .sdot{background:var(--text);animation:pulse 1s infinite}
+    .step.active .sdot{background:var(--red);animation:pulse 1s infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+
+    /* ── Results ── */
     .results{display:none}
-    .tabs{display:flex;border:0.5px solid var(--border);border-radius:var(--rs);overflow:hidden;margin-bottom:1.25rem;background:var(--bg2)}
-    .tab{flex:1;padding:9px 12px;font-size:13px;font-weight:500;text-align:center;cursor:pointer;background:none;color:var(--text2);border:none;border-right:0.5px solid var(--border);font-family:var(--font)}
-    .tab:last-child{border-right:none}
-    .tab.active{background:var(--bg);color:var(--text)}
+    .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+    .tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:1.25rem;gap:0}
+    .tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;background:none;color:var(--text3);border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:var(--font);transition:all 0.15s;letter-spacing:0.01em}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
-    .annotated-wrap{position:relative;display:block;line-height:0;border-radius:var(--rs);overflow:hidden;border:0.5px solid var(--border)}
+
+    /* ── Annotated wrap ── */
+    .annotated-wrap{position:relative;display:block;line-height:0;overflow:hidden;border:1px solid var(--border)}
     .annotated-wrap img{width:100%;display:block}
     .annotated-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-    .ann-sidebar{margin-top:1rem;display:flex;flex-direction:column;gap:8px}
-    .ann-item{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:12px;cursor:pointer;transition:border-color 0.15s}
-    .ann-item:hover{border-color:var(--border2)}
-    .ann-item.active-ann{border-color:var(--green)}
-    .ann-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-    .ann-content .ann-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
-    .ann-content .ann-desc{font-size:12px;color:var(--text2);line-height:1.5}
-    .ann-content .ann-dim{font-size:10px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em}
-    .priority-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;float:right;margin-left:8px}
-    .p-high{background:#FAECE7;color:#993C1D}
-    .p-medium{background:#FAEEDA;color:#854F0B}
-    .p-low{background:#EAF3DE;color:#3B6D11}
-    .overall-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-bottom:1.25rem}
-    .overall-card{background:var(--bg2);border-radius:var(--rs);padding:14px;text-align:center}
-    .oc-label{font-size:12px;color:var(--text2);margin-bottom:5px}
-    .oc-score{font-size:28px;font-weight:600;letter-spacing:-0.03em}
-    .oc-score span{font-size:14px;font-weight:400;color:var(--text2)}
-    .oc-model{font-size:10px;color:var(--text3);margin-top:2px}
-    .scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-    @media(max-width:600px){.scores-grid{grid-template-columns:repeat(4,1fr)}}
-    .score-card{background:var(--bg2);border-radius:var(--rs);padding:12px 8px;text-align:center}
-    .dim-label{font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.3;min-height:26px;display:flex;align-items:center;justify-content:center}
-    .score-num{font-size:20px;font-weight:600}
-    .score-bar{height:3px;border-radius:2px;margin-top:8px;background:var(--border)}
-    .score-fill{height:100%;border-radius:2px}
+
+    /* ── Ann sidebar ── */
+    .ann-sidebar{margin-top:1rem;display:flex;flex-direction:column;gap:6px}
+    .ann-item{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-left:3px solid transparent;padding:12px 14px;cursor:pointer;transition:all 0.12s}
+    .ann-item:hover{border-color:var(--border2);border-left-color:var(--border2)}
+    .ann-item.active-ann{border-left-color:var(--red);background:rgba(220,0,24,0.02)}
+    .ann-num{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+    .ann-content .ann-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+    .ann-content .ann-desc{font-size:12px;color:var(--text2);line-height:1.55}
+    .ann-content .ann-dim{font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.07em;font-weight:600}
+    .priority-badge{font-size:9px;font-weight:700;padding:2px 7px;float:right;margin-left:8px;text-transform:uppercase;letter-spacing:0.06em}
+    .p-high{background:#FDEAEA;color:#A8000F}
+    .p-medium{background:#FFF4E0;color:#8A5800}
+    .p-low{background:#EBF5EF;color:#1A7A4A}
+
+    /* ── Score cards ── */
+    .overall-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+    .overall-card{background:var(--bg2);padding:14px;text-align:center;border:1px solid var(--border)}
+    .oc-label{font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+    .oc-score{font-size:28px;font-weight:300;letter-spacing:-0.02em}
+    .oc-score span{font-size:13px;color:var(--text3)}
+    .oc-model{font-size:10px;color:var(--text3);margin-top:3px}
+    .scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+    @media(max-width:600px){.scores-grid{grid-template-columns:repeat(3,1fr)}}
+    .score-card{background:var(--bg2);padding:12px 8px;text-align:center;border:1px solid var(--border)}
+    .dim-label{font-size:9px;color:var(--text3);margin-bottom:8px;line-height:1.3;min-height:28px;display:flex;align-items:center;justify-content:center;text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
+    .score-num{font-size:22px;font-weight:300}
+    .score-bar{height:2px;margin-top:8px;background:var(--border)}
+    .score-fill{height:100%}
     .models-used{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
-    .model-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
-    footer{text-align:center;margin-top:2.5rem;font-size:12px;color:var(--text3)}
-    .bp-btn{margin-top:8px;height:28px;padding:0 12px;font-size:11px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font);transition:background 0.15s}
+    .model-badge{font-size:11px;padding:3px 10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+
+    /* ── Buttons ── */
+    .bp-btn{margin-top:8px;height:26px;padding:0 10px;font-size:11px;font-weight:600;border:1px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.12s;text-transform:uppercase;letter-spacing:0.04em}
     .bp-btn:hover{background:var(--bg2)}
     .bp-btn:disabled{opacity:0.4;cursor:not-allowed}
-    .bp-panel{margin-top:10px;background:var(--bg2);border-radius:var(--rs);padding:12px;display:none;border-left:2px solid #1D9E75}
+    .bp-panel{margin-top:10px;background:var(--bg);padding:12px;display:none;border-left:3px solid var(--green)}
     .bp-panel.open{display:block}
     .bp-loading{font-size:12px;color:var(--text3);font-style:italic}
     .bp-content{font-size:12px;color:var(--text2);line-height:1.6}
-    .bp-content strong{color:var(--text);font-weight:500}
-    .bp-content a{color:#1D9E75;text-decoration:none}
+    .bp-content strong{color:var(--text);font-weight:600}
+    .bp-content a{color:var(--green);text-decoration:none}
     .bp-content a:hover{text-decoration:underline}
-    .bp-example{margin-top:8px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px}
-    .bp-example-title{font-size:11px;font-weight:500;color:var(--text);margin-bottom:3px}
+    .bp-example{margin-top:8px;background:var(--surface);border:1px solid var(--border);padding:10px}
+    .bp-example-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px}
     .bp-example-desc{font-size:11px;color:var(--text2);line-height:1.5}
-    footer a{color:inherit}
+
+    /* ── Fix panel ── */
+    .fix-btn{margin-top:6px;margin-left:6px;height:26px;padding:0 10px;font-size:11px;font-weight:600;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-family:var(--font);transition:all 0.12s;text-transform:uppercase;letter-spacing:0.04em}
+    .fix-btn:hover{background:rgba(220,0,24,0.06)}
+    .fix-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .fix-panel{margin-top:10px;background:var(--bg);padding:12px;display:none;border-left:3px solid var(--red)}
+    .fix-panel.open{display:block}
+    .fix-before-after{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    @media(max-width:500px){.fix-before-after{grid-template-columns:1fr}}
+    .fix-box{background:var(--surface);border:1px solid var(--border);padding:10px}
+    .fix-box-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+    .fix-box pre{font-size:11px;font-family:monospace;white-space:pre-wrap;line-height:1.5;color:var(--text2)}
+
+    /* ── CSS input ── */
     .css-input-wrap{margin-bottom:1.25rem}
-    .css-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;user-select:none}
-    .css-toggle-label{font-size:12px;font-weight:500;color:var(--text2)}
-    .css-toggle-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:#E6F1FB;color:#185FA5;font-weight:500}
-    .css-textarea{width:100%;height:140px;padding:10px 12px;font-size:12px;font-family:monospace;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg2);color:var(--text);outline:none;resize:vertical;line-height:1.5}
-    .css-textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12)}
-    .css-stats{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
-    .css-stat{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--text3);border:0.5px solid var(--border)}
-    .region-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-    .region-btn{height:28px;padding:0 12px;font-size:11px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.15s}
+    .css-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;user-select:none;padding:10px 0;border-top:1px solid var(--border)}
+    .css-toggle-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em}
+    .css-toggle-badge{font-size:9px;padding:2px 7px;background:rgba(220,0,24,0.08);color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+    .css-textarea{width:100%;height:130px;padding:10px 12px;font-size:12px;font-family:monospace;border:1px solid var(--border2);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5}
+    .css-textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,0,24,0.08)}
+    .css-stats{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+    .css-stat{font-size:10px;padding:2px 8px;background:var(--bg2);color:var(--text3);border:1px solid var(--border);font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
+
+    /* ── Region ── */
+    .region-bar{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+    .region-btn{height:28px;padding:0 12px;font-size:11px;font-weight:600;border:1px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.12s;text-transform:uppercase;letter-spacing:0.05em}
     .region-btn:hover{background:var(--bg2)}
     .region-btn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
     .region-hint{font-size:11px;color:var(--text3)}
-    .fix-btn{margin-top:6px;margin-left:6px;height:28px;padding:0 12px;font-size:11px;font-weight:500;border:0.5px solid #1D9E75;border-radius:var(--rs);background:transparent;color:#1D9E75;cursor:pointer;font-family:var(--font);transition:background 0.15s}
-    .fix-btn:hover{background:#E1F5EE}
-    .fix-btn:disabled{opacity:0.4;cursor:not-allowed}
-    .fix-panel{margin-top:10px;background:var(--bg2);border-radius:var(--rs);padding:12px;display:none;border-left:2px solid #1D9E75}
-    .fix-panel.open{display:block}
-    .fix-before-after{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
-    @media(max-width:500px){.fix-before-after{grid-template-columns:1fr}}
-    .fix-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px}
-    .fix-box-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
-    .fix-box pre{font-size:11px;font-family:monospace;white-space:pre-wrap;line-height:1.5;color:var(--text2)}
     .annotated-wrap{cursor:crosshair}
+
+    /* ── Export btn ── */
+    .btn-export{height:36px;padding:0 16px;background:transparent;color:var(--text);border:1px solid var(--border2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s}
+    .btn-export:hover{background:var(--bg2)}
+
+    /* ── Footer ── */
+    footer{border-top:1px solid var(--border);margin-top:3rem;padding:1.5rem 2rem;background:var(--surface)}
+    .footer-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .footer-left{font-size:12px;color:var(--text3)}
+    .footer-links{display:flex;gap:16px;flex-wrap:wrap}
+    .footer-links a{font-size:12px;color:var(--text3);text-decoration:none}
+    .footer-links a:hover{color:var(--text)}
+
+    /* ── Utility ── */
+    .card{background:var(--surface);border:1px solid var(--border);padding:1.5rem;margin-bottom:1.25rem}
   </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="badge">Vision + multi-model UX audit</div>
-    <h1>UX / UI Audit Tool</h1>
-    <p>Upload a screenshot or paste a URL. Vision models annotate it directly — text models add scoring depth.</p>
-  </header>
 
-  <div class="card">
-    <div class="url-row">
-      <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)"/>
+<div class="topbar"></div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-logo-mark">
+        <svg viewBox="0 0 16 16"><path d="M2 2h12v2H2zm0 5h8v2H2zm0 5h10v2H2z"/></svg>
+      </div>
+      <div>
+        <div class="nav-logo-text">UX Audit</div>
+        <div class="nav-logo-sub">Multi-model analysis</div>
+      </div>
+    </a>
+    <div class="nav-spacer"></div>
+    <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">UX / UI Audit Tool</div>
+      <h1>Audit any interface<br><strong>in under 3 minutes.</strong></h1>
+      <p class="hero-desc">Upload a screenshot or paste a URL. Vision AI annotates issues directly on screen — scored against Nielsen's 10 heuristics with WCAG contrast analysis.</p>
     </div>
+    <div class="hero-meta">
+      <div class="hero-pill"><span class="hero-pill-dot"></span>Free with Groq</div>
+      <div class="hero-pill">Nielsen heuristics</div>
+      <div class="hero-pill">WCAG 2.1</div>
+      <div class="hero-pill">PDF export</div>
+    </div>
+  </div>
+</div>
 
-    <div class="upload-row">
-      <label class="upload-label">Screenshot (recommended — drag & drop or click)</label>
+<main class="main">
+
+  <div class="section-label">Input</div>
+
+  <div class="input-card">
+    <div class="input-card-header">
+      <div class="input-card-num">1</div>
+      <div class="input-card-title">URL & Screenshot</div>
+      <div class="input-card-desc">Screenshot recommended for visual annotations</div>
+    </div>
+    <div class="input-card-body">
+      <div class="url-row">
+        <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)"/>
+      </div>
+
+      <label class="upload-label">Screenshot — drag & drop or click</label>
       <div class="upload-area" id="uploadArea">
         <input type="file" id="fileInput" accept="image/*"/>
         <div class="upload-icon">&#8679;</div>
-        <div class="upload-text"><span>Choose file</span> or drag here · PNG, JPG, WebP</div>
+        <div class="upload-text"><span>Choose file</span> or drag here &nbsp;·&nbsp; PNG, JPG, WebP, SVG</div>
         <div id="previewWrap"></div>
       </div>
-    </div>
 
-    <div class="css-input-wrap">
-      <div class="css-toggle" onclick="toggleCSSInput()">
-        <span class="css-toggle-label">Paste CSS / code from Figma Dev Mode</span>
-        <span class="css-toggle-badge">More precise WCAG</span>
-        <span id="cssArrow" style="font-size:11px;color:var(--text3);margin-left:auto">▼ expand</span>
-      </div>
-      <div id="cssInputArea" style="display:none">
-        <textarea class="css-textarea" id="cssInput" placeholder="Paste CSS here — e.g. from Figma Dev Mode, browser DevTools, or any CSS file.
+      <div class="css-input-wrap">
+        <div class="css-toggle" onclick="toggleCSSInput()">
+          <span class="css-toggle-label">Paste CSS from Figma Dev Mode</span>
+          <span class="css-toggle-badge">Precise WCAG</span>
+          <span id="cssArrow" style="font-size:11px;color:var(--text3);margin-left:auto">▼ expand</span>
+        </div>
+        <div id="cssInputArea" style="display:none">
+          <textarea class="css-textarea" id="cssInput" placeholder="Paste CSS here — from Figma Dev Mode, browser DevTools, or any CSS file.
 
 Example:
 background: #F5F5F3;
 color: #1A1A18;
 font-size: 14px;
-font-weight: 500;
-border-radius: 8px;
-padding: 16px 24px;"></textarea>
-        <div class="css-stats" id="cssStats"></div>
+font-weight: 500;"></textarea>
+          <div class="css-stats" id="cssStats"></div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div class="models-label">AI models</div>
-    <div class="model-grid">
-      <div class="model-row">
-        <div class="model-dot" style="background:#4285F4"></div>
-        <div class="model-info">
-          <div class="model-name">Gemini</div>
-          <div class="model-sub">Google · 1.5 Flash · free</div>
-          <span class="model-cap cap-vision">Vision · free</span>
-        </div>
-        <input type="password" id="key-gemini" placeholder="AIza..."/>
-      </div>
-      <div class="model-row">
-        <div class="model-dot" style="background:#F55036"></div>
-        <div class="model-info">
-          <div class="model-name">Groq</div>
-          <div class="model-sub">Llama 3.3 · free</div>
-          <span class="model-cap cap-text">Evaluator · free</span>
-        </div>
-        <input type="password" id="key-groq" placeholder="gsk_..."/>
-      </div>
-      <div class="model-row">
-        <div class="model-dot" style="background:#D97706"></div>
-        <div class="model-info">
-          <div class="model-name">Claude</div>
-          <div class="model-sub">Anthropic · Sonnet 4</div>
-          <span class="model-cap cap-vision">Vision · paid</span>
-        </div>
-        <input type="password" id="key-claude" placeholder="sk-ant-..."/>
-      </div>
-      <div class="model-row">
-        <div class="model-dot" style="background:#10A37F"></div>
-        <div class="model-info">
-          <div class="model-name">GPT-4o</div>
-          <div class="model-sub">OpenAI · paid</div>
-          <span class="model-cap cap-vision">Vision · paid</span>
-        </div>
-        <input type="password" id="key-openai" placeholder="sk-..."/>
-      </div>
+  <div class="input-card">
+    <div class="input-card-header">
+      <div class="input-card-num">2</div>
+      <div class="input-card-title">AI Models</div>
+      <div class="input-card-desc">Add any key — only configured models run</div>
     </div>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:1rem">
-      Lokal öffnen: alle 4 Modelle funktionieren. 
-      Auf GitHub Pages: nur Claude zuverlässig (CORS). 
-      <a href="https://aistudio.google.com" target="_blank" style="color:var(--text2)">Gemini Key (free)</a> · 
-      <a href="https://console.groq.com" target="_blank" style="color:var(--text2)">Groq Key (free)</a> · 
-      <a href="https://console.anthropic.com" target="_blank" style="color:var(--text2)">Claude Key</a>
-    </p>
+    <div class="input-card-body">
+      <div class="model-grid">
+      <p style="font-size:11px;color:var(--text3);margin-bottom:1.25rem">* Gemini free tier not available in CH/EU. <a href="https://console.groq.com" target="_blank" style="color:var(--text2)">Groq (free)</a> · <a href="https://console.anthropic.com" target="_blank" style="color:var(--text2)">Claude</a></p>
 
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn-run" id="runBtn" onclick="startAudit()">Run audit →</button>
-      <p class="info-note">🔒 Keys stay in your browser only.</p>
-    </div>
-    <div id="errorMsg" class="error-msg"></div>
-    <div class="progress-section" id="progressSection">
-      <div class="step-list" id="stepList"></div>
+      <div class="run-row">
+        <button class="btn-run" id="runBtn" onclick="startAudit()">Run Audit &rarr;</button>
+        <p class="info-note">&#128274; Keys used only in your browser — never stored.</p>
+      </div>
+      <div id="errorMsg" class="error-msg"></div>
+      <div class="progress-section" id="progressSection">
+        <div class="step-list" id="stepList"></div>
+      </div>
     </div>
   </div>
 
   <div class="results" id="results">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-      <div class="tabs" style="margin-bottom:0;flex:1">
-        <button class="tab active" onclick="switchTab('visual')">Annotated screenshot</button>
-        <button class="tab" onclick="switchTab('scores')">Nielsen scores</button>
-        <button class="tab" onclick="switchTab('wcag')">WCAG contrast</button>
-      </div>
-      <button onclick="exportPDF()" style="height:36px;padding:0 16px;background:var(--text);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:var(--font);flex-shrink:0">Export PDF ↓</button>
+    <div class="results-header">
+      <div class="section-label" style="flex:1;margin-bottom:0">Results</div>
+      <button onclick="exportPDF()" class="btn-export">Export PDF &darr;</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('visual')">Annotated screenshot</button>
+      <button class="tab" onclick="switchTab('scores')">Nielsen scores</button>
+      <button class="tab" onclick="switchTab('wcag')">WCAG contrast</button>
     </div>
 
     <div class="tab-panel active" id="tab-visual">
       <div class="card">
         <div class="region-bar">
-          <button class="region-btn active" id="btnFullAudit" onclick="setMode('full')">Full page audit</button>
+          <button class="region-btn active" id="btnFullAudit" onclick="setMode('full')">Full page</button>
           <button class="region-btn" id="btnRegion" onclick="setMode('region')">Select region</button>
           <span class="region-hint" id="regionHint"></span>
-          <button class="region-btn" id="btnAuditRegion" style="display:none;background:var(--text);color:var(--bg);border-color:var(--text)" onclick="auditRegion()">Audit selection →</button>
+          <button class="region-btn" id="btnAuditRegion" style="display:none;background:var(--red);color:#fff;border-color:var(--red)" onclick="auditRegion()">Audit selection &rarr;</button>
         </div>
         <div class="annotated-wrap" id="annotatedWrap">
           <img id="annotatedImg" src="" alt="Screenshot being audited"/>
@@ -287,10 +395,23 @@ padding: 16px 24px;"></textarea>
     </div>
   </div>
 
-  <footer>UX Audit Tool · Keys stay in your browser · Built with Claude, GPT-4o, Gemini & Groq</footer>
-</div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">UX Audit Tool &nbsp;&middot;&nbsp; Keys stay in your browser</div>
+    <div class="footer-links">
+<a href="https://console.groq.com" target="_blank">Groq (free)</a>
+      <a href="https://aistudio.google.com" target="_blank">Gemini</a>
+      <a href="https://console.anthropic.com" target="_blank">Claude</a>
+    </div>
+  </div>
+</footer>
 
 <script>
+
+// Element cache — avoids repeated DOM lookups
+const el = id => document.getElementById(id);
 const DIMS=[
   'Visibility of system status',
   'Match with real world',
@@ -336,7 +457,7 @@ function handleFile(file){
   const reader=new FileReader();
   reader.onload=e=>{
     imageBase64=e.target.result.split(',')[1];
-    const wrap=document.getElementById('previewWrap');
+    const wrap=el('previewWrap');
     wrap.innerHTML=`<div class="preview-wrap"><img class="preview-img" src="${e.target.result}"/><button class="preview-clear" onclick="clearImage(event)">×</button></div>`;
   };
   reader.readAsDataURL(file);
@@ -345,7 +466,7 @@ function handleFile(file){
 function clearImage(e){
   e.stopPropagation();
   imageBase64=null;
-  document.getElementById('previewWrap').innerHTML='';
+  el('previewWrap').innerHTML='';
   fileInput.value='';
 }
 
@@ -361,7 +482,7 @@ function setSteps(ids){
 }
 
 function renderStep(active){
-  document.getElementById('stepList').innerHTML=stepLabels.map((s,i)=>{
+  el('stepList').innerHTML=stepLabels.map((s,i)=>{
     let cls='step';
     if(i<active)cls+=' done';
     else if(i===active)cls+=' active';
@@ -377,6 +498,16 @@ function switchTab(name){
 function scoreColor(s){return s>=8?'#1D9E75':s>=6?'#BA7517':'#D85A30'}
 function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length}
 function parseJSON(raw){return JSON.parse(raw.replace(/```json|```/g,'').trim())}
+
+// Fetch with timeout
+async function fetchWithTimeout(url,opts,ms=30000){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(),ms);
+  try{
+    const r=await fetch(url,{...opts,signal:ctrl.signal});
+    return r;
+  }finally{clearTimeout(id);}
+}
 
 // --- Vision system prompt ---
 function visionSystem(){
@@ -421,38 +552,38 @@ The 7 scores map to: Navigation, Visual Hierarchy, Accessibility, Conversion, Mo
 }
 
 // --- API calls ---
-async function callClaudeVision(key,base64,mime,url){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+async function callClaudeVision(key,base64,mime,url,cssCtx=''){
+  const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
       messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mime,data:base64}},
-        {type:'text',text:visionSystem()+(document.getElementById('cssInput').value.trim()?'\n\nCSS provided:\n'+document.getElementById('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'}
+        {type:'text',text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'}
       ]}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude vision error')}
   return parseJSON((await r.json()).content[0].text);
 }
 
-async function callGPTVision(key,base64,mime,url){
+async function callGPTVision(key,base64,mime,url,cssCtx=''){
   const content=[
-    {type:'text',text:visionSystem()+(document.getElementById('cssInput').value.trim()?'\n\nCSS provided:\n'+document.getElementById('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
+    {type:'text',text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
     {type:'image_url',image_url:{url:`data:${mime};base64,${base64}`}}
   ];
   const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-    body:JSON.stringify({model:'gpt-4o',max_tokens:2000,messages:[{role:'user',content}]})});
+    body:JSON.stringify({model:'gpt-4o',max_tokens:1500,temperature:0,messages:[{role:'user',content}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'GPT-4o error')}
   return parseJSON((await r.json()).choices[0].message.content);
 }
 
-async function callGeminiVision(key,base64,mime,url){
+async function callGeminiVision(key,base64,mime,url,cssCtx=''){
   const parts=[
-    {text:visionSystem()+(document.getElementById('cssInput').value.trim()?'\n\nCSS provided:\n'+document.getElementById('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
+    {text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
     {inline_data:{mime_type:mime,data:base64}}
   ];
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,{method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})});
+    body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0,maxOutputTokens:1500}})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Gemini error')}
   return parseJSON((await r.json()).candidates[0].content.parts[0].text);
 }
@@ -460,33 +591,23 @@ async function callGeminiVision(key,base64,mime,url){
 async function callClaudeEval(key,findingsSummary){
   const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,temperature:0,
       messages:[{role:'user',content:evaluatorSystem(findingsSummary)}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
   return parseJSON((await r.json()).content[0].text);
 }
 
+
 async function callGroqEval(key,findingsSummary){
   const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-    body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:500,
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:400,temperature:0,
       messages:[{role:'user',content:evaluatorSystem(findingsSummary)}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
   return parseJSON((await r.json()).choices[0].message.content);
 }
 
-async function fetchSiteScreenshotProxy(url){
-  try{
-    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(12000)});
-    const d=await r.json();
-    if(d.contents){
-      const doc=new DOMParser().parseFromString(d.contents,'text/html');
-      doc.querySelectorAll('script,style,noscript,svg').forEach(el=>el.remove());
-      return(doc.body?.innerText||'').replace(/\s+/g,' ').trim().slice(0,3000);
-    }
-  }catch(e){}
-  return null;
-}
+
 
 // --- Draw annotations on canvas ---
 function drawAnnotations(annotations,img,canvas){
@@ -562,11 +683,11 @@ function setupCanvasClick(annotations,img,canvas){
 // --- Render results ---
 function renderResults(imgSrc,annotations,allScores,activeModelIds){
   // annotated image
-  const img=document.getElementById('annotatedImg');
+  const img=el('annotatedImg');
   img.src=imgSrc;
   img.onload=()=>{
-    const canvas=document.getElementById('annotationCanvas');
-    const sel=document.getElementById('selectionCanvas');
+    const canvas=el('annotationCanvas');
+    const sel=el('selectionCanvas');
     sel.width=img.naturalWidth;
     sel.height=img.naturalHeight;
     drawAnnotations(annotations,img,canvas);
@@ -575,7 +696,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
   };
 
   // run WCAG check — use CSS colors if available, else sample from image
-  const cssInput=document.getElementById('cssInput').value.trim();
+  const cssInput=el('cssInput').value.trim();
   if(cssInput){
     const cssPairs=runWCAGFromCSS(cssInput);
     if(cssPairs&&cssPairs.length>0){
@@ -591,7 +712,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
   }
 
   // sidebar
-  const sidebar=document.getElementById('annSidebar');
+  const sidebar=el('annSidebar');
   sidebar.innerHTML=annotations.map((ann,i)=>{
     const col=ANNOTATION_COLORS[i]||'#888';
     const p=(ann.priority||'Medium').toLowerCase();
@@ -616,12 +737,12 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
   const combinedScores=DIMS.map((_,i)=>avg(allScores.map(s=>s[i])));
   const combinedAvg=avg(combinedScores).toFixed(1);
 
-  document.getElementById('modelsUsed').innerHTML=activeModelIds.map(id=>{
+  el('modelsUsed').innerHTML=activeModelIds.map(id=>{
     const m=MODEL_META[id];
     return`<span class="model-badge" style="background:${m.color}22;color:${m.color}">${m.name}</span>`;
   }).join('');
 
-  document.getElementById('overallRow').innerHTML=
+  el('overallRow').innerHTML=
     (allScores.length>1?`<div class="overall-card">
       <div class="oc-label">Combined score</div>
       <div class="oc-score" style="color:${scoreColor(combinedAvg)}">${combinedAvg}<span>/10</span></div>
@@ -637,7 +758,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
       </div>`;
     }).join('');
 
-  document.getElementById('scoreOverview').innerHTML=DIMS.map((d,i)=>{
+  el('scoreOverview').innerHTML=DIMS.map((d,i)=>{
     const sc=avg(allScores.map(s=>s[i]||5)).toFixed(1);
     const short=DIMS_SHORT[i]||d;
     return`<div class="score-card">
@@ -647,31 +768,32 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     </div>`;
   }).join('');
 
-  document.getElementById('results').style.display='block';
-  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+  el('results').style.display='block';
+  el('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 window.selectAnnotation=function(idx){
   activeAnnIdx=idx;
-  const img=document.getElementById('annotatedImg');
-  const canvas=document.getElementById('annotationCanvas');
+  const img=el('annotatedImg');
+  const canvas=el('annotationCanvas');
   drawAnnotations(currentAnnotations,img,canvas);
   document.querySelectorAll('.ann-item').forEach((el,i)=>el.classList.toggle('active-ann',i===idx));
 };
 
 // --- Main audit ---
 async function startAudit(){
-  const url=document.getElementById('urlInput').value.trim();
+  const url=el('urlInput').value.trim();
   const keys={
     openai:document.getElementById('key-openai').value.trim(),
     gemini:document.getElementById('key-gemini').value.trim(),
     claude:document.getElementById('key-claude').value.trim(),
     groq:document.getElementById('key-groq').value.trim()
   };
-  const errEl=document.getElementById('errorMsg');
+  const errEl=el('errorMsg');
   errEl.textContent='';
 
   const activeIds=Object.keys(keys).filter(k=>keys[k]);
+  const _cssCtx=el('cssInput').value.trim(); // cached once
   const visionIds=activeIds.filter(id=>MODEL_META[id].vision);
   const textIds=activeIds.filter(id=>!MODEL_META[id].vision);
 
@@ -679,10 +801,10 @@ async function startAudit(){
   if(activeIds.length===0){errEl.textContent='Please enter at least one API key.';return}
   if(visionIds.length===0){errEl.textContent='Please enter a key for at least one vision model — Gemini (free), Claude, or GPT-4o.';return}
 
-  const btn=document.getElementById('runBtn');
+  const btn=el('runBtn');
   btn.disabled=true;
-  document.getElementById('results').style.display='none';
-  document.getElementById('progressSection').style.display='block';
+  el('results').style.display='none';
+  el('progressSection').style.display='block';
   setSteps(activeIds);
 
   try{
@@ -714,9 +836,9 @@ async function startAudit(){
       renderStep(step++);
       try{
         let res;
-        if(id==='claude')res=await callClaudeVision(keys[id],b64,mime,url);
-        if(id==='openai')res=await callGPTVision(keys[id],b64,mime,url);
-        if(id==='gemini')res=await callGeminiVision(keys[id],b64,mime,url);
+if(id==='claude')res=await callClaudeVision(keys[id],b64,mime,url,_cssCtx);
+        if(id==='openai')res=await callGPTVision(keys[id],b64,mime,url,_cssCtx);
+        if(id==='gemini')res=await callGeminiVision(keys[id],b64,mime,url,_cssCtx);
         if(res)visionResults.push({id,data:res});
       }catch(e){console.warn(id,'vision failed:',e.message)}
     }
@@ -758,31 +880,31 @@ async function startAudit(){
 
     renderStep(step);
     setTimeout(()=>{
-      document.getElementById('progressSection').style.display='none';
+      el('progressSection').style.display='none';
       renderResults(imgSrc,currentAnnotations,allScores,allModelIds);
     },300);
 
   }catch(e){
     errEl.textContent='Error: '+e.message;
-    document.getElementById('progressSection').style.display='none';
+    el('progressSection').style.display='none';
   }finally{
     btn.disabled=false;
   }
 }
 
-document.getElementById('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')startAudit()});
+el('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')startAudit()});
 
 // --- CSS Input ---
 function toggleCSSInput(){
-  const area=document.getElementById('cssInputArea');
-  const arrow=document.getElementById('cssArrow');
+  const area=el('cssInputArea');
+  const arrow=el('cssArrow');
   const open=area.style.display==='none';
   area.style.display=open?'block':'none';
   arrow.textContent=open?'▲ collapse':'▼ expand';
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('cssInput').addEventListener('input',parseCSSLive);
+  el('cssInput').addEventListener('input',parseCSSLive);
 });
 
 function parseCSSColors(css){
@@ -818,11 +940,11 @@ function parseCSSFontSizes(css){
 }
 
 function parseCSSLive(){
-  const css=document.getElementById('cssInput').value;
-  if(!css.trim()){document.getElementById('cssStats').innerHTML='';return;}
+  const css=el('cssInput').value;
+  if(!css.trim()){el('cssStats').innerHTML='';return;}
   const colors=parseCSSColors(css);
   const fonts=parseCSSFontSizes(css);
-  const statsEl=document.getElementById('cssStats');
+  const statsEl=el('cssStats');
   statsEl.innerHTML=[
     colors.length?`<span class="css-stat">${colors.length} colors found</span>`:'',
     fonts.length?`<span class="css-stat">Font sizes: ${fonts.join(', ')}px</span>`:'',
@@ -855,12 +977,6 @@ function hexToRgb(hex){
   return isNaN(r)?null:{r,g,b};
 }
 
-function buildCSSContext(css){
-  if(!css.trim())return'';
-  const colors=parseCSSColors(css);
-  const fonts=parseCSSFontSizes(css);
-  return`\n\nCSS/Design tokens provided:\nColors: ${colors.join(', ')}\nFont sizes: ${fonts.map(f=>f+'px').join(', ')||'none found'}\nFull CSS:\n${css.slice(0,2000)}`;
-}
 function getLuminance(r,g,b){
   const [rs,gs,bs]=[r,g,b].map(c=>{
     c/=255;
@@ -875,17 +991,6 @@ function getContrastRatio(l1,l2){
   return(lighter+0.05)/(darker+0.05);
 }
 
-function wcagLevel(ratio,isLargeText){
-  if(isLargeText){
-    if(ratio>=4.5)return{level:'AAA',pass:true};
-    if(ratio>=3.0)return{level:'AA',pass:true};
-    return{level:'Fail',pass:false};
-  }
-  if(ratio>=7.0)return{level:'AAA',pass:true};
-  if(ratio>=4.5)return{level:'AA',pass:true};
-  if(ratio>=3.0)return{level:'AA Large',pass:false};
-  return{level:'Fail',pass:false};
-}
 
 function sampleColors(canvas,regions=20){
   const ctx=canvas.getContext('2d');
@@ -893,10 +998,8 @@ function sampleColors(canvas,regions=20){
   const H=canvas.height;
   const pairs=[];
   const step=Math.floor(Math.min(W,H)/regions);
-
   for(let y=step;y<H-step;y+=step*2){
     for(let x=step;x<W-step;x+=step*2){
-      // sample small patch — get bg (average) and fg (darkest pixel nearby)
       const patch=ctx.getImageData(x-2,y-2,5,5).data;
       let rSum=0,gSum=0,bSum=0,count=0;
       let rDark=255,gDark=255,bDark=255;
@@ -977,7 +1080,7 @@ function renderWCAG(results){
     </div>`;
   }
 
-  document.getElementById('wcagResults').innerHTML=`
+  el('wcagResults').innerHTML=`
     <div style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap">
       <div style="flex:1;min-width:100px;background:${failing.length>0?'#FCEBEB':'#E1F5EE'};border-radius:var(--rs);padding:12px;text-align:center">
         <div style="font-size:22px;font-weight:600;color:${failing.length>0?'#E24B4A':'#1D9E75'}">${failing.length}</div>
@@ -1013,12 +1116,12 @@ let isDragging=false;
 
 function setMode(mode){
   regionMode=(mode==='region');
-  document.getElementById('btnFullAudit').classList.toggle('active',!regionMode);
-  document.getElementById('btnRegion').classList.toggle('active',regionMode);
-  document.getElementById('regionHint').textContent=regionMode?'Draw a box on the screenshot to select a component':'';
-  document.getElementById('btnAuditRegion').style.display='none';
-  document.getElementById('annotationCanvas').style.pointerEvents=regionMode?'none':'auto';
-  const sel=document.getElementById('selectionCanvas');
+  el('btnFullAudit').classList.toggle('active',!regionMode);
+  el('btnRegion').classList.toggle('active',regionMode);
+  el('regionHint').textContent=regionMode?'Draw a box on the screenshot to select a component':'';
+  el('btnAuditRegion').style.display='none';
+  el('annotationCanvas').style.pointerEvents=regionMode?'none':'auto';
+  const sel=el('selectionCanvas');
   sel.style.pointerEvents=regionMode?'auto':'none';
   if(!regionMode){
     const ctx=sel.getContext('2d');
@@ -1027,10 +1130,18 @@ function setMode(mode){
   }
 }
 
+let _regionHandlers=null;
 function initRegionCanvas(){
-  const wrap=document.getElementById('annotatedWrap');
-  const img=document.getElementById('annotatedImg');
-  const sel=document.getElementById('selectionCanvas');
+  const wrap=el('annotatedWrap');
+  const img=el('annotatedImg');
+  const sel=el('selectionCanvas');
+
+  // Remove old listeners before adding new ones
+  if(_regionHandlers){
+    sel.removeEventListener('mousedown',_regionHandlers.down);
+    sel.removeEventListener('mousemove',_regionHandlers.move);
+    sel.removeEventListener('mouseup',_regionHandlers.up);
+  }
 
   function getPos(e){
     const rect=wrap.getBoundingClientRect();
@@ -1046,16 +1157,16 @@ function initRegionCanvas(){
     };
   }
 
-  sel.addEventListener('mousedown',e=>{
+  const _onDown=e=>{
     if(!regionMode)return;
     isDragging=true;
     const p=getPos(e);
     regionStart={x:p.x,y:p.y,px:p.px,py:p.py};
     regionRect=null;
-    document.getElementById('btnAuditRegion').style.display='none';
-  });
+    el('btnAuditRegion').style.display='none';
+  };
 
-  sel.addEventListener('mousemove',e=>{
+  const _onMove=e=>{
     if(!regionMode||!isDragging)return;
     const p=getPos(e);
     const ctx=sel.getContext('2d');
@@ -1071,13 +1182,13 @@ function initRegionCanvas(){
     const h=Math.abs(p.y-regionStart.y);
     ctx.fillRect(x,y,w,h);
     ctx.strokeRect(x,y,w,h);
-  });
+  };
 
-  sel.addEventListener('mouseup',e=>{
+  const _onUp=e=>{
     if(!regionMode||!isDragging)return;
     isDragging=false;
     const p=getPos(e);
-    const img2=document.getElementById('annotatedImg');
+    const img2=el('annotatedImg');
     regionRect={
       x:Math.min(regionStart.x,p.x)/img2.naturalWidth,
       y:Math.min(regionStart.y,p.y)/img2.naturalHeight,
@@ -1085,10 +1196,15 @@ function initRegionCanvas(){
       h:Math.abs(p.y-regionStart.y)/img2.naturalHeight
     };
     if(regionRect.w>0.02&&regionRect.h>0.02){
-      document.getElementById('btnAuditRegion').style.display='inline-block';
-      document.getElementById('regionHint').textContent='Region selected — click "Audit selection"';
+      el('btnAuditRegion').style.display='inline-block';
+      el('regionHint').textContent='Region selected — click "Audit selection"';
     }
-  });
+  };
+
+  sel.addEventListener('mousedown',_onDown);
+  sel.addEventListener('mousemove',_onMove);
+  sel.addEventListener('mouseup',_onUp);
+  _regionHandlers={down:_onDown,move:_onMove,up:_onUp};
 }
 
 async function auditRegion(){
@@ -1097,7 +1213,7 @@ async function auditRegion(){
   if(!claudeKey){alert('Claude API key needed.');return;}
 
   // crop image to selected region
-  const img=document.getElementById('annotatedImg');
+  const img=el('annotatedImg');
   const cropCanvas=document.createElement('canvas');
   const cw=Math.round(regionRect.w*img.naturalWidth);
   const ch=Math.round(regionRect.h*img.naturalHeight);
@@ -1108,19 +1224,19 @@ async function auditRegion(){
   cropCanvas.getContext('2d').drawImage(img,cx,cy,cw,ch,0,0,cw,ch);
   const croppedB64=cropCanvas.toDataURL('image/jpeg',0.9).split(',')[1];
 
-  const btn=document.getElementById('btnAuditRegion');
+  const btn=el('btnAuditRegion');
   btn.textContent='Analyzing...';
   btn.disabled=true;
 
   try{
     const prompt=visionSystem()+'\n\nAnalyze this cropped UI component in detail. This is a selected region from a larger page — focus deeply on this specific component.';
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,temperature:0,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:'image/jpeg',data:croppedB64}},
           {type:'text',text:prompt}
-        ]}]})});
+        ]}]})},35000);
     if(!r.ok){const e=await r.json();throw new Error(e.error?.message);}
     const data=await r.json();
     const parsed=parseJSON(data.content[0].text);
@@ -1133,12 +1249,12 @@ async function auditRegion(){
     }));
 
     currentAnnotations=[...currentAnnotations,...parsed.annotations];
-    const imgEl=document.getElementById('annotatedImg');
-    const canvas=document.getElementById('annotationCanvas');
+    const imgEl=el('annotatedImg');
+    const canvas=el('annotationCanvas');
     drawAnnotations(currentAnnotations,imgEl,canvas);
 
     // add to sidebar
-    const sidebar=document.getElementById('annSidebar');
+    const sidebar=el('annSidebar');
     const startIdx=currentAnnotations.length-parsed.annotations.length;
     const newItems=parsed.annotations.map((ann,j)=>{
       const i=startIdx+j;
@@ -1183,9 +1299,12 @@ async function loadFix(idx,btn){
 
   const ann=currentAnnotations[idx];
   if(!ann)return;
+
+  const groqKey=document.getElementById('key-groq').value.trim();
   const claudeKey=document.getElementById('key-claude').value.trim();
-  if(!claudeKey){
-    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Claude API key needed.</p>';
+
+  if(!groqKey&&!claudeKey){
+    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Add a Groq key (free) or Claude key to generate fixes.</p>';
     panel.classList.add('open');return;
   }
 
@@ -1193,17 +1312,15 @@ async function loadFix(idx,btn){
   btn.disabled=true;
   panel.classList.add('open');
 
-  const cssCtx=document.getElementById('cssInput').value.trim();
-
-  try{
-    const prompt=`You are a UX engineer. A UX audit found this issue:
+  const cssCtx=el('cssInput').value.trim();
+  const prompt=`You are a UX engineer. A UX audit found this issue:
 
 Dimension: ${ann.dimension}
 Heuristic: ${ann.title}
 Problem: ${ann.description}
 ${cssCtx?`\nExisting CSS context:\n${cssCtx.slice(0,1000)}`:''}
 
-Generate a concrete before/after fix. Respond ONLY with valid JSON:
+Generate a concrete before/after fix. Respond ONLY with valid JSON, no markdown:
 {
   "problem_summary": "one sentence what exactly is wrong",
   "before": {
@@ -1212,25 +1329,40 @@ Generate a concrete before/after fix. Respond ONLY with valid JSON:
   },
   "after": {
     "label": "Fixed",
-    "code": "the corrected CSS or HTML snippet, max 8 lines"  
+    "code": "the corrected CSS or HTML snippet, max 8 lines"
   },
   "explanation": "1-2 sentences why this fix works",
   "impact": "High|Medium|Low"
 }`;
 
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
-        messages:[{role:'user',content:prompt}]})});
+  try{
+    let raw;
+    const usedModel = groqKey ? 'Groq' : 'Claude';
 
-    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
-    const data=await r.json();
-    const parsed=parseJSON(data.content.find(b=>b.type==='text')?.text||'{}');
+    if(groqKey){
+      // Groq — free, fast, good enough for code fixes
+      const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:600,temperature:0,
+          messages:[{role:'user',content:prompt}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error');}
+      raw=(await r.json()).choices[0].message.content;
+    } else {
+      // Claude fallback
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+          messages:[{role:'user',content:prompt}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error');}
+      raw=(await r.json()).content.find(b=>b.type==='text')?.text||'{}';
+    }
 
+    const parsed=parseJSON(raw);
     const impactColor=parsed.impact==='High'?'#993C1D':parsed.impact==='Low'?'#3B6D11':'#854F0B';
     const impactBg=parsed.impact==='High'?'#FAECE7':parsed.impact==='Low'?'#EAF3DE':'#FAEEDA';
 
     panel.innerHTML=`
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Generated by ${usedModel} · free${groqKey?' (Groq)':''}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">${parsed.problem_summary||''}</div>
       <div class="fix-before-after">
         <div class="fix-box">
@@ -1256,102 +1388,6 @@ Generate a concrete before/after fix. Respond ONLY with valid JSON:
 }
 
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-async function loadBestPractice(idx, btn){
-  const panel=document.getElementById('bp-'+idx);
-  if(btn.dataset.loaded==='true'){
-    panel.classList.toggle('open');
-    btn.textContent=panel.classList.contains('open')?'Hide ↑':'Best practice →';
-    return;
-  }
-
-  const ann=currentAnnotations[idx];
-  if(!ann)return;
-
-  const claudeKey=document.getElementById('key-claude').value.trim();
-  if(!claudeKey){
-    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Claude API key needed for best practices.</p>';
-    panel.classList.add('open');
-    return;
-  }
-
-  btn.textContent='Searching...';
-  btn.disabled=true;
-  panel.innerHTML='';
-  panel.classList.add('open');
-
-  try{
-    const prompt=`You are a UX expert. A UX audit found this issue:
-
-Dimension: ${ann.dimension}
-Issue: ${ann.title}
-Details: ${ann.description}
-
-Do a web search and find 2-3 real-world best practice examples that show how leading companies solve this exact UX problem. 
-
-Respond ONLY with a JSON object, no markdown:
-{
-  "summary": "1-2 sentence explanation of the best practice principle",
-  "examples": [
-    {
-      "company": "Company name",
-      "what": "What they do specifically",
-      "why": "Why it works",
-      "url": "their website URL if relevant"
-    }
-  ],
-  "quick_fix": "One concrete actionable sentence on how to fix this specific issue"
-}`;
-
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':claudeKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-
-    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
-    const data=await r.json();
-
-    // extract text from response (may contain tool_use blocks)
-    const textBlock=data.content.find(b=>b.type==='text');
-    if(!textBlock)throw new Error('No text response');
-
-    let parsed;
-    try{parsed=JSON.parse(textBlock.text.replace(/```json|```/g,'').trim());}
-    catch(e){throw new Error('Could not parse response');}
-
-    panel.innerHTML=`
-      <p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">${parsed.summary}</p>
-      ${parsed.examples.map(ex=>`
-        <div style="margin-bottom:10px;padding:8px;background:var(--bg);border-radius:var(--rs);border:0.5px solid var(--border)">
-          <div style="font-size:11px;font-weight:500;color:var(--text);margin-bottom:3px">${ex.company}</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">${ex.what}</div>
-          <div style="font-size:10px;color:var(--text3)">${ex.why}</div>
-        </div>`).join('')}
-      <div style="margin-top:10px;padding:8px 10px;background:#E1F5EE;border-radius:var(--rs)">
-        <div style="font-size:10px;font-weight:600;color:#0F6E56;margin-bottom:3px">QUICK FIX</div>
-        <div style="font-size:11px;color:#085041;line-height:1.5">${parsed.quick_fix}</div>
-      </div>`;
-
-    btn.dataset.loaded='true';
-    btn.textContent='Hide ↑';
-  }catch(e){
-    panel.innerHTML=`<p style="font-size:12px;color:var(--red)">${e.message}</p>`;
-    btn.textContent='Best practice →';
-  }finally{
-    btn.disabled=false;
-  }
-}
-
 // --- Best Practice Lookup ---
 async function loadBestPractice(idx, btn){
   if(btn.dataset.loaded==='true') {
@@ -1420,7 +1456,7 @@ Be specific, cite real companies (Stripe, Linear, Apple, Airbnb, etc.). No gener
       // Groq fallback (no web search but still useful)
       const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
-        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:800,
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:600,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
       raw=(await r.json()).choices[0].message.content;
@@ -1488,7 +1524,7 @@ async function exportPDF(){
   const priColor=(p)=>p==='High'?[153,60,29]:p==='Low'?[59,109,17]:[133,79,11];
   const priBg=(p)=>p==='High'?[250,236,231]:p==='Low'?[234,243,222]:[250,238,218];
 
-  const url=document.getElementById('urlInput').value.trim()||'Unknown URL';
+  const url=el('urlInput').value.trim()||'Unknown URL';
   const date=new Date().toLocaleDateString('de-CH',{year:'numeric',month:'long',day:'numeric'});
 
   // ── Header ──
@@ -1509,8 +1545,8 @@ async function exportPDF(){
   y+=10;
 
   // ── Annotated Screenshot ──
-  const img=document.getElementById('annotatedImg');
-  const canvas=document.getElementById('annotationCanvas');
+  const img=el('annotatedImg');
+  const canvas=el('annotationCanvas');
 
   // merge img + canvas into one image
   const mergeCanvas=document.createElement('canvas');
@@ -1680,6 +1716,7 @@ async function exportPDF(){
   btn.textContent='Export PDF ↓';
   btn.disabled=false;
 }
+
 </script>
 </body>
 </html>
