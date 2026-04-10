@@ -550,6 +550,13 @@ async function fetchWithTimeout(url,opts,ms=30000){
 function visionSystem(){
   return`You are a senior UX/UI auditor analyzing a website screenshot. Respond ONLY with valid JSON, no markdown, no preamble.
 
+CRITICAL RULES — follow strictly:
+- Only report issues you can DIRECTLY SEE in the screenshot. Do NOT invent or assume issues.
+- Reference specific visible elements (e.g. "the blue button in the top-right", "the navigation bar", "the hero headline").
+- If a heuristic has no visible issue, give it a score of 7–9 — do not fabricate problems.
+- Be consistent: the same screenshot analyzed twice should yield the same findings.
+- Scores must reflect what is actually visible, not general assumptions about the site type.
+
 Return this exact schema:
 {
   "annotations": [
@@ -557,20 +564,20 @@ Return this exact schema:
       "id": 1,
       "x": 0.45,
       "y": 0.12,
-      "title": "short issue title",
-      "description": "detailed explanation of the problem and how to fix it",
-      "dimension": "one of: Navigation|Visual Hierarchy|Accessibility|Conversion|Mobile UX|Content Clarity|Performance",
+      "title": "short issue title (max 8 words)",
+      "description": "specific description referencing a visible element and how to fix it",
+      "dimension": "one of: Visibility of system status|Match with real world|User control & freedom|Consistency & standards|Error prevention|Recognition over recall|Flexibility & efficiency|Aesthetic & minimal design|Help users recover from errors|Help & documentation",
       "priority": "High|Medium|Low"
     }
   ],
-  "scores": [n,n,n,n,n,n,n]
+  "scores": [n,n,n,n,n,n,n,n,n,n]
 }
 
 Rules:
-- x and y are fractional coordinates (0.0–1.0) indicating where on the image the issue is located. x=0 is left, x=1 is right, y=0 is top, y=1 is bottom.
-- Provide 5–8 annotations pointing to real visible issues in the screenshot.
-- The 7 scores map to: Navigation, Visual Hierarchy, Accessibility, Conversion, Mobile UX, Content Clarity, Performance. Each 1–10.
-- Be specific and actionable. Reference actual visible elements.`;
+- x and y are fractional coordinates (0.0–1.0). x=0 is left, x=1 is right, y=0 is top, y=1 is bottom.
+- Provide 5–8 annotations for VISIBLE issues only.
+- The 10 scores map in order to Nielsen's heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation. Each 1–10.
+- Score 1–4 = serious problem clearly visible. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.`;
 }
 
 // --- Evaluator system prompt (text-only models) ---
@@ -579,20 +586,26 @@ function evaluatorSystem(findingsSummary){
 
 ${findingsSummary}
 
-Based on these findings, provide your own scoring assessment. Respond ONLY with valid JSON:
+CRITICAL RULES:
+- Base your scores ONLY on the findings listed above. Do not invent additional issues.
+- Be consistent and calibrated: if the findings describe minor issues, scores should be 6–8, not 2–3.
+- Score 1–4 = serious problem. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.
+- If a heuristic is not mentioned in the findings, score it 7 (assume acceptable unless evidence suggests otherwise).
+
+Respond ONLY with valid JSON:
 {
-  "scores": [n,n,n,n,n,n,n],
+  "scores": [n,n,n,n,n,n,n,n,n,n],
   "notes": "brief overall assessment in 1-2 sentences"
 }
 
-The 7 scores map to: Navigation, Visual Hierarchy, Accessibility, Conversion, Mobile UX, Content Clarity, Performance. Each 1–10. Be critical and realistic.`;
+The 10 scores map in order to Nielsen's heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation. Each 1–10.`;
 }
 
 // --- API calls ---
 async function callClaudeVision(key,base64,mime,url,cssCtx=''){
   const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,temperature:0,
       messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mime,data:base64}},
         {type:'text',text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'}
@@ -771,8 +784,11 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
   }).join('');
 
   // scores tab
-  const combinedScores=DIMS.map((_,i)=>avg(allScores.map(s=>s[i])));
-  const combinedAvg=avg(combinedScores).toFixed(1);
+  const combinedScores=DIMS.map((_,i)=>{
+    const vals=allScores.map(s=>s[i]).filter(v=>v!=null&&!isNaN(v));
+    return vals.length>0?avg(vals):0;
+  });
+  const combinedAvg=avg(combinedScores.filter(s=>s>0)).toFixed(1);
 
   el('modelsUsed').innerHTML=activeModelIds.map(id=>{
     const m=MODEL_META[id];
@@ -1388,7 +1404,7 @@ Generate a concrete before/after fix. Respond ONLY with valid JSON, no markdown:
       // Claude fallback
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
         headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error');}
       raw=(await r.json()).content.find(b=>b.type==='text')?.text||'{}';
