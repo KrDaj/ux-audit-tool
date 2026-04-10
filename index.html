@@ -1,627 +1,1685 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>UX / UI Audit Tool</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #ffffff;
-      --bg2: #f5f5f3;
-      --bg3: #efefec;
-      --text: #1a1a18;
-      --text2: #5a5a56;
-      --text3: #9a9a94;
-      --border: rgba(0,0,0,0.10);
-      --border2: rgba(0,0,0,0.18);
-      --radius: 10px;
-      --radius-sm: 6px;
-      --font: -apple-system, 'Segoe UI', sans-serif;
-      --green: #1D9E75;
-      --amber: #BA7517;
-      --red: #D85A30;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#fff;--bg2:#f5f5f3;--bg3:#efefec;
+      --text:#1a1a18;--text2:#5a5a56;--text3:#9a9a94;
+      --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);
+      --r:10px;--rs:6px;--font:-apple-system,'Segoe UI',sans-serif;
+      --green:#1D9E75;--amber:#BA7517;--red:#D85A30;
     }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #1c1c1a;
-        --bg2: #242422;
-        --bg3: #2c2c2a;
-        --text: #f0f0ec;
-        --text2: #a0a09a;
-        --text3: #606058;
-        --border: rgba(255,255,255,0.10);
-        --border2: rgba(255,255,255,0.18);
-      }
-    }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg3);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 2rem 1rem 4rem;
-    }
-
-    .wrap {
-      max-width: 820px;
-      margin: 0 auto;
-    }
-
-    header {
-      margin-bottom: 2rem;
-    }
-
-    header h1 {
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
-    }
-
-    header p {
-      font-size: 15px;
-      color: var(--text2);
-    }
-
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 3px 10px;
-      border-radius: 20px;
-      margin-bottom: 12px;
-      background: #E1F5EE;
-      color: #0F6E56;
-    }
-
-    .card {
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 1rem;
-    }
-
-    input[type="url"], input[type="password"], input[type="text"] {
-      height: 40px;
-      padding: 0 14px;
-      font-size: 14px;
-      border: 0.5px solid var(--border2);
-      border-radius: var(--radius-sm);
-      background: var(--bg);
-      color: var(--text);
-      outline: none;
-      font-family: var(--font);
-      width: 100%;
-    }
-
-    input:focus {
-      border-color: #1D9E75;
-      box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
-    }
-
-    .input-row input { flex: 1; }
-
-    .key-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 1rem;
-    }
-
-    .key-group label {
-      display: block;
-      font-size: 12px;
-      color: var(--text2);
-      margin-bottom: 5px;
-    }
-
-    .btn-run {
-      height: 40px;
-      padding: 0 22px;
-      background: var(--text);
-      color: var(--bg);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-      font-family: var(--font);
-      transition: opacity 0.15s;
-    }
-
-    .btn-run:hover { opacity: 0.82; }
-    .btn-run:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    .info-note {
-      font-size: 12px;
-      color: var(--text3);
-      line-height: 1.6;
-    }
-
-    .error-msg {
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--red);
-    }
-
-    /* Progress */
-    .progress-section { display: none; margin-top: 1.25rem; }
-    .step-list { display: flex; flex-direction: column; gap: 8px; }
-    .step {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--text3);
-    }
-    .step.done { color: var(--green); }
-    .step.active { color: var(--text); }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--border2);
-      flex-shrink: 0;
-    }
-    .step.done .dot { background: var(--green); }
-    .step.active .dot { background: var(--text); animation: pulse 1s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
-
-    /* Results */
-    .results { display: none; }
-
-    .tabs {
-      display: flex;
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      margin-bottom: 1.25rem;
-      background: var(--bg2);
-    }
-    .tab {
-      flex: 1;
-      padding: 9px 12px;
-      font-size: 13px;
-      font-weight: 500;
-      text-align: center;
-      cursor: pointer;
-      background: none;
-      color: var(--text2);
-      border: none;
-      border-right: 0.5px solid var(--border);
-      font-family: var(--font);
-      transition: background 0.1s;
-    }
-    .tab:last-child { border-right: none; }
-    .tab.active { background: var(--bg); color: var(--text); }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    /* Overview */
-    .overall-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 1.25rem;
-    }
-    .overall-card {
-      background: var(--bg2);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      text-align: center;
-    }
-    .oc-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
-    .oc-score { font-size: 32px; font-weight: 600; letter-spacing: -0.03em; }
-    .oc-score span { font-size: 16px; font-weight: 400; color: var(--text2); }
-    .oc-model { font-size: 11px; color: var(--text3); margin-top: 3px; }
-
-    .scores-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-      margin-bottom: 0;
-    }
-
-    @media (max-width: 600px) {
-      .scores-grid { grid-template-columns: repeat(4, 1fr); }
-      .key-row { grid-template-columns: 1fr; }
-    }
-
-    .score-card {
-      background: var(--bg2);
-      border-radius: var(--radius-sm);
-      padding: 12px 8px;
-      text-align: center;
-    }
-    .dim-label {
-      font-size: 10px;
-      color: var(--text2);
-      margin-bottom: 8px;
-      line-height: 1.3;
-      min-height: 26px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .score-num { font-size: 20px; font-weight: 600; }
-    .score-bar {
-      height: 3px;
-      border-radius: 2px;
-      margin-top: 8px;
-      background: var(--border);
-    }
-    .score-fill { height: 100%; border-radius: 2px; }
-
-    /* Findings */
-    .findings-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 540px) { .findings-grid { grid-template-columns: 1fr; } }
-
-    .finding-card {
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px;
-    }
-    .fc-dim {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text3);
-      margin-bottom: 5px;
-    }
-    .fc-title {
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 5px;
-      color: var(--text);
-    }
-    .fc-text {
-      font-size: 12px;
-      color: var(--text2);
-      line-height: 1.55;
-    }
-
-    /* Actions */
-    .priority-list { display: flex; flex-direction: column; gap: 8px; }
-    .action-item {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px;
-    }
-    .priority-badge {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      flex-shrink: 0;
-      margin-top: 1px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .p-high { background: #FAECE7; color: #993C1D; }
-    .p-medium { background: #FAEEDA; color: #854F0B; }
-    .p-low { background: #EAF3DE; color: #3B6D11; }
-    .ac-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-    .ac-desc { font-size: 12px; color: var(--text2); line-height: 1.55; }
-
-    footer {
-      text-align: center;
-      margin-top: 2.5rem;
-      font-size: 12px;
-      color: var(--text3);
-    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1c1c1a;--bg2:#242422;--bg3:#2c2c2a;
+      --text:#f0f0ec;--text2:#a0a09a;--text3:#606058;
+      --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);
+    }}
+    body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh;padding:2rem 1rem 4rem}
+    .wrap{max-width:900px;margin:0 auto}
+    header{margin-bottom:2rem}
+    header h1{font-size:26px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
+    header p{font-size:15px;color:var(--text2)}
+    .badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;margin-bottom:12px;background:#E1F5EE;color:#0F6E56}
+    .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem}
+    input[type=url],input[type=password]{height:40px;padding:0 14px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg);color:var(--text);outline:none;font-family:var(--font);width:100%}
+    input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12)}
+    .url-row{display:flex;gap:8px;margin-bottom:1rem}
+    .url-row input{flex:1}
+    .upload-row{margin-bottom:1.25rem}
+    .upload-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;display:block}
+    .upload-area{border:1.5px dashed var(--border2);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;transition:border-color 0.15s;background:var(--bg2)}
+    .upload-area:hover,.upload-area.drag{border-color:var(--green);background:rgba(29,158,117,0.04)}
+    .upload-area input{display:none}
+    .upload-icon{font-size:24px;margin-bottom:6px;color:var(--text3)}
+    .upload-text{font-size:13px;color:var(--text2)}
+    .upload-text span{color:var(--green);font-weight:500}
+    .preview-wrap{position:relative;display:inline-block;margin-top:10px}
+    .preview-img{max-width:100%;max-height:200px;border-radius:var(--rs);border:0.5px solid var(--border)}
+    .preview-clear{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;line-height:1}
+    .models-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px}
+    .model-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+    @media(max-width:540px){.model-grid{grid-template-columns:1fr}}
+    .model-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:var(--rs);padding:10px 12px;border:0.5px solid var(--border)}
+    .model-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .model-info{flex:0 0 90px}
+    .model-name{font-size:12px;font-weight:500;color:var(--text)}
+    .model-sub{font-size:10px;color:var(--text3);line-height:1.3}
+    .model-cap{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-top:2px;display:inline-block}
+    .cap-vision{background:#E6F1FB;color:#185FA5}
+    .cap-text{background:#F1EFE8;color:#5F5E5A}
+    .model-row input{flex:1;height:32px;font-size:12px;padding:0 10px;background:var(--bg)}
+    .btn-run{height:40px;padding:0 24px;background:var(--text);color:var(--bg);border:none;border-radius:var(--rs);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:opacity 0.15s}
+    .btn-run:hover{opacity:0.82}
+    .btn-run:disabled{opacity:0.35;cursor:not-allowed}
+    .info-note{font-size:12px;color:var(--text3);line-height:1.6}
+    .info-note a{color:var(--text2)}
+    .error-msg{margin-top:10px;font-size:13px;color:var(--red)}
+    .progress-section{display:none;margin-top:1.25rem}
+    .step-list{display:flex;flex-direction:column;gap:8px}
+    .step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3)}
+    .step.done{color:var(--green)}
+    .step.active{color:var(--text)}
+    .sdot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0}
+    .step.done .sdot{background:var(--green)}
+    .step.active .sdot{background:var(--text);animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+    .results{display:none}
+    .tabs{display:flex;border:0.5px solid var(--border);border-radius:var(--rs);overflow:hidden;margin-bottom:1.25rem;background:var(--bg2)}
+    .tab{flex:1;padding:9px 12px;font-size:13px;font-weight:500;text-align:center;cursor:pointer;background:none;color:var(--text2);border:none;border-right:0.5px solid var(--border);font-family:var(--font)}
+    .tab:last-child{border-right:none}
+    .tab.active{background:var(--bg);color:var(--text)}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .annotated-wrap{position:relative;display:block;line-height:0;border-radius:var(--rs);overflow:hidden;border:0.5px solid var(--border)}
+    .annotated-wrap img{width:100%;display:block}
+    .annotated-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+    .ann-sidebar{margin-top:1rem;display:flex;flex-direction:column;gap:8px}
+    .ann-item{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:12px;cursor:pointer;transition:border-color 0.15s}
+    .ann-item:hover{border-color:var(--border2)}
+    .ann-item.active-ann{border-color:var(--green)}
+    .ann-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+    .ann-content .ann-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+    .ann-content .ann-desc{font-size:12px;color:var(--text2);line-height:1.5}
+    .ann-content .ann-dim{font-size:10px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em}
+    .priority-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;float:right;margin-left:8px}
+    .p-high{background:#FAECE7;color:#993C1D}
+    .p-medium{background:#FAEEDA;color:#854F0B}
+    .p-low{background:#EAF3DE;color:#3B6D11}
+    .overall-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-bottom:1.25rem}
+    .overall-card{background:var(--bg2);border-radius:var(--rs);padding:14px;text-align:center}
+    .oc-label{font-size:12px;color:var(--text2);margin-bottom:5px}
+    .oc-score{font-size:28px;font-weight:600;letter-spacing:-0.03em}
+    .oc-score span{font-size:14px;font-weight:400;color:var(--text2)}
+    .oc-model{font-size:10px;color:var(--text3);margin-top:2px}
+    .scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    @media(max-width:600px){.scores-grid{grid-template-columns:repeat(4,1fr)}}
+    .score-card{background:var(--bg2);border-radius:var(--rs);padding:12px 8px;text-align:center}
+    .dim-label{font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.3;min-height:26px;display:flex;align-items:center;justify-content:center}
+    .score-num{font-size:20px;font-weight:600}
+    .score-bar{height:3px;border-radius:2px;margin-top:8px;background:var(--border)}
+    .score-fill{height:100%;border-radius:2px}
+    .models-used{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+    .model-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+    footer{text-align:center;margin-top:2.5rem;font-size:12px;color:var(--text3)}
+    .bp-btn{margin-top:8px;height:28px;padding:0 12px;font-size:11px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font);transition:background 0.15s}
+    .bp-btn:hover{background:var(--bg2)}
+    .bp-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .bp-panel{margin-top:10px;background:var(--bg2);border-radius:var(--rs);padding:12px;display:none;border-left:2px solid #1D9E75}
+    .bp-panel.open{display:block}
+    .bp-loading{font-size:12px;color:var(--text3);font-style:italic}
+    .bp-content{font-size:12px;color:var(--text2);line-height:1.6}
+    .bp-content strong{color:var(--text);font-weight:500}
+    .bp-content a{color:#1D9E75;text-decoration:none}
+    .bp-content a:hover{text-decoration:underline}
+    .bp-example{margin-top:8px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px}
+    .bp-example-title{font-size:11px;font-weight:500;color:var(--text);margin-bottom:3px}
+    .bp-example-desc{font-size:11px;color:var(--text2);line-height:1.5}
+    footer a{color:inherit}
+    .css-input-wrap{margin-bottom:1.25rem}
+    .css-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;user-select:none}
+    .css-toggle-label{font-size:12px;font-weight:500;color:var(--text2)}
+    .css-toggle-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:#E6F1FB;color:#185FA5;font-weight:500}
+    .css-textarea{width:100%;height:140px;padding:10px 12px;font-size:12px;font-family:monospace;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg2);color:var(--text);outline:none;resize:vertical;line-height:1.5}
+    .css-textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12)}
+    .css-stats{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+    .css-stat{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--text3);border:0.5px solid var(--border)}
+    .region-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+    .region-btn{height:28px;padding:0 12px;font-size:11px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--rs);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.15s}
+    .region-btn:hover{background:var(--bg2)}
+    .region-btn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .region-hint{font-size:11px;color:var(--text3)}
+    .fix-btn{margin-top:6px;margin-left:6px;height:28px;padding:0 12px;font-size:11px;font-weight:500;border:0.5px solid #1D9E75;border-radius:var(--rs);background:transparent;color:#1D9E75;cursor:pointer;font-family:var(--font);transition:background 0.15s}
+    .fix-btn:hover{background:#E1F5EE}
+    .fix-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .fix-panel{margin-top:10px;background:var(--bg2);border-radius:var(--rs);padding:12px;display:none;border-left:2px solid #1D9E75}
+    .fix-panel.open{display:block}
+    .fix-before-after{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+    @media(max-width:500px){.fix-before-after{grid-template-columns:1fr}}
+    .fix-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px}
+    .fix-box-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+    .fix-box pre{font-size:11px;font-family:monospace;white-space:pre-wrap;line-height:1.5;color:var(--text2)}
+    .annotated-wrap{cursor:crosshair}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="badge">Claude + GPT-4o</div>
-      <h1>UX / UI Audit Tool</h1>
-      <p>Paste a URL — get a scored audit across 7 dimensions from two AI models in ~3 minutes.</p>
-    </header>
+<div class="wrap">
+  <header>
+    <div class="badge">Vision + multi-model UX audit</div>
+    <h1>UX / UI Audit Tool</h1>
+    <p>Upload a screenshot or paste a URL. Vision models annotate it directly — text models add scoring depth.</p>
+  </header>
 
-    <div class="card">
-      <div class="input-row">
-        <input type="url" id="urlInput" placeholder="https://example.com" />
-        <button class="btn-run" id="runBtn" onclick="startAudit()">Run audit →</button>
-      </div>
+  <div class="card">
+    <div class="url-row">
+      <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)"/>
+    </div>
 
-      <div class="key-row">
-        <div class="key-group">
-          <label for="anthropicKey">Anthropic API key <span style="color:var(--red)">*</span></label>
-          <input type="password" id="anthropicKey" placeholder="sk-ant-..." />
-        </div>
-        <div class="key-group">
-          <label for="openaiKey">OpenAI API key <span style="color:var(--text3)">(optional, for GPT-4o)</span></label>
-          <input type="password" id="openaiKey" placeholder="sk-..." />
-        </div>
-      </div>
-
-      <p class="info-note">
-        🔒 Keys are used only in your browser — never stored or sent to any server other than the respective AI provider.
-      </p>
-
-      <div id="errorMsg" class="error-msg"></div>
-
-      <div class="progress-section" id="progressSection">
-        <div class="step-list" id="stepList"></div>
+    <div class="upload-row">
+      <label class="upload-label">Screenshot (recommended — drag & drop or click)</label>
+      <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" accept="image/*"/>
+        <div class="upload-icon">&#8679;</div>
+        <div class="upload-text"><span>Choose file</span> or drag here · PNG, JPG, WebP</div>
+        <div id="previewWrap"></div>
       </div>
     </div>
 
-    <div class="results" id="results">
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab('overview')">Overview</button>
-        <button class="tab" onclick="switchTab('findings')">Detailed findings</button>
-        <button class="tab" onclick="switchTab('actions')">Action plan</button>
+    <div class="css-input-wrap">
+      <div class="css-toggle" onclick="toggleCSSInput()">
+        <span class="css-toggle-label">Paste CSS / code from Figma Dev Mode</span>
+        <span class="css-toggle-badge">More precise WCAG</span>
+        <span id="cssArrow" style="font-size:11px;color:var(--text3);margin-left:auto">▼ expand</span>
       </div>
+      <div id="cssInputArea" style="display:none">
+        <textarea class="css-textarea" id="cssInput" placeholder="Paste CSS here — e.g. from Figma Dev Mode, browser DevTools, or any CSS file.
 
-      <div class="tab-panel active" id="tab-overview">
-        <div class="card" style="margin-bottom:1rem">
-          <div class="overall-row" id="overallRow"></div>
-          <div class="scores-grid" id="scoreOverview"></div>
-        </div>
-      </div>
-
-      <div class="tab-panel" id="tab-findings">
-        <div class="card">
-          <div class="findings-grid" id="findingsGrid"></div>
-        </div>
-      </div>
-
-      <div class="tab-panel" id="tab-actions">
-        <div class="card">
-          <div class="priority-list" id="priorityList"></div>
-        </div>
+Example:
+background: #F5F5F3;
+color: #1A1A18;
+font-size: 14px;
+font-weight: 500;
+border-radius: 8px;
+padding: 16px 24px;"></textarea>
+        <div class="css-stats" id="cssStats"></div>
       </div>
     </div>
 
-    <footer>
-      Built with Claude + GPT-4o &nbsp;·&nbsp; Keys stay in your browser
-    </footer>
+    <div class="models-label">AI models</div>
+    <div class="model-grid">
+      <div class="model-row">
+        <div class="model-dot" style="background:#4285F4"></div>
+        <div class="model-info">
+          <div class="model-name">Gemini</div>
+          <div class="model-sub">Google · 1.5 Flash · free</div>
+          <span class="model-cap cap-vision">Vision · free</span>
+        </div>
+        <input type="password" id="key-gemini" placeholder="AIza..."/>
+      </div>
+      <div class="model-row">
+        <div class="model-dot" style="background:#F55036"></div>
+        <div class="model-info">
+          <div class="model-name">Groq</div>
+          <div class="model-sub">Llama 3.3 · free</div>
+          <span class="model-cap cap-text">Evaluator · free</span>
+        </div>
+        <input type="password" id="key-groq" placeholder="gsk_..."/>
+      </div>
+      <div class="model-row">
+        <div class="model-dot" style="background:#D97706"></div>
+        <div class="model-info">
+          <div class="model-name">Claude</div>
+          <div class="model-sub">Anthropic · Sonnet 4</div>
+          <span class="model-cap cap-vision">Vision · paid</span>
+        </div>
+        <input type="password" id="key-claude" placeholder="sk-ant-..."/>
+      </div>
+      <div class="model-row">
+        <div class="model-dot" style="background:#10A37F"></div>
+        <div class="model-info">
+          <div class="model-name">GPT-4o</div>
+          <div class="model-sub">OpenAI · paid</div>
+          <span class="model-cap cap-vision">Vision · paid</span>
+        </div>
+        <input type="password" id="key-openai" placeholder="sk-..."/>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:1rem">
+      Lokal öffnen: alle 4 Modelle funktionieren. 
+      Auf GitHub Pages: nur Claude zuverlässig (CORS). 
+      <a href="https://aistudio.google.com" target="_blank" style="color:var(--text2)">Gemini Key (free)</a> · 
+      <a href="https://console.groq.com" target="_blank" style="color:var(--text2)">Groq Key (free)</a> · 
+      <a href="https://console.anthropic.com" target="_blank" style="color:var(--text2)">Claude Key</a>
+    </p>
+
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn-run" id="runBtn" onclick="startAudit()">Run audit →</button>
+      <p class="info-note">🔒 Keys stay in your browser only.</p>
+    </div>
+    <div id="errorMsg" class="error-msg"></div>
+    <div class="progress-section" id="progressSection">
+      <div class="step-list" id="stepList"></div>
+    </div>
   </div>
 
-  <script>
-    const DIMENSIONS = [
-      { id: 'navigation', label: 'Navigation' },
-      { id: 'visual_hierarchy', label: 'Visual hierarchy' },
-      { id: 'accessibility', label: 'Accessibility' },
-      { id: 'conversion', label: 'Conversion' },
-      { id: 'mobile_ux', label: 'Mobile UX' },
-      { id: 'content_clarity', label: 'Content clarity' },
-      { id: 'performance', label: 'Performance' }
-    ];
+  <div class="results" id="results">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div class="tabs" style="margin-bottom:0;flex:1">
+        <button class="tab active" onclick="switchTab('visual')">Annotated screenshot</button>
+        <button class="tab" onclick="switchTab('scores')">Nielsen scores</button>
+        <button class="tab" onclick="switchTab('wcag')">WCAG contrast</button>
+      </div>
+      <button onclick="exportPDF()" style="height:36px;padding:0 16px;background:var(--text);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:var(--font);flex-shrink:0">Export PDF ↓</button>
+    </div>
 
-    const STEPS = [
-      'Fetching website content...',
-      'Claude is analyzing the UX...',
-      'GPT-4o is analyzing the UX...',
-      'Consolidating scores...',
-      'Generating action plan...'
-    ];
-
-    function setStep(i) {
-      document.getElementById('stepList').innerHTML = STEPS.map((s, idx) => {
-        let cls = 'step';
-        if (idx < i) cls += ' done';
-        else if (idx === i) cls += ' active';
-        return `<div class="${cls}"><div class="dot"></div><span>${s}</span></div>`;
-      }).join('');
-    }
-
-    function switchTab(name) {
-      document.querySelectorAll('.tab').forEach((t, i) =>
-        t.classList.toggle('active', ['overview', 'findings', 'actions'][i] === name));
-      document.querySelectorAll('.tab-panel').forEach(p =>
-        p.classList.toggle('active', p.id === 'tab-' + name));
-    }
-
-    function scoreColor(s) {
-      if (s >= 8) return '#1D9E75';
-      if (s >= 6) return '#BA7517';
-      return '#D85A30';
-    }
-
-    function renderResults(data, hasGPT) {
-      const claudeAvg = (data.claude_scores.reduce((a, b) => a + b, 0) / 7).toFixed(1);
-
-      document.getElementById('overallRow').innerHTML = `
-        <div class="overall-card">
-          <div class="oc-label">Claude score</div>
-          <div class="oc-score" style="color:${scoreColor(claudeAvg)}">${claudeAvg}<span>/10</span></div>
-          <div class="oc-model">claude-sonnet-4-20250514</div>
+    <div class="tab-panel active" id="tab-visual">
+      <div class="card">
+        <div class="region-bar">
+          <button class="region-btn active" id="btnFullAudit" onclick="setMode('full')">Full page audit</button>
+          <button class="region-btn" id="btnRegion" onclick="setMode('region')">Select region</button>
+          <span class="region-hint" id="regionHint"></span>
+          <button class="region-btn" id="btnAuditRegion" style="display:none;background:var(--text);color:var(--bg);border-color:var(--text)" onclick="auditRegion()">Audit selection →</button>
         </div>
-        ${hasGPT ? `<div class="overall-card">
-          <div class="oc-label">GPT-4o score</div>
-          <div class="oc-score" style="color:${scoreColor(data.gpt_avg)}">${data.gpt_avg}<span>/10</span></div>
-          <div class="oc-model">gpt-4o</div>
-        </div>` : ''}
-        <div class="overall-card">
-          <div class="oc-label">Combined score</div>
-          <div class="oc-score" style="color:${scoreColor(data.combined_avg)}">${data.combined_avg}<span>/10</span></div>
-          <div class="oc-model">${hasGPT ? 'Average of both models' : 'Claude only'}</div>
-        </div>`;
+        <div class="annotated-wrap" id="annotatedWrap">
+          <img id="annotatedImg" src="" alt="Screenshot being audited"/>
+          <canvas id="annotationCanvas"></canvas>
+          <canvas id="selectionCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+        </div>
+        <div class="ann-sidebar" id="annSidebar"></div>
+      </div>
+    </div>
 
-      document.getElementById('scoreOverview').innerHTML = DIMENSIONS.map((d, i) => {
-        const cs = data.claude_scores[i];
-        const gs = hasGPT ? data.gpt_scores[i] : null;
-        const avg = hasGPT ? ((cs + gs) / 2).toFixed(1) : cs.toFixed(1);
-        return `<div class="score-card">
-          <div class="dim-label">${d.label}</div>
-          <div class="score-num" style="color:${scoreColor(avg)}">${avg}</div>
-          <div class="score-bar"><div class="score-fill" style="width:${avg * 10}%;background:${scoreColor(avg)}"></div></div>
-        </div>`;
-      }).join('');
+    <div class="tab-panel" id="tab-scores">
+      <div class="card">
+        <div class="models-used" id="modelsUsed"></div>
+        <div class="overall-row" id="overallRow"></div>
+        <div class="scores-grid" id="scoreOverview"></div>
+      </div>
+    </div>
 
-      document.getElementById('findingsGrid').innerHTML = data.findings.map(f => `
-        <div class="finding-card">
-          <div class="fc-dim">${f.dimension}</div>
-          <div class="fc-title">${f.title}</div>
-          <div class="fc-text">${f.description}</div>
-        </div>`).join('');
+    <div class="tab-panel" id="tab-wcag">
+      <div class="card">
+        <div id="wcagResults"></div>
+      </div>
+    </div>
+  </div>
 
-      document.getElementById('priorityList').innerHTML = data.actions.map(a => {
-        const p = (a.priority || 'Medium').toLowerCase();
-        const cls = p === 'high' ? 'p-high' : p === 'low' ? 'p-low' : 'p-medium';
-        return `<div class="action-item">
-          <span class="priority-badge ${cls}">${a.priority}</span>
-          <div>
-            <div class="ac-title">${a.title}</div>
-            <div class="ac-desc">${a.description}</div>
-          </div>
-        </div>`;
-      }).join('');
+  <footer>UX Audit Tool · Keys stay in your browser · Built with Claude, GPT-4o, Gemini & Groq</footer>
+</div>
 
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+<script>
+const DIMS=[
+  'Visibility of system status',
+  'Match with real world',
+  'User control & freedom',
+  'Consistency & standards',
+  'Error prevention',
+  'Recognition over recall',
+  'Flexibility & efficiency',
+  'Aesthetic & minimal design',
+  'Help users recover from errors',
+  'Help & documentation'
+];
+const DIMS_SHORT=['System status','Real world match','Control & freedom','Consistency','Error prevention','Recognition','Flexibility','Aesthetics','Error recovery','Documentation'];
 
-    async function callClaude(apiKey, system, user) {
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          system,
-          messages: [{ role: 'user', content: user }]
-        })
-      });
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Claude API error'); }
-      return (await r.json()).content[0].text;
-    }
+const MODEL_META={
+  claude:{name:'Claude',color:'#D97706',sub:'claude-sonnet-4-20250514',vision:true},
+  openai:{name:'GPT-4o',color:'#10A37F',sub:'gpt-4o',vision:true},
+  gemini:{name:'Gemini',color:'#4285F4',sub:'gemini-1.5-flash-latest',vision:true},
+  groq:  {name:'Groq',  color:'#F55036',sub:'llama-3.3-70b-versatile',vision:false}
+};
 
-    async function callGPT(apiKey, system, user) {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          max_tokens: 2000,
-          messages: [{ role: 'system', content: system }, { role: 'user', content: user }]
-        })
-      });
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'OpenAI error'); }
-      return (await r.json()).choices[0].message.content;
-    }
+const ANNOTATION_COLORS=['#E24B4A','#E24B4A','#EF9F27','#EF9F27','#639922','#639922','#4285F4','#4285F4'];
 
-    function buildSystem() {
-      return `You are a senior UX/UI auditor. Respond ONLY with a valid JSON object — no markdown, no preamble.
-Schema:
-{
-  "scores": [number,number,number,number,number,number,number],
-  "findings": [{"dimension":"string","title":"string","description":"string"}],
-  "actions": [{"priority":"High"|"Medium"|"Low","title":"string","description":"string"}]
+let imageBase64=null;
+let imageMime='image/png';
+let stepLabels=[];
+let currentAnnotations=[];
+let activeAnnIdx=-1;
+
+// --- Upload handling ---
+const uploadArea=document.getElementById('uploadArea');
+const fileInput=document.getElementById('fileInput');
+
+uploadArea.addEventListener('click',()=>fileInput.click());
+uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag')});
+uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop',e=>{e.preventDefault();uploadArea.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
+fileInput.addEventListener('change',e=>handleFile(e.target.files[0]));
+
+function handleFile(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  imageMime=file.type;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    imageBase64=e.target.result.split(',')[1];
+    const wrap=document.getElementById('previewWrap');
+    wrap.innerHTML=`<div class="preview-wrap"><img class="preview-img" src="${e.target.result}"/><button class="preview-clear" onclick="clearImage(event)">×</button></div>`;
+  };
+  reader.readAsDataURL(file);
 }
-The 7 scores map in order to: Navigation, Visual Hierarchy, Accessibility, Conversion Optimization, Mobile UX, Content Clarity, Performance. Each score is 1–10. Provide 7 findings (one per dimension) and 5–7 prioritized actions sorted High→Low.`;
+
+function clearImage(e){
+  e.stopPropagation();
+  imageBase64=null;
+  document.getElementById('previewWrap').innerHTML='';
+  fileInput.value='';
+}
+
+// --- Steps ---
+function setSteps(ids){
+  const visionIds=ids.filter(id=>MODEL_META[id].vision);
+  const textIds=ids.filter(id=>!MODEL_META[id].vision);
+  stepLabels=['Preparing input...'];
+  visionIds.forEach(id=>stepLabels.push(`${MODEL_META[id].name} analyzing screenshot...`));
+  if(textIds.length>0)stepLabels.push(`${textIds.map(id=>MODEL_META[id].name).join(' + ')} evaluating findings...`);
+  stepLabels.push('Rendering annotations...');
+  renderStep(-1);
+}
+
+function renderStep(active){
+  document.getElementById('stepList').innerHTML=stepLabels.map((s,i)=>{
+    let cls='step';
+    if(i<active)cls+=' done';
+    else if(i===active)cls+=' active';
+    return`<div class="${cls}"><div class="sdot"></div><span>${s}</span></div>`;
+  }).join('');
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['visual','scores','wcag'][i]===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+}
+
+function scoreColor(s){return s>=8?'#1D9E75':s>=6?'#BA7517':'#D85A30'}
+function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length}
+function parseJSON(raw){return JSON.parse(raw.replace(/```json|```/g,'').trim())}
+
+// --- Vision system prompt ---
+function visionSystem(){
+  return`You are a senior UX/UI auditor analyzing a website screenshot. Respond ONLY with valid JSON, no markdown, no preamble.
+
+Return this exact schema:
+{
+  "annotations": [
+    {
+      "id": 1,
+      "x": 0.45,
+      "y": 0.12,
+      "title": "short issue title",
+      "description": "detailed explanation of the problem and how to fix it",
+      "dimension": "one of: Navigation|Visual Hierarchy|Accessibility|Conversion|Mobile UX|Content Clarity|Performance",
+      "priority": "High|Medium|Low"
+    }
+  ],
+  "scores": [n,n,n,n,n,n,n]
+}
+
+Rules:
+- x and y are fractional coordinates (0.0–1.0) indicating where on the image the issue is located. x=0 is left, x=1 is right, y=0 is top, y=1 is bottom.
+- Provide 5–8 annotations pointing to real visible issues in the screenshot.
+- The 7 scores map to: Navigation, Visual Hierarchy, Accessibility, Conversion, Mobile UX, Content Clarity, Performance. Each 1–10.
+- Be specific and actionable. Reference actual visible elements.`;
+}
+
+// --- Evaluator system prompt (text-only models) ---
+function evaluatorSystem(findingsSummary){
+  return`You are a senior UX/UI auditor. Another AI has already performed a visual analysis of a website screenshot and found the following issues:
+
+${findingsSummary}
+
+Based on these findings, provide your own scoring assessment. Respond ONLY with valid JSON:
+{
+  "scores": [n,n,n,n,n,n,n],
+  "notes": "brief overall assessment in 1-2 sentences"
+}
+
+The 7 scores map to: Navigation, Visual Hierarchy, Accessibility, Conversion, Mobile UX, Content Clarity, Performance. Each 1–10. Be critical and realistic.`;
+}
+
+// --- API calls ---
+async function callClaudeVision(key,base64,mime,url){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mime,data:base64}},
+        {type:'text',text:visionSystem()+(document.getElementById('cssInput').value.trim()?'\n\nCSS provided:\n'+document.getElementById('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'}
+      ]}]})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude vision error')}
+  return parseJSON((await r.json()).content[0].text);
+}
+
+async function callGPTVision(key,base64,mime,url){
+  const content=[
+    {type:'text',text:visionSystem()+(document.getElementById('cssInput').value.trim()?'\n\nCSS provided:\n'+document.getElementById('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
+    {type:'image_url',image_url:{url:`data:${mime};base64,${base64}`}}
+  ];
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+    body:JSON.stringify({model:'gpt-4o',max_tokens:2000,messages:[{role:'user',content}]})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'GPT-4o error')}
+  return parseJSON((await r.json()).choices[0].message.content);
+}
+
+async function callGeminiVision(key,base64,mime,url){
+  const parts=[
+    {text:visionSystem()+(document.getElementById('cssInput').value.trim()?'\n\nCSS provided:\n'+document.getElementById('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
+    {inline_data:{mime_type:mime,data:base64}}
+  ];
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Gemini error')}
+  return parseJSON((await r.json()).candidates[0].content.parts[0].text);
+}
+
+async function callClaudeEval(key,findingsSummary){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+      messages:[{role:'user',content:evaluatorSystem(findingsSummary)}]})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
+  return parseJSON((await r.json()).content[0].text);
+}
+
+async function callGroqEval(key,findingsSummary){
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:500,
+      messages:[{role:'user',content:evaluatorSystem(findingsSummary)}]})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
+  return parseJSON((await r.json()).choices[0].message.content);
+}
+
+async function fetchSiteScreenshotProxy(url){
+  try{
+    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(12000)});
+    const d=await r.json();
+    if(d.contents){
+      const doc=new DOMParser().parseFromString(d.contents,'text/html');
+      doc.querySelectorAll('script,style,noscript,svg').forEach(el=>el.remove());
+      return(doc.body?.innerText||'').replace(/\s+/g,' ').trim().slice(0,3000);
+    }
+  }catch(e){}
+  return null;
+}
+
+// --- Draw annotations on canvas ---
+function drawAnnotations(annotations,img,canvas){
+  const W=img.naturalWidth||img.width;
+  const H=img.naturalHeight||img.height;
+  canvas.width=W;
+  canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  annotations.forEach((ann,i)=>{
+    const x=ann.x*W;
+    const y=ann.y*H;
+    const r=Math.min(W,H)*0.028;
+    const col=ANNOTATION_COLORS[i]||'#888';
+    const isActive=(i===activeAnnIdx);
+
+    // pulse ring if active
+    if(isActive){
+      ctx.beginPath();
+      ctx.arc(x,y,r+6,0,Math.PI*2);
+      ctx.strokeStyle=col+'66';
+      ctx.lineWidth=3;
+      ctx.stroke();
     }
 
-    function buildUser(url, content) {
-      return `Audit this website for UX/UI quality.\nURL: ${url}\n\nWebsite content:\n${content.slice(0, 6000)}`;
+    // dot
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=col;
+    ctx.fill();
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    // number
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${Math.round(r)}px -apple-system,sans-serif`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(String(i+1),x,y+1);
+  });
+}
+
+function setupCanvasClick(annotations,img,canvas){
+  canvas.style.pointerEvents='auto';
+  canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width;
+    const scaleY=canvas.height/rect.height;
+    const cx=(e.clientX-rect.left)*scaleX;
+    const cy=(e.clientY-rect.top)*scaleY;
+    const W=canvas.width;
+    const H=canvas.height;
+    const r=Math.min(W,H)*0.036;
+
+    let hit=-1;
+    annotations.forEach((ann,i)=>{
+      const ax=ann.x*W;
+      const ay=ann.y*H;
+      if(Math.hypot(cx-ax,cy-ay)<r)hit=i;
+    });
+
+    activeAnnIdx=hit;
+    drawAnnotations(annotations,img,canvas);
+    document.querySelectorAll('.ann-item').forEach((el,i)=>{
+      el.classList.toggle('active-ann',i===hit);
+      if(i===hit)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  });
+}
+
+// --- Render results ---
+function renderResults(imgSrc,annotations,allScores,activeModelIds){
+  // annotated image
+  const img=document.getElementById('annotatedImg');
+  img.src=imgSrc;
+  img.onload=()=>{
+    const canvas=document.getElementById('annotationCanvas');
+    const sel=document.getElementById('selectionCanvas');
+    sel.width=img.naturalWidth;
+    sel.height=img.naturalHeight;
+    drawAnnotations(annotations,img,canvas);
+    setupCanvasClick(annotations,img,canvas);
+    initRegionCanvas();
+  };
+
+  // run WCAG check — use CSS colors if available, else sample from image
+  const cssInput=document.getElementById('cssInput').value.trim();
+  if(cssInput){
+    const cssPairs=runWCAGFromCSS(cssInput);
+    if(cssPairs&&cssPairs.length>0){
+      const failing=cssPairs.filter(p=>p.ratio<4.5).slice(0,5);
+      const borderline=cssPairs.filter(p=>p.ratio>=4.5&&p.ratio<7).slice(0,4);
+      const passing=cssPairs.filter(p=>p.ratio>=7).slice(0,4);
+      renderWCAG({failing,borderline,passing,totalChecked:cssPairs.length,fromCSS:true});
+    } else {
+      runWCAGCheck(imgSrc).then(renderWCAG).catch(e=>console.warn('WCAG check failed:',e));
+    }
+  } else {
+    runWCAGCheck(imgSrc).then(renderWCAG).catch(e=>console.warn('WCAG check failed:',e));
+  }
+
+  // sidebar
+  const sidebar=document.getElementById('annSidebar');
+  sidebar.innerHTML=annotations.map((ann,i)=>{
+    const col=ANNOTATION_COLORS[i]||'#888';
+    const p=(ann.priority||'Medium').toLowerCase();
+    const pcls=p==='high'?'p-high':p==='low'?'p-low':'p-medium';
+    return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})">
+      <div class="ann-num" style="background:${col}">${i+1}</div>
+      <div class="ann-content">
+        <div class="ann-dim">${ann.dimension||''}<span class="priority-badge ${pcls}">${ann.priority||'Medium'}</span></div>
+        <div class="ann-title">${ann.title}</div>
+        <div class="ann-desc">${ann.description}</div>
+        <div style="display:flex;gap:0;flex-wrap:wrap">
+          <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
+          <button class="fix-btn" onclick="event.stopPropagation();loadFix(${i},this)" data-loaded="false">Generate fix →</button>
+        </div>
+        <div class="bp-panel" id="bp-${i}"></div>
+        <div class="fix-panel" id="fix-${i}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // scores tab
+  const combinedScores=DIMS.map((_,i)=>avg(allScores.map(s=>s[i])));
+  const combinedAvg=avg(combinedScores).toFixed(1);
+
+  document.getElementById('modelsUsed').innerHTML=activeModelIds.map(id=>{
+    const m=MODEL_META[id];
+    return`<span class="model-badge" style="background:${m.color}22;color:${m.color}">${m.name}</span>`;
+  }).join('');
+
+  document.getElementById('overallRow').innerHTML=
+    (allScores.length>1?`<div class="overall-card">
+      <div class="oc-label">Combined score</div>
+      <div class="oc-score" style="color:${scoreColor(combinedAvg)}">${combinedAvg}<span>/10</span></div>
+      <div class="oc-model">Average · ${activeModelIds.length} models</div>
+    </div>`:'')
+    +activeModelIds.map((id,idx)=>{
+      const m=MODEL_META[id];
+      const sc=avg(allScores[idx]).toFixed(1);
+      return`<div class="overall-card">
+        <div class="oc-label" style="color:${m.color}">${m.name}</div>
+        <div class="oc-score" style="color:${scoreColor(sc)}">${sc}<span>/10</span></div>
+        <div class="oc-model">${m.sub}</div>
+      </div>`;
+    }).join('');
+
+  document.getElementById('scoreOverview').innerHTML=DIMS.map((d,i)=>{
+    const sc=avg(allScores.map(s=>s[i]||5)).toFixed(1);
+    const short=DIMS_SHORT[i]||d;
+    return`<div class="score-card">
+      <div class="dim-label" title="${d}">${short}</div>
+      <div class="score-num" style="color:${scoreColor(sc)}">${sc}</div>
+      <div class="score-bar"><div class="score-fill" style="width:${sc*10}%;background:${scoreColor(sc)}"></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+window.selectAnnotation=function(idx){
+  activeAnnIdx=idx;
+  const img=document.getElementById('annotatedImg');
+  const canvas=document.getElementById('annotationCanvas');
+  drawAnnotations(currentAnnotations,img,canvas);
+  document.querySelectorAll('.ann-item').forEach((el,i)=>el.classList.toggle('active-ann',i===idx));
+};
+
+// --- Main audit ---
+async function startAudit(){
+  const url=document.getElementById('urlInput').value.trim();
+  const keys={
+    openai:document.getElementById('key-openai').value.trim(),
+    gemini:document.getElementById('key-gemini').value.trim(),
+    claude:document.getElementById('key-claude').value.trim(),
+    groq:document.getElementById('key-groq').value.trim()
+  };
+  const errEl=document.getElementById('errorMsg');
+  errEl.textContent='';
+
+  const activeIds=Object.keys(keys).filter(k=>keys[k]);
+  const visionIds=activeIds.filter(id=>MODEL_META[id].vision);
+  const textIds=activeIds.filter(id=>!MODEL_META[id].vision);
+
+  if(!imageBase64&&(!url||!url.startsWith('http'))){errEl.textContent='Please upload a screenshot or enter a URL.';return}
+  if(activeIds.length===0){errEl.textContent='Please enter at least one API key.';return}
+  if(visionIds.length===0){errEl.textContent='Please enter a key for at least one vision model — Gemini (free), Claude, or GPT-4o.';return}
+
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;
+  document.getElementById('results').style.display='none';
+  document.getElementById('progressSection').style.display='block';
+  setSteps(activeIds);
+
+  try{
+    let b64=imageBase64;
+    let mime=imageMime;
+    let imgSrc;
+    let step=0;
+    renderStep(step++);
+
+    // if no image uploaded, try to get page text and use a placeholder
+    if(!b64){
+      // No screenshot: generate a solid placeholder and inform vision models via text
+      const canvas=document.createElement('canvas');
+      canvas.width=1200;canvas.height=800;
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#f5f5f3';ctx.fillRect(0,0,1200,800);
+      ctx.fillStyle='#9a9a94';ctx.font='20px sans-serif';ctx.textAlign='center';
+      ctx.fillText('No screenshot provided — analyzing URL: '+url,600,400);
+      imgSrc=canvas.toDataURL('image/png');
+      b64=imgSrc.split(',')[1];
+      mime='image/png';
+    } else {
+      imgSrc=`data:${mime};base64,${b64}`;
     }
 
-    async function fetchSite(url) {
-      try {
-        const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(15000) });
-        const d = await r.json();
-        if (d.contents) {
-          const doc = new DOMParser().parseFromString(d.contents, 'text/html');
-          doc.querySelectorAll('script,style,noscript,svg,nav,footer').forEach(el => el.remove());
-          return (doc.body?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
-        }
-      } catch (e) {}
-      return `[Could not fetch live content for ${url}. Analyze based on URL and common patterns for this type of site.]`;
+    // Vision models
+    const visionResults=[];
+    for(const id of visionIds){
+      renderStep(step++);
+      try{
+        let res;
+        if(id==='claude')res=await callClaudeVision(keys[id],b64,mime,url);
+        if(id==='openai')res=await callGPTVision(keys[id],b64,mime,url);
+        if(id==='gemini')res=await callGeminiVision(keys[id],b64,mime,url);
+        if(res)visionResults.push({id,data:res});
+      }catch(e){console.warn(id,'vision failed:',e.message)}
     }
 
-    async function startAudit() {
-      const url = document.getElementById('urlInput').value.trim();
-      const anthropicKey = document.getElementById('anthropicKey').value.trim();
-      const openaiKey = document.getElementById('openaiKey').value.trim();
-      const errEl = document.getElementById('errorMsg');
-      errEl.textContent = '';
+    if(visionResults.length===0)throw new Error('Vision analysis failed. Check your GPT-4o or Gemini key.');
 
-      if (!url || !url.startsWith('http')) { errEl.textContent = 'Please enter a valid URL starting with https://'; return; }
-      if (!anthropicKey) { errEl.textContent = 'Please enter your Anthropic API key.'; return; }
+    // Merge annotations from vision models (use first, deduplicate rest by proximity)
+    const primary=visionResults[0].data;
+    currentAnnotations=primary.annotations||[];
 
-      const btn = document.getElementById('runBtn');
-      btn.disabled = true;
-      document.getElementById('results').style.display = 'none';
-      document.getElementById('progressSection').style.display = 'block';
-      setStep(0);
+    // Collect all scores
+    const allScores=[primary.scores];
+    const allModelIds=[visionResults[0].id];
 
-      try {
-        const content = await fetchSite(url);
-        setStep(1);
-        const sys = buildSystem();
-        const usr = buildUser(url, content);
+    // If multiple vision models, average their scores too
+    if(visionResults.length>1){
+      visionResults.slice(1).forEach(r=>{
+        allScores.push(r.data.scores);
+        allModelIds.push(r.id);
+      });
+    }
 
-        const claudeRaw = await callClaude(anthropicKey, sys, usr);
-        let claudeData;
-        try { claudeData = JSON.parse(claudeRaw.replace(/```json|```/g, '').trim()); }
-        catch (e) { throw new Error('Claude returned invalid JSON. Please try again.'); }
+    // Text evaluator models
+    if(textIds.length>0){
+      renderStep(step++);
+      const findingsSummary=currentAnnotations.map((a,i)=>
+        `${i+1}. [${a.priority}] ${a.dimension}: ${a.title} — ${a.description}`
+      ).join('\n');
 
-        let gptData = null;
-        if (openaiKey) {
-          setStep(2);
-          try {
-            const gptRaw = await callGPT(openaiKey, sys, usr);
-            gptData = JSON.parse(gptRaw.replace(/```json|```/g, '').trim());
-          } catch (e) { console.warn('GPT-4o failed:', e.message); }
-        }
-
-        setStep(3);
-        const hasGPT = !!gptData;
-        const combinedScores = DIMENSIONS.map((_, i) =>
-          hasGPT ? (claudeData.scores[i] + (gptData.scores[i] || claudeData.scores[i])) / 2 : claudeData.scores[i]);
-        const combined_avg = (combinedScores.reduce((a, b) => a + b, 0) / 7).toFixed(1);
-        const gpt_avg = hasGPT ? ((gptData.scores || []).reduce((a, b) => a + b, 0) / 7).toFixed(1) : null;
-
-        setStep(4);
-        const merged = {
-          claude_scores: claudeData.scores,
-          gpt_scores: hasGPT ? gptData.scores : [],
-          combined_avg, gpt_avg,
-          findings: claudeData.findings,
-          actions: claudeData.actions
-        };
-
-        setTimeout(() => {
-          document.getElementById('progressSection').style.display = 'none';
-          renderResults(merged, hasGPT);
-        }, 500);
-      } catch (e) {
-        errEl.textContent = 'Error: ' + e.message;
-        document.getElementById('progressSection').style.display = 'none';
-      } finally {
-        btn.disabled = false;
+      for(const id of textIds){
+        try{
+          let res;
+          if(id==='claude')res=await callClaudeEval(keys[id],findingsSummary);
+          if(id==='groq')res=await callGroqEval(keys[id],findingsSummary);
+          if(res?.scores){allScores.push(res.scores);allModelIds.push(id);}
+        }catch(e){console.warn(id,'eval failed:',e.message)}
       }
     }
 
-    document.getElementById('urlInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') startAudit();
+    renderStep(step);
+    setTimeout(()=>{
+      document.getElementById('progressSection').style.display='none';
+      renderResults(imgSrc,currentAnnotations,allScores,allModelIds);
+    },300);
+
+  }catch(e){
+    errEl.textContent='Error: '+e.message;
+    document.getElementById('progressSection').style.display='none';
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+document.getElementById('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')startAudit()});
+
+// --- CSS Input ---
+function toggleCSSInput(){
+  const area=document.getElementById('cssInputArea');
+  const arrow=document.getElementById('cssArrow');
+  const open=area.style.display==='none';
+  area.style.display=open?'block':'none';
+  arrow.textContent=open?'▲ collapse':'▼ expand';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('cssInput').addEventListener('input',parseCSSLive);
+});
+
+function parseCSSColors(css){
+  const colorRegex=/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b|rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)|rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/g;
+  const found=new Set();
+  let m;
+  while((m=colorRegex.exec(css))!==null){
+    if(m[1]){
+      let h=m[1];
+      if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+      found.add('#'+h.toLowerCase());
+    } else {
+      const r=parseInt(m[2]||m[5]);
+      const g=parseInt(m[3]||m[6]);
+      const b=parseInt(m[4]||m[7]);
+      found.add(rgbToHex(r,g,b));
+    }
+  }
+  return[...found];
+}
+
+function parseCSSFontSizes(css){
+  const re=/font-size\s*:\s*([\d.]+)(px|rem|em|pt)/gi;
+  const found=[];let m;
+  while((m=re.exec(css))!==null){
+    let px=parseFloat(m[1]);
+    if(m[2]==='rem')px*=16;
+    if(m[2]==='em')px*=16;
+    if(m[2]==='pt')px*=1.333;
+    found.push(Math.round(px));
+  }
+  return[...new Set(found)].sort((a,b)=>a-b);
+}
+
+function parseCSSLive(){
+  const css=document.getElementById('cssInput').value;
+  if(!css.trim()){document.getElementById('cssStats').innerHTML='';return;}
+  const colors=parseCSSColors(css);
+  const fonts=parseCSSFontSizes(css);
+  const statsEl=document.getElementById('cssStats');
+  statsEl.innerHTML=[
+    colors.length?`<span class="css-stat">${colors.length} colors found</span>`:'',
+    fonts.length?`<span class="css-stat">Font sizes: ${fonts.join(', ')}px</span>`:'',
+  ].join('');
+}
+
+function runWCAGFromCSS(css){
+  const colors=parseCSSColors(css);
+  if(colors.length<2)return null;
+
+  const pairs=[];
+  for(let i=0;i<colors.length;i++){
+    for(let j=i+1;j<colors.length;j++){
+      const c1=hexToRgb(colors[i]);
+      const c2=hexToRgb(colors[j]);
+      if(!c1||!c2)continue;
+      const l1=getLuminance(c1.r,c1.g,c1.b);
+      const l2=getLuminance(c2.r,c2.g,c2.b);
+      const ratio=getContrastRatio(l1,l2);
+      pairs.push({bg:c1,fg:c2,ratio,bgHex:colors[i],fgHex:colors[j]});
+    }
+  }
+  return pairs.sort((a,b)=>a.ratio-b.ratio);
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return isNaN(r)?null:{r,g,b};
+}
+
+function buildCSSContext(css){
+  if(!css.trim())return'';
+  const colors=parseCSSColors(css);
+  const fonts=parseCSSFontSizes(css);
+  return`\n\nCSS/Design tokens provided:\nColors: ${colors.join(', ')}\nFont sizes: ${fonts.map(f=>f+'px').join(', ')||'none found'}\nFull CSS:\n${css.slice(0,2000)}`;
+}
+function getLuminance(r,g,b){
+  const [rs,gs,bs]=[r,g,b].map(c=>{
+    c/=255;
+    return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);
+  });
+  return 0.2126*rs+0.7152*gs+0.0722*bs;
+}
+
+function getContrastRatio(l1,l2){
+  const lighter=Math.max(l1,l2);
+  const darker=Math.min(l1,l2);
+  return(lighter+0.05)/(darker+0.05);
+}
+
+function wcagLevel(ratio,isLargeText){
+  if(isLargeText){
+    if(ratio>=4.5)return{level:'AAA',pass:true};
+    if(ratio>=3.0)return{level:'AA',pass:true};
+    return{level:'Fail',pass:false};
+  }
+  if(ratio>=7.0)return{level:'AAA',pass:true};
+  if(ratio>=4.5)return{level:'AA',pass:true};
+  if(ratio>=3.0)return{level:'AA Large',pass:false};
+  return{level:'Fail',pass:false};
+}
+
+function sampleColors(canvas,regions=20){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width;
+  const H=canvas.height;
+  const pairs=[];
+  const step=Math.floor(Math.min(W,H)/regions);
+
+  for(let y=step;y<H-step;y+=step*2){
+    for(let x=step;x<W-step;x+=step*2){
+      // sample small patch — get bg (average) and fg (darkest pixel nearby)
+      const patch=ctx.getImageData(x-2,y-2,5,5).data;
+      let rSum=0,gSum=0,bSum=0,count=0;
+      let rDark=255,gDark=255,bDark=255;
+      for(let i=0;i<patch.length;i+=4){
+        const r=patch[i],g=patch[i+1],b=patch[i+2];
+        rSum+=r;gSum+=g;bSum+=b;count++;
+        if(r+g+b<rDark+gDark+bDark){rDark=r;gDark=g;bDark=b;}
+      }
+      const bg={r:Math.round(rSum/count),g:Math.round(gSum/count),b:Math.round(bSum/count)};
+      const fg={r:rDark,g:gDark,b:bDark};
+      const lBg=getLuminance(bg.r,bg.g,bg.b);
+      const lFg=getLuminance(fg.r,fg.g,fg.b);
+      const ratio=getContrastRatio(lBg,lFg);
+      if(ratio>1.2&&ratio<21)pairs.push({bg,fg,ratio,x,y});
+    }
+  }
+  return pairs.sort((a,b)=>a.ratio-b.ratio);
+}
+
+function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('')}
+
+async function runWCAGCheck(imageDataUrl){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth;
+      c.height=img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      const pairs=sampleColors(c,16);
+
+      // group into worst, borderline, passing
+      const failing=pairs.filter(p=>p.ratio<4.5).slice(0,4);
+      const borderline=pairs.filter(p=>p.ratio>=4.5&&p.ratio<7).slice(0,3);
+      const passing=pairs.filter(p=>p.ratio>=7).slice(0,3);
+
+      // deduplicate by color similarity
+      function dedup(arr){
+        const seen=[];
+        return arr.filter(p=>{
+          const key=`${Math.round(p.bg.r/30)}-${Math.round(p.bg.g/30)}-${Math.round(p.fg.r/30)}`;
+          if(seen.includes(key))return false;
+          seen.push(key);return true;
+        });
+      }
+
+      resolve({
+        failing:dedup(failing),
+        borderline:dedup(borderline),
+        passing:dedup(passing),
+        totalChecked:pairs.length
+      });
+    };
+    img.src=imageDataUrl;
+  });
+}
+
+function renderWCAG(results){
+  const {failing,borderline,passing,totalChecked}=results;
+
+  function pairCard(p,status){
+    const ratio=p.ratio.toFixed(2);
+    const bgHex=p.bgHex||rgbToHex(p.bg.r,p.bg.g,p.bg.b);
+    const fgHex=p.fgHex||rgbToHex(p.fg.r,p.fg.g,p.fg.b);
+    const statusColor=status==='fail'?'#E24B4A':status==='warn'?'#EF9F27':'#1D9E75';
+    const statusBg=status==='fail'?'#FCEBEB':status==='warn'?'#FAEEDA':'#E1F5EE';
+    const statusText=status==='fail'?'Fail':status==='warn'?'AA only':'AAA Pass';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
+      <div style="display:flex;gap:0;border-radius:4px;overflow:hidden;flex-shrink:0;border:0.5px solid var(--border)">
+        <div style="width:32px;height:32px;background:${bgHex}"></div>
+        <div style="width:32px;height:32px;background:${fgHex};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${bgHex}">Aa</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--text3);font-family:monospace">${bgHex} / ${fgHex}</div>
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-top:2px">Ratio ${ratio}:1</div>
+      </div>
+      <div style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:${statusBg};color:${statusColor};flex-shrink:0">${statusText}</div>
+    </div>`;
+  }
+
+  document.getElementById('wcagResults').innerHTML=`
+    <div style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:100px;background:${failing.length>0?'#FCEBEB':'#E1F5EE'};border-radius:var(--rs);padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:600;color:${failing.length>0?'#E24B4A':'#1D9E75'}">${failing.length}</div>
+        <div style="font-size:11px;color:${failing.length>0?'#993C1D':'#0F6E56'}">Failing pairs</div>
+      </div>
+      <div style="flex:1;min-width:100px;background:#FAEEDA;border-radius:var(--rs);padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:600;color:#EF9F27">${borderline.length}</div>
+        <div style="font-size:11px;color:#854F0B">AA only</div>
+      </div>
+      <div style="flex:1;min-width:100px;background:#E1F5EE;border-radius:var(--rs);padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:600;color:#1D9E75">${passing.length}</div>
+        <div style="font-size:11px;color:#0F6E56">AAA pass</div>
+      </div>
+      <div style="flex:1;min-width:100px;background:var(--bg2);border-radius:var(--rs);padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:600;color:var(--text)">${totalChecked}</div>
+        <div style="font-size:11px;color:var(--text2)">Pairs sampled</div>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:var(--text3);margin-bottom:1rem;line-height:1.5">${results.fromCSS?'Colors extracted directly from your CSS — 100% precise WCAG 2.1 calculation.':'Colors sampled from your screenshot using the WCAG 2.1 relative luminance formula. For pixel-perfect results, paste your CSS above.'} Large text (18pt+) requires 3:1, normal text 4.5:1 for AA compliance.</p>
+
+    ${failing.length>0?`<div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px">Failing combinations (below 4.5:1)</div>${failing.map(p=>pairCard(p,'fail')).join('')}`:''}
+    ${borderline.length>0?`<div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px;margin-top:12px">Borderline — AA only (4.5–7:1)</div>${borderline.map(p=>pairCard(p,'warn')).join('')}`:''}
+    ${passing.length>0?`<div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px;margin-top:12px">Passing AAA (7:1+)</div>${passing.map(p=>pairCard(p,'pass')).join('')}`:''}
+  `;
+}
+
+// --- Region Selection (Feature 6) ---
+let regionMode=false;
+let regionStart=null;
+let regionRect=null;
+let isDragging=false;
+
+function setMode(mode){
+  regionMode=(mode==='region');
+  document.getElementById('btnFullAudit').classList.toggle('active',!regionMode);
+  document.getElementById('btnRegion').classList.toggle('active',regionMode);
+  document.getElementById('regionHint').textContent=regionMode?'Draw a box on the screenshot to select a component':'';
+  document.getElementById('btnAuditRegion').style.display='none';
+  document.getElementById('annotationCanvas').style.pointerEvents=regionMode?'none':'auto';
+  const sel=document.getElementById('selectionCanvas');
+  sel.style.pointerEvents=regionMode?'auto':'none';
+  if(!regionMode){
+    const ctx=sel.getContext('2d');
+    ctx.clearRect(0,0,sel.width,sel.height);
+    regionRect=null;
+  }
+}
+
+function initRegionCanvas(){
+  const wrap=document.getElementById('annotatedWrap');
+  const img=document.getElementById('annotatedImg');
+  const sel=document.getElementById('selectionCanvas');
+
+  function getPos(e){
+    const rect=wrap.getBoundingClientRect();
+    const scaleX=img.naturalWidth/rect.width;
+    const scaleY=img.naturalHeight/rect.height;
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    const clientY=e.touches?e.touches[0].clientY:e.clientY;
+    return{
+      x:(clientX-rect.left)*scaleX,
+      y:(clientY-rect.top)*scaleY,
+      px:clientX-rect.left,
+      py:clientY-rect.top
+    };
+  }
+
+  sel.addEventListener('mousedown',e=>{
+    if(!regionMode)return;
+    isDragging=true;
+    const p=getPos(e);
+    regionStart={x:p.x,y:p.y,px:p.px,py:p.py};
+    regionRect=null;
+    document.getElementById('btnAuditRegion').style.display='none';
+  });
+
+  sel.addEventListener('mousemove',e=>{
+    if(!regionMode||!isDragging)return;
+    const p=getPos(e);
+    const ctx=sel.getContext('2d');
+    sel.width=img.naturalWidth;
+    sel.height=img.naturalHeight;
+    ctx.clearRect(0,0,sel.width,sel.height);
+    ctx.fillStyle='rgba(29,158,117,0.08)';
+    ctx.strokeStyle='#1D9E75';
+    ctx.lineWidth=2;
+    const x=Math.min(regionStart.x,p.x);
+    const y=Math.min(regionStart.y,p.y);
+    const w=Math.abs(p.x-regionStart.x);
+    const h=Math.abs(p.y-regionStart.y);
+    ctx.fillRect(x,y,w,h);
+    ctx.strokeRect(x,y,w,h);
+  });
+
+  sel.addEventListener('mouseup',e=>{
+    if(!regionMode||!isDragging)return;
+    isDragging=false;
+    const p=getPos(e);
+    const img2=document.getElementById('annotatedImg');
+    regionRect={
+      x:Math.min(regionStart.x,p.x)/img2.naturalWidth,
+      y:Math.min(regionStart.y,p.y)/img2.naturalHeight,
+      w:Math.abs(p.x-regionStart.x)/img2.naturalWidth,
+      h:Math.abs(p.y-regionStart.y)/img2.naturalHeight
+    };
+    if(regionRect.w>0.02&&regionRect.h>0.02){
+      document.getElementById('btnAuditRegion').style.display='inline-block';
+      document.getElementById('regionHint').textContent='Region selected — click "Audit selection"';
+    }
+  });
+}
+
+async function auditRegion(){
+  if(!regionRect||!imageBase64)return;
+  const claudeKey=document.getElementById('key-claude').value.trim();
+  if(!claudeKey){alert('Claude API key needed.');return;}
+
+  // crop image to selected region
+  const img=document.getElementById('annotatedImg');
+  const cropCanvas=document.createElement('canvas');
+  const cw=Math.round(regionRect.w*img.naturalWidth);
+  const ch=Math.round(regionRect.h*img.naturalHeight);
+  const cx=Math.round(regionRect.x*img.naturalWidth);
+  const cy=Math.round(regionRect.y*img.naturalHeight);
+  cropCanvas.width=cw;
+  cropCanvas.height=ch;
+  cropCanvas.getContext('2d').drawImage(img,cx,cy,cw,ch,0,0,cw,ch);
+  const croppedB64=cropCanvas.toDataURL('image/jpeg',0.9).split(',')[1];
+
+  const btn=document.getElementById('btnAuditRegion');
+  btn.textContent='Analyzing...';
+  btn.disabled=true;
+
+  try{
+    const prompt=visionSystem()+'\n\nAnalyze this cropped UI component in detail. This is a selected region from a larger page — focus deeply on this specific component.';
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:croppedB64}},
+          {type:'text',text:prompt}
+        ]}]})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message);}
+    const data=await r.json();
+    const parsed=parseJSON(data.content[0].text);
+
+    // scale coordinates back to full image space
+    parsed.annotations=parsed.annotations.map(a=>({
+      ...a,
+      x:regionRect.x+a.x*regionRect.w,
+      y:regionRect.y+a.y*regionRect.h
+    }));
+
+    currentAnnotations=[...currentAnnotations,...parsed.annotations];
+    const imgEl=document.getElementById('annotatedImg');
+    const canvas=document.getElementById('annotationCanvas');
+    drawAnnotations(currentAnnotations,imgEl,canvas);
+
+    // add to sidebar
+    const sidebar=document.getElementById('annSidebar');
+    const startIdx=currentAnnotations.length-parsed.annotations.length;
+    const newItems=parsed.annotations.map((ann,j)=>{
+      const i=startIdx+j;
+      const col=ANNOTATION_COLORS[i%ANNOTATION_COLORS.length]||'#888';
+      const p=(ann.priority||'Medium').toLowerCase();
+      const pcls=p==='high'?'p-high':p==='low'?'p-low':'p-medium';
+      return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})" style="border-left:3px solid #1D9E75">
+        <div style="position:absolute;font-size:9px;color:#1D9E75;font-weight:600;top:8px;right:10px">REGION</div>
+        <div class="ann-num" style="background:${col}">${i+1}</div>
+        <div class="ann-content">
+          <div class="ann-dim">${ann.dimension||''}<span class="priority-badge ${pcls}">${ann.priority||'Medium'}</span></div>
+          <div class="ann-title">${ann.title}</div>
+          <div class="ann-desc">${ann.description}</div>
+          <div style="display:flex;gap:0;flex-wrap:wrap">
+            <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
+            <button class="fix-btn" onclick="event.stopPropagation();loadFix(${i},this)" data-loaded="false">Generate fix →</button>
+          </div>
+          <div class="bp-panel" id="bp-${i}"></div>
+          <div class="fix-panel" id="fix-${i}"></div>
+        </div>
+      </div>`;
+    }).join('');
+    sidebar.innerHTML+=`<div style="font-size:11px;font-weight:500;color:#1D9E75;margin:12px 0 6px;padding:0 2px">Region findings</div>`+newItems;
+
+    setMode('full');
+  }catch(e){
+    alert('Region audit failed: '+e.message);
+  }finally{
+    btn.textContent='Audit selection →';
+    btn.disabled=false;
+  }
+}
+
+// --- Before/After Fix Generator (Feature 1) ---
+async function loadFix(idx,btn){
+  const panel=document.getElementById('fix-'+idx);
+  if(btn.dataset.loaded==='true'){
+    panel.classList.toggle('open');
+    btn.textContent=panel.classList.contains('open')?'Hide fix':'Generate fix →';
+    return;
+  }
+
+  const ann=currentAnnotations[idx];
+  if(!ann)return;
+  const claudeKey=document.getElementById('key-claude').value.trim();
+  if(!claudeKey){
+    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Claude API key needed.</p>';
+    panel.classList.add('open');return;
+  }
+
+  btn.textContent='Generating...';
+  btn.disabled=true;
+  panel.classList.add('open');
+
+  const cssCtx=document.getElementById('cssInput').value.trim();
+
+  try{
+    const prompt=`You are a UX engineer. A UX audit found this issue:
+
+Dimension: ${ann.dimension}
+Heuristic: ${ann.title}
+Problem: ${ann.description}
+${cssCtx?`\nExisting CSS context:\n${cssCtx.slice(0,1000)}`:''}
+
+Generate a concrete before/after fix. Respond ONLY with valid JSON:
+{
+  "problem_summary": "one sentence what exactly is wrong",
+  "before": {
+    "label": "Current (broken)",
+    "code": "the problematic CSS or HTML snippet, max 8 lines"
+  },
+  "after": {
+    "label": "Fixed",
+    "code": "the corrected CSS or HTML snippet, max 8 lines"  
+  },
+  "explanation": "1-2 sentences why this fix works",
+  "impact": "High|Medium|Low"
+}`;
+
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+        messages:[{role:'user',content:prompt}]})});
+
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
+    const data=await r.json();
+    const parsed=parseJSON(data.content.find(b=>b.type==='text')?.text||'{}');
+
+    const impactColor=parsed.impact==='High'?'#993C1D':parsed.impact==='Low'?'#3B6D11':'#854F0B';
+    const impactBg=parsed.impact==='High'?'#FAECE7':parsed.impact==='Low'?'#EAF3DE':'#FAEEDA';
+
+    panel.innerHTML=`
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">${parsed.problem_summary||''}</div>
+      <div class="fix-before-after">
+        <div class="fix-box">
+          <div class="fix-box-label" style="color:#E24B4A">${parsed.before?.label||'Before'}</div>
+          <pre>${escapeHtml(parsed.before?.code||'')}</pre>
+        </div>
+        <div class="fix-box">
+          <div class="fix-box-label" style="color:#1D9E75">${parsed.after?.label||'After'}</div>
+          <pre>${escapeHtml(parsed.after?.code||'')}</pre>
+        </div>
+      </div>
+      ${parsed.explanation?`<div style="margin-top:10px;font-size:11px;color:var(--text2);line-height:1.5">${parsed.explanation}</div>`:''}
+      ${parsed.impact?`<div style="margin-top:8px"><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${impactBg};color:${impactColor}">Impact: ${parsed.impact}</span></div>`:''}`;
+
+    btn.dataset.loaded='true';
+    btn.textContent='Hide fix';
+  }catch(e){
+    panel.innerHTML=`<p style="font-size:12px;color:var(--red)">${e.message}</p>`;
+    btn.textContent='Generate fix →';
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function loadBestPractice(idx, btn){
+  const panel=document.getElementById('bp-'+idx);
+  if(btn.dataset.loaded==='true'){
+    panel.classList.toggle('open');
+    btn.textContent=panel.classList.contains('open')?'Hide ↑':'Best practice →';
+    return;
+  }
+
+  const ann=currentAnnotations[idx];
+  if(!ann)return;
+
+  const claudeKey=document.getElementById('key-claude').value.trim();
+  if(!claudeKey){
+    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Claude API key needed for best practices.</p>';
+    panel.classList.add('open');
+    return;
+  }
+
+  btn.textContent='Searching...';
+  btn.disabled=true;
+  panel.innerHTML='';
+  panel.classList.add('open');
+
+  try{
+    const prompt=`You are a UX expert. A UX audit found this issue:
+
+Dimension: ${ann.dimension}
+Issue: ${ann.title}
+Details: ${ann.description}
+
+Do a web search and find 2-3 real-world best practice examples that show how leading companies solve this exact UX problem. 
+
+Respond ONLY with a JSON object, no markdown:
+{
+  "summary": "1-2 sentence explanation of the best practice principle",
+  "examples": [
+    {
+      "company": "Company name",
+      "what": "What they do specifically",
+      "why": "Why it works",
+      "url": "their website URL if relevant"
+    }
+  ],
+  "quick_fix": "One concrete actionable sentence on how to fix this specific issue"
+}`;
+
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':claudeKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:prompt}]
+      })
     });
-  </script>
+
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
+    const data=await r.json();
+
+    // extract text from response (may contain tool_use blocks)
+    const textBlock=data.content.find(b=>b.type==='text');
+    if(!textBlock)throw new Error('No text response');
+
+    let parsed;
+    try{parsed=JSON.parse(textBlock.text.replace(/```json|```/g,'').trim());}
+    catch(e){throw new Error('Could not parse response');}
+
+    panel.innerHTML=`
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">${parsed.summary}</p>
+      ${parsed.examples.map(ex=>`
+        <div style="margin-bottom:10px;padding:8px;background:var(--bg);border-radius:var(--rs);border:0.5px solid var(--border)">
+          <div style="font-size:11px;font-weight:500;color:var(--text);margin-bottom:3px">${ex.company}</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">${ex.what}</div>
+          <div style="font-size:10px;color:var(--text3)">${ex.why}</div>
+        </div>`).join('')}
+      <div style="margin-top:10px;padding:8px 10px;background:#E1F5EE;border-radius:var(--rs)">
+        <div style="font-size:10px;font-weight:600;color:#0F6E56;margin-bottom:3px">QUICK FIX</div>
+        <div style="font-size:11px;color:#085041;line-height:1.5">${parsed.quick_fix}</div>
+      </div>`;
+
+    btn.dataset.loaded='true';
+    btn.textContent='Hide ↑';
+  }catch(e){
+    panel.innerHTML=`<p style="font-size:12px;color:var(--red)">${e.message}</p>`;
+    btn.textContent='Best practice →';
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+// --- Best Practice Lookup ---
+async function loadBestPractice(idx, btn){
+  if(btn.dataset.loaded==='true') {
+    const panel=document.getElementById('bp-'+idx);
+    panel.classList.toggle('open');
+    return;
+  }
+
+  const ann=currentAnnotations[idx];
+  if(!ann) return;
+
+  // need claude key
+  const claudeKey=document.getElementById('key-claude').value.trim();
+  const groqKey=document.getElementById('key-groq').value.trim();
+  if(!claudeKey && !groqKey){
+    alert('Add a Claude or Groq key to load best practices.');
+    return;
+  }
+
+  btn.textContent='Searching...';
+  btn.disabled=true;
+
+  const panel=document.getElementById('bp-'+idx);
+  panel.classList.add('open');
+  panel.innerHTML='<div class="bp-loading">Searching for best practices and real-world examples...</div>';
+
+  const prompt=`You are a UX expert. A UX audit found this issue:
+
+Dimension: ${ann.dimension}
+Issue: ${ann.title}
+Details: ${ann.description}
+
+Search the web and provide:
+1. Why this matters (1-2 sentences, data-backed if possible)
+2. 2-3 concrete real-world examples of companies doing this WELL (name the company, what they do specifically)
+3. One actionable quick fix for this specific issue
+
+Format your response as JSON:
+{
+  "why": "string",
+  "examples": [
+    {"company": "string", "what": "string", "url": "string or null"}
+  ],
+  "quickfix": "string"
+}
+
+Be specific, cite real companies (Stripe, Linear, Apple, Airbnb, etc.). No generic advice.`;
+
+  try{
+    let raw;
+    if(claudeKey){
+      // Claude with web search tool
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          messages:[{role:'user',content:prompt}]
+        })});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
+      const d=await r.json();
+      // extract text from content blocks
+      raw=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    } else {
+      // Groq fallback (no web search but still useful)
+      const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:800,
+          messages:[{role:'user',content:prompt}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
+      raw=(await r.json()).choices[0].message.content;
+    }
+
+    let data;
+    try{ data=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch(e){ 
+      // fallback: show raw text nicely
+      panel.innerHTML=`<div class="bp-content">${raw.replace(/\n/g,'<br>')}</div>`;
+      btn.textContent='Best practice ↑';
+      btn.dataset.loaded='true';
+      btn.disabled=false;
+      return;
+    }
+
+    panel.innerHTML=`
+      <div class="bp-content">
+        <strong>Why it matters</strong><br>
+        ${data.why||''}<br><br>
+        <strong>Who does it well</strong>
+        ${(data.examples||[]).map(ex=>`
+          <div class="bp-example">
+            <div class="bp-example-title">${ex.company}${ex.url?` · <a href="${ex.url}" target="_blank" rel="noopener">${ex.url.replace(/https?:\/\//,'').split('/')[0]}</a>`:''}</div>
+            <div class="bp-example-desc">${ex.what}</div>
+          </div>`).join('')}
+        <br><strong>Quick fix</strong><br>
+        ${data.quickfix||''}
+      </div>`;
+
+    btn.textContent='Best practice ↑';
+    btn.dataset.loaded='true';
+  }catch(e){
+    panel.innerHTML=`<div class="bp-content" style="color:var(--red)">Error: ${e.message}</div>`;
+    btn.textContent='Best practice →';
+  }
+  btn.disabled=false;
+}
+
+// --- PDF Export ---
+async function exportPDF(){
+  const btn=event.target;
+  btn.textContent='Generating...';
+  btn.disabled=true;
+
+  // load jsPDF dynamically
+  if(!window.jspdf){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const PW=210; // A4 width mm
+  const PH=297; // A4 height mm
+  const M=14;   // margin
+  const CW=PW-M*2; // content width
+  let y=M;
+
+  const scoreColor=(s)=>s>=8?[29,158,117]:s>=6?[186,117,23]:[216,90,48];
+  const priColor=(p)=>p==='High'?[153,60,29]:p==='Low'?[59,109,17]:[133,79,11];
+  const priBg=(p)=>p==='High'?[250,236,231]:p==='Low'?[234,243,222]:[250,238,218];
+
+  const url=document.getElementById('urlInput').value.trim()||'Unknown URL';
+  const date=new Date().toLocaleDateString('de-CH',{year:'numeric',month:'long',day:'numeric'});
+
+  // ── Header ──
+  doc.setFillColor(26,26,24);
+  doc.rect(0,0,PW,22,'F');
+  doc.setTextColor(240,240,236);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('UX / UI Audit Report',M,13);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.setTextColor(160,160,154);
+  doc.text(date,PW-M,13,{align:'right'});
+  y=30;
+
+  // URL
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.setTextColor(90,90,86);
+  doc.text('Audited URL: '+url,M,y);
+  y+=10;
+
+  // ── Annotated Screenshot ──
+  const img=document.getElementById('annotatedImg');
+  const canvas=document.getElementById('annotationCanvas');
+
+  // merge img + canvas into one image
+  const mergeCanvas=document.createElement('canvas');
+  mergeCanvas.width=canvas.width||img.naturalWidth;
+  mergeCanvas.height=canvas.height||img.naturalHeight;
+  const mctx=mergeCanvas.getContext('2d');
+  mctx.drawImage(img,0,0);
+  mctx.drawImage(canvas,0,0);
+  const mergedImg=mergeCanvas.toDataURL('image/jpeg',0.85);
+
+  const imgW=mergeCanvas.width;
+  const imgH=mergeCanvas.height;
+  const ratio=imgH/imgW;
+  const dispW=CW;
+  const dispH=Math.min(dispW*ratio,90);
+
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+  doc.text('Annotated screenshot',M,y);y+=5;
+  doc.addImage(mergedImg,'JPEG',M,y,dispW,dispH);
+  y+=dispH+10;
+
+  // ── Scores ──
+  if(y>220){doc.addPage();y=M;}
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+  doc.text('Dimension scores',M,y);y+=6;
+
+  // Combined scores
+  const allScoreEls=document.querySelectorAll('#scoreOverview .score-card');
+  const dimW=CW/7;
+  allScoreEls.forEach((card,i)=>{
+    const num=parseFloat(card.querySelector('.score-num').textContent);
+    const col=scoreColor(num);
+    const x=M+i*dimW;
+
+    // bar background
+    doc.setFillColor(230,230,226);
+    doc.roundedRect(x,y,dimW-2,18,2,2,'F');
+
+    // score fill
+    const fillH=(num/10)*18;
+    doc.setFillColor(...col);
+    doc.roundedRect(x,y+(18-fillH),dimW-2,fillH,2,2,'F');
+
+    // score number
+    doc.setFontSize(10);doc.setFont('helvetica','bold');
+    doc.setTextColor(...col);
+    doc.text(String(num),x+(dimW-2)/2,y+10,{align:'center'});
+
+    // dim label
+    doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(90,90,86);
+    const label=DIMS[i];
+    const lines=doc.splitTextToSize(label,dimW-3);
+    doc.text(lines,x+(dimW-2)/2,y+20,{align:'center'});
+  });
+  y+=30;
+
+  // Per-model overall scores
+  const overallCards=document.querySelectorAll('#overallRow .overall-card');
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(90,90,86);
+  const cardW=CW/overallCards.length;
+  overallCards.forEach((card,i)=>{
+    const label=card.querySelector('.oc-label').textContent;
+    const scoreEl=card.querySelector('.oc-score');
+    const num=parseFloat(scoreEl.textContent);
+    const sub=card.querySelector('.oc-model').textContent;
+    const col=scoreColor(num);
+    const x=M+i*cardW;
+    doc.setFillColor(245,245,243);
+    doc.roundedRect(x,y,cardW-2,16,2,2,'F');
+    doc.setFontSize(7);doc.setTextColor(90,90,86);
+    doc.text(label,x+(cardW-2)/2,y+4,{align:'center'});
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...col);
+    doc.text(String(num)+'/10',x+(cardW-2)/2,y+10,{align:'center'});
+    doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(154,154,148);
+    doc.text(sub,x+(cardW-2)/2,y+14,{align:'center'});
+  });
+  y+=22;
+
+  // ── Findings ──
+  if(y>230){doc.addPage();y=M;}
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+  doc.text('Detailed findings',M,y);y+=6;
+
+  currentAnnotations.forEach((ann,i)=>{
+    const col=i<2?[226,75,74]:i<4?[239,159,39]:[99,153,34];
+    const p=ann.priority||'Medium';
+    const needed=22;
+    if(y+needed>PH-M){doc.addPage();y=M;}
+
+    // dot
+    doc.setFillColor(...col);
+    doc.circle(M+3,y+3,3,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(6);doc.setFont('helvetica','bold');
+    doc.text(String(i+1),M+3,y+4.5,{align:'center'});
+
+    // priority badge
+    doc.setFillColor(...priBg(p));
+    doc.roundedRect(PW-M-18,y-1,18,6,1,1,'F');
+    doc.setFontSize(6);doc.setFont('helvetica','bold');
+    doc.setTextColor(...priColor(p));
+    doc.text(p.toUpperCase(),PW-M-9,y+3.5,{align:'center'});
+
+    // dimension
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(154,154,148);
+    doc.text((ann.dimension||'').toUpperCase(),M+8,y+2);
+
+    // title
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+    doc.text(ann.title||'',M+8,y+7);
+
+    // description
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(90,90,86);
+    const descLines=doc.splitTextToSize(ann.description||'',CW-10);
+    doc.text(descLines,M+8,y+12);
+    y+=8+descLines.length*4+4;
+
+    // separator
+    doc.setDrawColor(220,220,216);doc.setLineWidth(0.3);
+    doc.line(M,y-2,PW-M,y-2);
+  });
+
+  // ── Action Plan ──
+  if(y>230){doc.addPage();y=M;}
+  y+=4;
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+  doc.text('Action plan',M,y);y+=6;
+
+  const actionItems=document.querySelectorAll('#priorityList .action-item');
+  actionItems.forEach((item)=>{
+    const title=item.querySelector('.ac-title')?.textContent||'';
+    const desc=item.querySelector('.ac-desc')?.textContent||'';
+    const p=item.querySelector('.priority-badge')?.textContent||'Medium';
+    const descLines=doc.splitTextToSize(desc,CW-8);
+    const needed=14+descLines.length*4;
+    if(y+needed>PH-M){doc.addPage();y=M;}
+
+    doc.setFillColor(...priBg(p));
+    doc.roundedRect(M,y-1,18,6,1,1,'F');
+    doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...priColor(p));
+    doc.text(p.toUpperCase(),M+9,y+3.5,{align:'center'});
+
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+    doc.text(title,M+21,y+3.5);
+
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(90,90,86);
+    doc.text(descLines,M+21,y+8);
+    y+=needed+2;
+
+    doc.setDrawColor(220,220,216);doc.setLineWidth(0.3);
+    doc.line(M,y-1,PW-M,y-1);
+  });
+
+  // ── Footer on each page ──
+  const total=doc.internal.getNumberOfPages();
+  for(let p=1;p<=total;p++){
+    doc.setPage(p);
+    doc.setFillColor(245,245,243);
+    doc.rect(0,PH-8,PW,8,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(154,154,148);
+    doc.text('UX / UI Audit Tool · Generated '+date,M,PH-3);
+    doc.text('Page '+p+' / '+total,PW-M,PH-3,{align:'right'});
+  }
+
+  const filename='ux-audit-'+(url.replace(/https?:\/\//,'').replace(/[^a-z0-9]/gi,'-').slice(0,40)||'report')+'.pdf';
+  doc.save(filename);
+  btn.textContent='Export PDF ↓';
+  btn.disabled=false;
+}
+</script>
 </body>
 </html>
