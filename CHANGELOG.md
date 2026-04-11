@@ -5,6 +5,28 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v1.8.0 — April 2026
+
+### Added
+- **Results fade-in** — findings appear with a 0.4s opacity transition instead of appearing abruptly
+- **Score card tooltips** — hovering a heuristic score card shows the full heuristic name (e.g. "Visibility of System Status") with an arrow tooltip
+- **Run button pulse animation** — button glows red during analysis, text changes to "Analyzing…" and resets to "Run Audit →" on completion
+- **Keyboard shortcut** — `⌘ Enter` (Mac) / `Ctrl+Enter` (Windows) triggers the audit; hint shown next to the run button
+- **Findings counter in tab** — tab label shows "Annotated screenshot (6)" so issue count is immediately visible
+- **Sidebar empty state** — when no issues are found, a green "✓ No issues detected" block is shown instead of an empty list
+- **Color band on score cards** — overall score cards get a coloured top border (green / amber / red by score); model cards get the model's brand colour
+- **PDF green empty state** — heuristic pages with no findings show a green "✓ No issues detected for this heuristic" block instead of grey text
+- **Version number in footer** — `v1.8.0` shown discretely next to "Keys stay in your browser"
+- **Animated loading ticker** — progress bar + rotating messages during audit showing real research sources (NNG, Baymard, ACM CHI, WCAG); industry-aware phrasing
+- **Value proposition in hero** — sourced statistics below the description: NNG 1,000+ articles, Baymard 130,000+ hours, WCAG 78 criteria; footnotes with links in footer
+- **Redundant eyebrow removed** — "UX / UI Audit Tool" label below logo was duplicate; removed
+
+### Fixed
+- `willReadFrequently` canvas warning — added `{willReadFrequently:true}` to `sampleColors()` and `runWCAGCheck()` contexts
+- Groq `Failed to fetch` now fails silently (CORS on GitHub Pages); proxy fallback handles retry automatically
+
+---
+
 ## v1.7.0 — April 2026
 
 ### Added

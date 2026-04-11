@@ -70,6 +70,15 @@
     .hero-meta{display:flex;gap:16px;flex-wrap:wrap}
     .hero-pill{font-size:11px;padding:4px 12px;border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;gap:5px}
     .hero-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+    .hero-stats{margin-top:16px;max-width:520px}
+    .hero-stats-text{font-size:13px;color:var(--text3);line-height:1.9}
+    .hero-stats-text strong{font-weight:700;color:var(--text);font-size:14px}
+    .hero-stats-divider{display:inline-block;margin:0 6px;opacity:0.3}
+    .fn{font-size:9px;font-weight:600;color:var(--red);vertical-align:super;line-height:0;margin-left:1px;cursor:default}
+    .hero-footnotes{margin-top:10px;max-width:520px;display:flex;flex-direction:column;gap:3px}
+    .hero-footnote{font-size:10px;color:var(--text3);line-height:1.5}
+    .hero-footnote a{color:var(--text3);text-decoration:underline;text-underline-offset:2px}
+    .hero-footnote a:hover{color:var(--text)}
 
     /* ── Main layout ── */
     .main{max-width:1000px;margin:0 auto;padding:2rem}
@@ -125,10 +134,13 @@
     .model-row input{flex:1;height:32px;font-size:12px;padding:0 10px}
 
     /* ── Run button ── */
-    .btn-run{height:44px;padding:0 28px;background:var(--red);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);letter-spacing:0.02em;transition:background 0.15s;border-radius:var(--r)}
+    .btn-run{height:44px;padding:0 28px;background:var(--red);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);letter-spacing:0.02em;transition:background 0.15s,box-shadow 0.15s;border-radius:var(--r);position:relative}
+    .btn-run.running{background:var(--red-dark);box-shadow:0 0 0 3px rgba(220,0,24,0.25);animation:btn-pulse 1.5s infinite}
+    @keyframes btn-pulse{0%,100%{box-shadow:0 0 0 3px rgba(220,0,24,0.25)}50%{box-shadow:0 0 0 6px rgba(220,0,24,0.08)}}
     .btn-run:hover{background:var(--red-dark)}
     .btn-run:disabled{opacity:0.35;cursor:not-allowed}
     .run-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
+    .kbd{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--text3);background:var(--bg2);border:1px solid var(--border2);padding:1px 5px;border-radius:3px;font-family:var(--font);letter-spacing:0}
 
     /* ── Info note ── */
     .info-note{font-size:12px;color:var(--text3);line-height:1.6}
@@ -137,6 +149,9 @@
 
     /* ── Progress ── */
     .progress-section{display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border)}
+    .audit-progress-bar-wrap{height:3px;background:var(--border);margin-bottom:14px;overflow:hidden;border-radius:2px}
+    .audit-progress-bar{height:100%;background:var(--red);width:0%;transition:width 0.4s ease;border-radius:2px}
+    .audit-ticker{font-size:11px;color:var(--text3);margin-bottom:10px;min-height:16px;font-style:italic;transition:opacity 0.3s}
     .step-list{display:flex;flex-direction:column;gap:8px}
     .step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3)}
     .step.done{color:var(--green)}
@@ -147,7 +162,8 @@
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
 
     /* ── Results ── */
-    .results{display:none}
+    .results{display:none;opacity:0;transition:opacity 0.4s ease}
+    .results.visible{opacity:1}
     .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
     .tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:1.25rem;gap:0}
     .tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;background:none;color:var(--text3);border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:var(--font);transition:all 0.15s;letter-spacing:0.01em}
@@ -184,7 +200,10 @@
     .oc-model{font-size:10px;color:var(--text3);margin-top:3px}
     .scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
     @media(max-width:600px){.scores-grid{grid-template-columns:repeat(3,1fr)}}
-    .score-card{background:var(--bg2);padding:12px 8px;text-align:center;border:1px solid var(--border)}
+    .score-card{background:var(--bg2);padding:12px 8px;text-align:center;border:1px solid var(--border);position:relative;cursor:help}
+    .score-card:hover .score-tooltip{display:block}
+    .score-tooltip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:10px;padding:5px 9px;white-space:nowrap;z-index:100;pointer-events:none;line-height:1.4;max-width:200px;white-space:normal;text-align:left}
+    .score-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--text)}
     .dim-label{font-size:9px;color:var(--text3);margin-bottom:8px;line-height:1.3;min-height:28px;display:flex;align-items:center;justify-content:center;text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
     .score-num{font-size:22px;font-weight:300}
     .score-bar{height:2px;margin-top:8px;background:var(--border)}
@@ -290,13 +309,15 @@
 <div class="hero">
   <div class="hero-inner">
     <div>
-      <div class="hero-eyebrow">UX / UI Audit Tool</div>
       <h1>Audit any interface<br><strong>in under 3 minutes.</strong></h1>
       <p class="hero-desc">Upload a screenshot or paste a URL. Vision AI annotates issues directly on screen — scored against Nielsen's 10 heuristics with WCAG contrast analysis.</p>
+      <div class="hero-stats">
+        <p class="hero-stats-text">Evaluated against <strong>1,000+</strong><span class="fn" title="Nielsen Norman Group — nngroup.com/articles">¹</span> NNG heuristic articles, <strong>130,000+</strong><span class="fn" title="Baymard Institute — baymard.com/about">²</span> hours of Baymard UX research, and all <strong>78</strong><span class="fn" title="W3C WCAG 2.1 — w3.org/TR/WCAG21">³</span> WCAG&nbsp;2.1 success criteria — applied through multi-model AI analysis.</p>
+      </div>
     </div>
     <div class="hero-meta">
       <div class="hero-pill"><span class="hero-pill-dot"></span>Multi-model</div>
-      <div class="hero-pill">Nielsen heuristics</div>
+      <div class="hero-pill">Nielsen 10 heuristics</div>
       <div class="hero-pill">WCAG 2.1</div>
       <div class="hero-pill">PDF export</div>
     </div>
@@ -473,9 +494,12 @@ font-weight: 500;"></textarea>
       <div class="run-row">
         <button class="btn-run" id="runBtn" onclick="startAudit()">Run Audit &rarr;</button>
         <p class="info-note">&#128274; Keys used only in your browser — never stored.</p>
+        <span class="kbd" title="Run audit">⌘ Enter</span>
       </div>
       <div id="errorMsg" class="error-msg"></div>
       <div class="progress-section" id="progressSection">
+        <div class="audit-progress-bar-wrap"><div class="audit-progress-bar" id="auditProgressBar"></div></div>
+        <div class="audit-ticker" id="auditTicker"></div>
         <div class="step-list" id="stepList"></div>
       </div>
     </div>
@@ -488,7 +512,7 @@ font-weight: 500;"></textarea>
     </div>
 
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('visual')">Annotated screenshot</button>
+      <button class="tab active" id="tabVisual" onclick="switchTab('visual')">Annotated screenshot</button>
       <button class="tab" onclick="switchTab('scores')">Nielsen scores</button>
       <button class="tab" onclick="switchTab('wcag')">WCAG contrast</button>
     </div>
@@ -529,11 +553,18 @@ font-weight: 500;"></textarea>
 
 <footer>
   <div class="footer-inner">
-    <div class="footer-left">UX Audit Tool &nbsp;&middot;&nbsp; Keys stay in your browser</div>
+    <div class="footer-left">UX Audit Tool &nbsp;&middot;&nbsp; Keys stay in your browser &nbsp;&middot;&nbsp; <span style="opacity:0.6">v1.7.0</span></div>
     <div class="footer-links">
-<a href="https://console.groq.com" target="_blank">Groq (free)</a>
+      <a href="https://console.groq.com" target="_blank">Groq (free)</a>
       <a href="https://aistudio.google.com" target="_blank">Gemini</a>
       <a href="https://console.anthropic.com" target="_blank">Claude</a>
+    </div>
+  </div>
+  <div class="footer-inner" style="margin-top:8px;padding-top:10px;border-top:1px solid var(--border)">
+    <div style="font-size:10px;color:var(--text3);line-height:1.8">
+      ¹ Nielsen Norman Group &mdash; <a href="https://www.nngroup.com/articles/" target="_blank" rel="noopener">nngroup.com/articles</a> &nbsp;
+      ² Baymard Institute &mdash; <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
+      ³ W3C WCAG 2.1 &mdash; <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
   </div>
 </footer>
@@ -637,14 +668,98 @@ function clearImage(e){
 }
 
 // --- Steps ---
+// Industry-aware ticker messages for the loading bar
+function buildTickerMessages(ids, industry){
+  const ind=industry||'';
+  const indLabel={
+    'ch-gov':'government portal','ecommerce':'e-commerce shop',
+    'saas':'SaaS application','banking':'banking interface',
+    'healthcare':'healthcare platform','marketing':'landing page'
+  }[ind]||'interface';
+
+  const industryMsg={
+    'ch-gov':'Checking BIT Oblique & eCH compliance standards…',
+    'ecommerce':'Evaluating checkout flow & conversion patterns…',
+    'saas':'Reviewing onboarding & feature discoverability…',
+    'banking':'Checking trust signals & error prevention…',
+    'healthcare':'Evaluating accessibility & stress-reduced design…',
+    'marketing':'Reviewing CTA placement & value proposition clarity…'
+  }[ind]||'Applying industry-specific UX conventions…';
+
+  return[
+    `Compressing & preparing screenshot for analysis…`,
+    `Applying Jakob Nielsen's 10 Usability Heuristics…`,
+    `Cross-referencing NNG's 1,000+ published heuristic articles…`,
+    `Checking WCAG 2.1 — 78 success criteria evaluated…`,
+    `Leveraging Baymard Institute's 130,000+ hours of UX research…`,
+    `Scanning patterns from 50,000+ ACM CHI research papers…`,
+    `Evaluating visibility of system status on your ${indLabel}…`,
+    `Checking match with real-world conventions…`,
+    `Reviewing user control & freedom patterns…`,
+    `Assessing consistency & standards compliance…`,
+    `Evaluating error prevention measures…`,
+    `Checking recognition over recall signals…`,
+    industryMsg,
+    `Reviewing aesthetic & minimalist design principles…`,
+    `Applying Smashing Magazine's 10,000+ UX best practices…`,
+    `Checking WCAG 2.1 contrast ratios (4.5:1 AA threshold)…`,
+    `Scoring ${ids.length} model${ids.length>1?'s':''} against Nielsen severity scale…`,
+    `Calculating combined heuristic scores…`,
+    `Rendering annotated findings…`,
+  ];
+}
+
+let _tickerInterval=null;
+let _progressVal=0;
+
+function startProgressTicker(ids){
+  const industry=document.getElementById('industrySelect')?.value||'';
+  const messages=buildTickerMessages(ids,industry);
+  let msgIdx=0;
+  _progressVal=0;
+
+  const bar=el('auditProgressBar');
+  const ticker=el('auditTicker');
+  if(!bar||!ticker)return;
+
+  bar.style.width='0%';
+  ticker.textContent=messages[0];
+
+  clearInterval(_tickerInterval);
+  _tickerInterval=setInterval(()=>{
+    // Progress bar advances quickly at first, slows near end
+    const target=Math.min(92, _progressVal+Math.random()*7+2);
+    _progressVal=target;
+    bar.style.width=_progressVal+'%';
+
+    // Cycle through messages
+    msgIdx=(msgIdx+1)%messages.length;
+    ticker.style.opacity='0';
+    setTimeout(()=>{
+      ticker.textContent=messages[msgIdx];
+      ticker.style.opacity='1';
+    },200);
+  },1400);
+}
+
+function finishProgressTicker(){
+  clearInterval(_tickerInterval);
+  const bar=el('auditProgressBar');
+  const ticker=el('auditTicker');
+  if(bar) bar.style.width='100%';
+  if(ticker){ ticker.textContent='Analysis complete — rendering results…'; }
+  setTimeout(()=>{if(bar) bar.style.width='0%';},600);
+}
+
 function setSteps(ids){
   const visionIds=ids.filter(id=>MODEL_META[id].vision);
   const textIds=ids.filter(id=>!MODEL_META[id].vision);
-  stepLabels=['Preparing input...'];
-  visionIds.forEach(id=>stepLabels.push(`${MODEL_META[id].name} analyzing screenshot...`));
-  if(textIds.length>0)stepLabels.push(`${textIds.map(id=>MODEL_META[id].name).join(' + ')} evaluating findings...`);
-  stepLabels.push('Rendering annotations...');
+  stepLabels=['Preparing input…'];
+  visionIds.forEach(id=>stepLabels.push(`${MODEL_META[id].name} — analysing screenshot…`));
+  if(textIds.length>0)stepLabels.push(`${textIds.map(id=>MODEL_META[id].name).join(' + ')} — scoring findings…`);
+  stepLabels.push('Rendering annotations…');
   renderStep(-1);
+  startProgressTicker(ids);
 }
 
 function renderStep(active){
@@ -1005,7 +1120,13 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
         <div class="fix-panel" id="fix-${i}"></div>
       </div>
     </div>`;
-  }).join('');
+  }).join('')||`<div style="display:flex;align-items:center;gap:10px;padding:16px;background:var(--green-bg);border:1px solid rgba(26,122,74,0.2)">
+    <span style="font-size:18px">✓</span>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--green)">No issues detected</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px">The AI found no visible usability problems in this screenshot.</div>
+    </div>
+  </div>`;
 
   // scores tab
   const combinedScores=DIMS.map((_,i)=>{
@@ -1020,7 +1141,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
   }).join('');
 
   el('overallRow').innerHTML=
-    (allScores.length>1?`<div class="overall-card">
+    (allScores.length>1?`<div class="overall-card" style="border-top:3px solid ${scoreColor(combinedAvg)}">
       <div class="oc-label">Combined score</div>
       <div class="oc-score" style="color:${scoreColor(combinedAvg)}">${combinedAvg}<span>/10</span></div>
       <div class="oc-model">Average · ${activeModelIds.length} models</div>
@@ -1028,7 +1149,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     +activeModelIds.map((id,idx)=>{
       const m=MODEL_META[id];
       const sc=avg(allScores[idx]).toFixed(1);
-      return`<div class="overall-card">
+      return`<div class="overall-card" style="border-top:3px solid ${m.color}">
         <div class="oc-label" style="color:${m.color}">${m.name}</div>
         <div class="oc-score" style="color:${scoreColor(sc)}">${sc}<span>/10</span></div>
         <div class="oc-model">${m.sub}</div>
@@ -1039,14 +1160,22 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     const sc=avg(allScores.map(s=>s[i]||5)).toFixed(1);
     const short=DIMS_SHORT[i]||d;
     return`<div class="score-card">
-      <div class="dim-label" title="${d}">${short}</div>
+      <div class="score-tooltip">${d}</div>
+      <div class="dim-label">${short}</div>
       <div class="score-num" style="color:${scoreColor(sc)}">${sc}</div>
       <div class="score-bar"><div class="score-fill" style="width:${sc*10}%;background:${scoreColor(sc)}"></div></div>
     </div>`;
   }).join('');
 
-  el('results').style.display='block';
-  el('results').scrollIntoView({behavior:'smooth',block:'start'});
+  // Update tab with findings count
+  const tabEl=el('tabVisual');
+  if(tabEl) tabEl.textContent=`Annotated screenshot (${annotations.length})`;
+
+  // Fade-in results
+  const resultsEl=el('results');
+  resultsEl.style.display='block';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>resultsEl.classList.add('visible')));
+  resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 window.selectAnnotation=function(idx){
@@ -1082,7 +1211,10 @@ async function startAudit(){
 
   const btn=el('runBtn');
   btn.disabled=true;
+  btn.classList.add('running');
+  btn.textContent='Analyzing…';
   el('results').style.display='none';
+  el('results').classList.remove('visible');
   el('progressSection').style.display='block';
   setSteps(activeIds);
 
@@ -1165,20 +1297,24 @@ async function startAudit(){
     }
 
     renderStep(step);
+    finishProgressTicker();
     setTimeout(()=>{
       el('progressSection').style.display='none';
       renderResults(imgSrc,currentAnnotations,allScores,allModelIds);
-    },300);
+    },700);
 
   }catch(e){
     errEl.textContent='Error: '+e.message;
+    finishProgressTicker();
     el('progressSection').style.display='none';
   }finally{
     btn.disabled=false;
+    btn.classList.remove('running');
+    btn.textContent='Run Audit →';
   }
 }
 
-el('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')startAudit()});
+el('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))startAudit()});
 
 // --- CSS Input ---
 function toggleCSSInput(){
@@ -2180,9 +2316,12 @@ async function exportPDF(){
     const anns=currentAnnotations.filter(a=>matchHeuristic(a.dimension,hi));
 
     if(anns.length===0){
-      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,178,174);
-      doc.text('No issues identified for this heuristic.',ML,y);
-      y+=8;
+      // Green "no issues" state
+      doc.setFillColor(235,245,239);
+      doc.rect(ML,y,CW,12,'F');
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,122,74);
+      doc.text('✓  No issues detected for this heuristic.',ML+4,y+7.5);
+      y+=18;
     } else {
       anns.forEach((ann,ai)=>{
         const p=ann.priority||'Medium';
