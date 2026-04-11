@@ -5,6 +5,44 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v1.6.0 — April 2026
+
+### Fixed
+- Constants self-reference bug (`CLAUDE_MODEL = CLAUDE_MODEL`) causing `ReferenceError` on load
+
+### Optimised — Code Quality
+- Extracted API model names into constants (`CLAUDE_MODEL`, `GROQ_MODEL`, `GPT_MODEL`, `GEMINI_MODEL`) — single place to update on model changes
+- Extracted `claudeHeaders(key)` helper — replaces 5× repeated Claude header objects
+- GPT-4o and Gemini vision functions now correctly use `cssCtx` and `sys` parameters — no more inline `el('cssInput').value` reads inside API calls
+
+### Optimised — Token Savings
+- Groq evaluator: compact prompt (~150 tokens vs ~530), `max_tokens` reduced from 400 → 200 — ~60% cheaper per Groq call
+- Best practice lookup: `max_tokens` reduced from 1000 → 700
+- Region audit: now injects CSS context correctly
+- Gemini URL uses `GEMINI_MODEL` constant
+
+---
+
+## v1.5.0 — April 2026
+
+### Optimised — Performance
+- **Screenshot compression** — images resized to max 1280 px, JPEG 85% quality before sending; saves ~75% vision tokens; size shown in preview
+- **Claude Prompt Caching** — system prompt cached with `cache_control: ephemeral`; ~90% cheaper on repeated audits within 5 minutes
+- **Parallel model execution** — all vision and evaluator models run concurrently via `Promise.all`; ~50% faster with multiple models
+- **`visionSystem()` cached once per audit** — built once before `Promise.all`, passed as parameter to all model calls
+- **CSS input debounced** — `parseCSSLive()` fires 300ms after last keystroke instead of on every keypress
+- **Font-display: swap** — Google Fonts no longer blocks first render; fallback font shown immediately
+- **Canvas redraw guard** — annotations only redrawn when active index changes
+- **Upload listener guard** — event listeners attached only once via `_listenersAttached` flag
+
+### Fixed
+- NaN combined score when evaluator models return fewer than 10 scores
+- `temperature: 0` set on all 8 API calls
+- All prompts updated from 7 to 10 Nielsen heuristic scores
+- Anti-hallucination instructions added to vision and evaluator prompts
+
+---
+
 ## v1.4.0 — April 2026
 
 ### Added

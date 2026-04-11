@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>UX Audit — Multi-model Analysis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap&font-display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet"/></noscript>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -530,6 +532,23 @@ font-weight: 500;"></textarea>
 
 // Element cache — avoids repeated DOM lookups
 const el = id => document.getElementById(id);
+
+// API constants — update model names here only
+const CLAUDE_MODEL  = 'claude-sonnet-4-20250514';
+const GROQ_MODEL    = 'llama-3.3-70b-versatile';
+const GPT_MODEL     = 'gpt-4o';
+const GEMINI_MODEL  = 'gemini-1.5-flash-latest';
+const ANTHROPIC_VER = '2023-06-01';
+
+// Claude headers helper — avoids repeating 4 header keys every call
+function claudeHeaders(key, extra={}){
+  return Object.assign({
+    'Content-Type':'application/json',
+    'x-api-key':key,
+    'anthropic-version':ANTHROPIC_VER,
+    'anthropic-dangerous-direct-browser-access':'true'
+  }, extra);
+}
 const DIMS=[
   'Visibility of system status',
   'Match with real world',
@@ -563,11 +582,15 @@ let activeAnnIdx=-1;
 const uploadArea=document.getElementById('uploadArea');
 const fileInput=document.getElementById('fileInput');
 
-uploadArea.addEventListener('click',()=>fileInput.click());
-uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag')});
-uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag'));
-uploadArea.addEventListener('drop',e=>{e.preventDefault();uploadArea.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
-fileInput.addEventListener('change',e=>handleFile(e.target.files[0]));
+// Guard: only attach once even if script re-runs
+if(!uploadArea._listenersAttached){
+  uploadArea.addEventListener('click',()=>fileInput.click());
+  uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag')});
+  uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag'));
+  uploadArea.addEventListener('drop',e=>{e.preventDefault();uploadArea.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
+  fileInput.addEventListener('change',e=>handleFile(e.target.files[0]));
+  uploadArea._listenersAttached=true;
+}
 
 function handleFile(file){
   if(!file||!file.type.startsWith('image/'))return;
@@ -765,11 +788,11 @@ The 10 scores map in order to Nielsen's heuristics: Visibility of system status,
 }
 
 // --- API calls ---
-async function callClaudeVision(key,base64,mime,url,cssCtx=''){
-  const sysPrompt=visionSystem()+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'');
+async function callClaudeVision(key,base64,mime,url,cssCtx='',sys=null){
+  const sysPrompt=(sys||visionSystem())+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'');
   const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-beta':'prompt-caching-2024-07-31','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,temperature:0,
+    headers:claudeHeaders(key,{'anthropic-beta':'prompt-caching-2024-07-31'}),
+    body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1500,temperature:0,
       system:[{type:'text',text:sysPrompt,cache_control:{type:'ephemeral'}}],
       messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mime,data:base64}},
@@ -779,24 +802,26 @@ async function callClaudeVision(key,base64,mime,url,cssCtx=''){
   return parseJSON((await r.json()).content[0].text);
 }
 
-async function callGPTVision(key,base64,mime,url,cssCtx=''){
+async function callGPTVision(key,base64,mime,url,cssCtx='',sys=null){
+  const prompt=(sys||visionSystem())+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.';
   const content=[
-    {type:'text',text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
+    {type:'text',text:prompt},
     {type:'image_url',image_url:{url:`data:${mime};base64,${base64}`}}
   ];
   const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-    body:JSON.stringify({model:'gpt-4o',max_tokens:1500,temperature:0,messages:[{role:'user',content}]})});
+    body:JSON.stringify({model:GPT_MODEL,max_tokens:1500,temperature:0,messages:[{role:'user',content}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'GPT-4o error')}
   return parseJSON((await r.json()).choices[0].message.content);
 }
 
-async function callGeminiVision(key,base64,mime,url,cssCtx=''){
+async function callGeminiVision(key,base64,mime,url,cssCtx='',sys=null){
+  const prompt=(sys||visionSystem())+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.';
   const parts=[
-    {text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'},
+    {text:prompt},
     {inline_data:{mime_type:mime,data:base64}}
   ];
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,{method:'POST',
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,{method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0,maxOutputTokens:1500}})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Gemini error')}
@@ -807,8 +832,8 @@ async function callClaudeEval(key,findingsSummary){
   // Split evaluatorSystem into cached static part + dynamic findings
   const staticPart='You are a senior UX/UI auditor providing scoring based on provided findings.\n\nCRITICAL RULES:\n- Base your scores ONLY on the findings listed. Do not invent additional issues.\n- Score 1–4 = serious problem. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.\n- If a heuristic is not mentioned in the findings, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n],"notes":"brief assessment"}\nThe 10 scores map to Nielsen\'s heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.';
   const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-beta':'prompt-caching-2024-07-31','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,temperature:0,
+    headers:claudeHeaders(key,{'anthropic-beta':'prompt-caching-2024-07-31'}),
+    body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:400,temperature:0,
       system:[{type:'text',text:staticPart,cache_control:{type:'ephemeral'}}],
       messages:[{role:'user',content:'Here are the findings to score:\n\n'+findingsSummary}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
@@ -817,10 +842,12 @@ async function callClaudeEval(key,findingsSummary){
 
 
 async function callGroqEval(key,findingsSummary){
-  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+  // Use same compact prompt as Claude eval — avoids sending full evaluatorSystem() string
+  const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
+  const r=await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-    body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:400,temperature:0,
-      messages:[{role:'user',content:evaluatorSystem(findingsSummary)}]})});
+    body:JSON.stringify({model:GROQ_MODEL,max_tokens:200,temperature:0,
+      messages:[{role:'user',content:prompt}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
   return parseJSON((await r.json()).choices[0].message.content);
 }
@@ -995,10 +1022,12 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
 }
 
 window.selectAnnotation=function(idx){
+  const prev=activeAnnIdx;
   activeAnnIdx=idx;
   const img=el('annotatedImg');
   const canvas=el('annotationCanvas');
-  drawAnnotations(currentAnnotations,img,canvas);
+  // Only do full redraw if active state changed — avoids full canvas repaint on every click
+  if(prev!==idx) drawAnnotations(currentAnnotations,img,canvas);
   document.querySelectorAll('.ann-item').forEach((el,i)=>el.classList.toggle('active-ann',i===idx));
 };
 
@@ -1054,12 +1083,13 @@ async function startAudit(){
 
     // Vision models — run in parallel for speed
     renderStep(step++);
+    const _sys=visionSystem(); // build once, reuse across all model calls
     const visionResults=[];
     const visionCalls=visionIds.map(id=>{
       const call=
-        id==='claude'?callClaudeVision(keys[id],b64,mime,url,_cssCtx):
-        id==='openai'?callGPTVision(keys[id],b64,mime,url,_cssCtx):
-        id==='gemini'?callGeminiVision(keys[id],b64,mime,url,_cssCtx):null;
+        id==='claude'?callClaudeVision(keys[id],b64,mime,url,_cssCtx,_sys):
+        id==='openai'?callGPTVision(keys[id],b64,mime,url,_cssCtx,_sys):
+        id==='gemini'?callGeminiVision(keys[id],b64,mime,url,_cssCtx,_sys):null;
       if(!call)return null;
       return call.then(data=>{if(data)visionResults.push({id,data});})
                  .catch(e=>console.warn(id,'vision failed:',e.message));
@@ -1128,7 +1158,11 @@ function toggleCSSInput(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  el('cssInput').addEventListener('input',parseCSSLive);
+  let _cssDebounce=null;
+  el('cssInput').addEventListener('input',()=>{
+    clearTimeout(_cssDebounce);
+    _cssDebounce=setTimeout(parseCSSLive,300);
+  });
 });
 
 function parseCSSColors(css){
@@ -1453,10 +1487,12 @@ async function auditRegion(){
   btn.disabled=true;
 
   try{
-    const prompt=visionSystem()+'\n\nAnalyze this cropped UI component in detail. This is a selected region from a larger page — focus deeply on this specific component.';
+    const _cssCtxR=el('cssInput').value.trim();
+    const prompt=visionSystem()+(_cssCtxR?'\n\nCSS provided:\n'+_cssCtxR.slice(0,1500):'')+
+      '\n\nAnalyze this cropped UI component in detail. This is a selected region from a larger page — focus deeply on this specific component.';
     const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,temperature:0,
+      headers:claudeHeaders(claudeKey),
+      body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1500,temperature:0,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:'image/jpeg',data:croppedB64}},
           {type:'text',text:prompt}
@@ -1568,15 +1604,15 @@ Generate a concrete before/after fix. Respond ONLY with valid JSON, no markdown:
       // Groq — free, fast, good enough for code fixes
       const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
-        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:600,temperature:0,
+        body:JSON.stringify({model:GROQ_MODEL,max_tokens:600,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error');}
       raw=(await r.json()).choices[0].message.content;
     } else {
       // Claude fallback
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,temperature:0,
+        headers:claudeHeaders(claudeKey),
+        body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:600,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error');}
       raw=(await r.json()).content.find(b=>b.type==='text')?.text||'{}';
@@ -1666,10 +1702,10 @@ Be specific, cite real companies (Stripe, Linear, Apple, Airbnb, etc.). No gener
     if(claudeKey){
       // Claude with web search tool
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        headers:claudeHeaders(claudeKey),
         body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:1000,
+          model:CLAUDE_MODEL,
+          max_tokens:700,
           tools:[{type:'web_search_20250305',name:'web_search'}],
           messages:[{role:'user',content:prompt}]
         })});
@@ -1681,7 +1717,7 @@ Be specific, cite real companies (Stripe, Linear, Apple, Airbnb, etc.). No gener
       // Groq fallback (no web search but still useful)
       const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
-        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:600,temperature:0,
+        body:JSON.stringify({model:GROQ_MODEL,max_tokens:600,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
       raw=(await r.json()).choices[0].message.content;
