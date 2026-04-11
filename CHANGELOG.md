@@ -5,6 +5,31 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v1.7.0 — April 2026
+
+### Added
+- **Frontend framework dropdown** in Audit Context card — Angular, React, Vue 3, Svelte, or Generic HTML/CSS; "Generate fix →" produces framework-specific code
+- **Angular fix prompt** — generates real Angular 17+ code: `@Component` template syntax, TypeScript class, SCSS; Before/After labelled as `component.html` / `component.ts` / `component.scss`
+- **Groq CORS proxy fallback** — all Groq calls (eval, fix, best practice) automatically retry via `corsproxy.io` when blocked by GitHub Pages CORS; no warning shown to user
+
+### Fixed
+- `AbortSignal object could not be cloned` — replaced `fetchWithTimeout` spread `{...opts, signal}` with plain `fetch()` for all vision calls; removed AbortController entirely from large-payload requests
+- Groq `Failed to fetch` warning suppressed — CORS failures fail silently, Claude covers scoring
+- `Canvas2D: willReadFrequently` warning — added `{willReadFrequently:true}` to both `sampleColors()` and `runWCAGCheck()` canvas contexts
+
+### Improved — PDF Export
+- **Score Summary table** — fixed column positions (`COL_NUM`, `COL_NAME`, `COL_BAR`, `COL_SCORE`, `COL_RATING`); score and rating now on the same baseline; rating no longer overlaps score number
+- **Heuristic pages** — large number and title correctly baseline-aligned; two-column divider drawn per finding instead of fixed 100mm; Recommendations column shows real actionable text instead of copy-pasting the issue description
+- **Block height** pre-calculated from actual line counts — no more text overflow or overlapping between findings
+- **Heuristic matching** rewritten with keyword list per heuristic — findings reliably appear under the correct heuristic page
+
+### Improved — Best Practice panel
+- New structured layout: "Why it matters" with source citation and clickable link; company examples with coloured initials badge and ↗ source link; Quick Fix in green accent block
+- Prompt updated to request `source`, `source_url` fields for verifiable citations
+- Raw JSON no longer shown on parse failure — falls back to clean text rendering
+
+---
+
 ## v1.6.0 — April 2026
 
 ### Fixed

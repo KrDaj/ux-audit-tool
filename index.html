@@ -373,6 +373,16 @@ font-weight: 500;"></textarea>
             <option value="simple">High / Medium / Low</option>
           </select>
         </div>
+        <div class="context-row">
+          <label class="context-label">Frontend framework</label>
+          <select class="context-select" id="frameworkSelect">
+            <option value="">Generic HTML / CSS</option>
+            <option value="angular">Angular (TypeScript + SCSS)</option>
+            <option value="react">React (JSX + CSS Modules)</option>
+            <option value="vue">Vue 3 (Composition API)</option>
+            <option value="svelte">Svelte</option>
+          </select>
+        </div>
       </div>
 
       <div class="context-label" style="margin-bottom:8px">Persona (optional — all fields optional)</div>
@@ -657,12 +667,13 @@ function parseJSON(raw){return JSON.parse(raw.replace(/```json|```/g,'').trim())
 
 // Fetch with timeout
 async function fetchWithTimeout(url,opts,ms=30000){
-  const ctrl=new AbortController();
-  const id=setTimeout(()=>ctrl.abort(),ms);
   try{
-    const r=await fetch(url,{...opts,signal:ctrl.signal});
-    return r;
-  }finally{clearTimeout(id);}
+    // AbortSignal.timeout() avoids the postMessage clone error with large base64 payloads
+    return await fetch(url,Object.assign({},opts,{signal:AbortSignal.timeout(ms)}));
+  }catch(e){
+    if(e.name==='TimeoutError'||e.name==='AbortError')throw new Error('Request timed out after '+Math.round(ms/1000)+'s');
+    throw e;
+  }
 }
 
 // --- Vision system prompt ---
@@ -790,7 +801,7 @@ The 10 scores map in order to Nielsen's heuristics: Visibility of system status,
 // --- API calls ---
 async function callClaudeVision(key,base64,mime,url,cssCtx='',sys=null){
   const sysPrompt=(sys||visionSystem())+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'');
-  const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:claudeHeaders(key,{'anthropic-beta':'prompt-caching-2024-07-31'}),
     body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1500,temperature:0,
       system:[{type:'text',text:sysPrompt,cache_control:{type:'ephemeral'}}],
@@ -831,7 +842,7 @@ async function callGeminiVision(key,base64,mime,url,cssCtx='',sys=null){
 async function callClaudeEval(key,findingsSummary){
   // Split evaluatorSystem into cached static part + dynamic findings
   const staticPart='You are a senior UX/UI auditor providing scoring based on provided findings.\n\nCRITICAL RULES:\n- Base your scores ONLY on the findings listed. Do not invent additional issues.\n- Score 1–4 = serious problem. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.\n- If a heuristic is not mentioned in the findings, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n],"notes":"brief assessment"}\nThe 10 scores map to Nielsen\'s heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.';
-  const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:claudeHeaders(key,{'anthropic-beta':'prompt-caching-2024-07-31'}),
     body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:400,temperature:0,
       system:[{type:'text',text:staticPart,cache_control:{type:'ephemeral'}}],
@@ -842,13 +853,30 @@ async function callClaudeEval(key,findingsSummary){
 
 
 async function callGroqEval(key,findingsSummary){
-  // Use same compact prompt as Claude eval — avoids sending full evaluatorSystem() string
   const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
-  const r=await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-    body:JSON.stringify({model:GROQ_MODEL,max_tokens:200,temperature:0,
-      messages:[{role:'user',content:prompt}]})});
-  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
+
+  const body=JSON.stringify({model:GROQ_MODEL,max_tokens:200,temperature:0,
+    messages:[{role:'user',content:prompt}]});
+  const headers={'Content-Type':'application/json','Authorization':`Bearer ${key}`};
+
+  // Try direct first, fall back to CORS proxy if blocked (GitHub Pages)
+  async function tryFetch(url){
+    const r=await fetch(url,{method:'POST',headers,body});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error');}
+    return r;
+  }
+
+  let r;
+  try{
+    r=await tryFetch('https://api.groq.com/openai/v1/chat/completions');
+  }catch(e){
+    if(e.message==='Failed to fetch'||e.message.includes('CORS')||e.message.includes('NetworkError')){
+      // Direct blocked (GitHub Pages CORS) — retry via proxy
+      r=await tryFetch('https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions');
+    } else {
+      throw e;
+    }
+  }
   return parseJSON((await r.json()).choices[0].message.content);
 }
 
@@ -1127,7 +1155,11 @@ async function startAudit(){
           id==='groq'?callGroqEval(keys[id],findingsSummary):null;
         if(!call)return null;
         return call.then(res=>{if(res?.scores){allScores.push(res.scores);allModelIds.push(id);}})
-                   .catch(e=>console.warn(id,'eval failed:',e.message));
+                   .catch(e=>{
+                     // Groq fails with CORS on GitHub Pages — fail silently, Claude covers scoring
+                     if(e.message==='Failed to fetch'||e.message.includes('CORS'))return;
+                     console.warn(id,'eval failed:',e.message);
+                   });
       }).filter(Boolean);
       await Promise.all(evalCalls);
     }
@@ -1251,7 +1283,8 @@ function getContrastRatio(l1,l2){
 
 
 function sampleColors(canvas,regions=20){
-  const ctx=canvas.getContext('2d');
+  // willReadFrequently avoids repeated GPU→CPU readback penalty
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
   const W=canvas.width;
   const H=canvas.height;
   const pairs=[];
@@ -1286,7 +1319,7 @@ async function runWCAGCheck(imageDataUrl){
       const c=document.createElement('canvas');
       c.width=img.naturalWidth;
       c.height=img.naturalHeight;
-      c.getContext('2d').drawImage(img,0,0);
+      c.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0);
       const pairs=sampleColors(c,16);
 
       // group into worst, borderline, passing
@@ -1490,7 +1523,7 @@ async function auditRegion(){
     const _cssCtxR=el('cssInput').value.trim();
     const prompt=visionSystem()+(_cssCtxR?'\n\nCSS provided:\n'+_cssCtxR.slice(0,1500):'')+
       '\n\nAnalyze this cropped UI component in detail. This is a selected region from a larger page — focus deeply on this specific component.';
-    const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:claudeHeaders(claudeKey),
       body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1500,temperature:0,
         messages:[{role:'user',content:[
@@ -1574,25 +1607,54 @@ async function loadFix(idx,btn){
   panel.classList.add('open');
 
   const cssCtx=el('cssInput').value.trim();
-  const prompt=`You are a UX engineer. A UX audit found this issue:
+  const framework=document.getElementById('frameworkSelect')?.value||'';
+  const frameworkMap={
+    'angular':'Angular (TypeScript component + SCSS)',
+    'react':'React (JSX + CSS Modules)',
+    'vue':'Vue 3 (Composition API + scoped CSS)',
+    'svelte':'Svelte (component syntax)'
+  };
+  const fwLabel=frameworkMap[framework]||'Generic HTML / CSS';
+
+  const prompt=`You are a senior frontend engineer specialising in ${fwLabel}. A UX audit found this issue:
 
 Dimension: ${ann.dimension}
 Heuristic: ${ann.title}
 Problem: ${ann.description}
-${cssCtx?`\nExisting CSS context:\n${cssCtx.slice(0,1000)}`:''}
+${cssCtx?`\nExisting CSS/design tokens:\n${cssCtx.slice(0,1000)}`:''}
 
-Generate a concrete before/after fix. Respond ONLY with valid JSON, no markdown:
+Generate a realistic before/after code fix in ${fwLabel}.
+
+${framework==='angular'?`ANGULAR REQUIREMENTS — mandatory:
+- "before" code: show the problematic .component.html template snippet (with realistic *ngIf, *ngFor, [binding], (event) syntax as relevant) AND the broken .component.ts class property/method if relevant
+- "after" code: show the fixed .component.html AND fixed .component.ts AND any .component.scss changes
+- Use Angular 17+ syntax: standalone components, signals or standard @Input/@Output, proper typing
+- No comments explaining what Angular is — write actual working code
+- Format multiline code with real newlines using \\n`:''}
+${framework==='react'?`REACT REQUIREMENTS — mandatory:
+- Use functional components with hooks (useState, useEffect, useMemo as needed)
+- Show JSX + any CSS Module class changes
+- TypeScript props interface if relevant`:''}
+${framework==='vue'?`VUE REQUIREMENTS — mandatory:
+- Use <template>, <script setup lang="ts">, <style scoped>
+- Composition API with ref/computed/defineProps`:''}
+${framework==='svelte'?`SVELTE REQUIREMENTS — mandatory:
+- Use <script lang="ts">, markup, <style>
+- Svelte reactivity ($:, stores) as relevant`:''}
+${!framework?'Show generic HTML + CSS. Keep it concise and realistic.':''}
+
+Respond ONLY with valid JSON, no markdown fences:
 {
-  "problem_summary": "one sentence what exactly is wrong",
+  "problem_summary": "one sentence describing the exact UX problem",
   "before": {
-    "label": "Current (broken)",
-    "code": "the problematic CSS or HTML snippet, max 8 lines"
+    "label": "${framework==='angular'?'component.html (broken)':framework==='react'?'Component.tsx (broken)':framework==='vue'?'Component.vue (broken)':'Before'}",
+    "code": "realistic broken code snippet in ${fwLabel}, max 12 lines, use \\n for newlines"
   },
   "after": {
-    "label": "Fixed",
-    "code": "the corrected CSS or HTML snippet, max 8 lines"
+    "label": "${framework==='angular'?'component.html + .ts + .scss (fixed)':framework==='react'?'Component.tsx (fixed)':framework==='vue'?'Component.vue (fixed)':'After'}",
+    "code": "realistic fixed code snippet in ${fwLabel}, max 14 lines, use \\n for newlines"
   },
-  "explanation": "1-2 sentences why this fix works",
+  "explanation": "1-2 sentences: what changed and why it fixes the UX issue",
   "impact": "High|Medium|Low"
 }`;
 
@@ -1602,17 +1664,19 @@ Generate a concrete before/after fix. Respond ONLY with valid JSON, no markdown:
 
     if(groqKey){
       // Groq — free, fast, good enough for code fixes
-      const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
-        body:JSON.stringify({model:GROQ_MODEL,max_tokens:600,temperature:0,
-          messages:[{role:'user',content:prompt}]})});
-      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error');}
-      raw=(await r.json()).choices[0].message.content;
+      const _groqBody=JSON.stringify({model:GROQ_MODEL,max_tokens:900,temperature:0,
+        messages:[{role:'user',content:prompt}]});
+      const _groqHeaders={'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`};
+      let _gr;
+      try{ _gr=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:_groqHeaders,body:_groqBody}); }
+      catch(e){ _gr=await fetch('https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:_groqHeaders,body:_groqBody}); }
+      if(!_gr.ok){const e=await _gr.json();throw new Error(e.error?.message||'Groq error');}
+      raw=(await _gr.json()).choices[0].message.content;
     } else {
       // Claude fallback
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
         headers:claudeHeaders(claudeKey),
-        body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:600,temperature:0,
+        body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:900,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error');}
       raw=(await r.json()).content.find(b=>b.type==='text')?.text||'{}';
@@ -1623,7 +1687,7 @@ Generate a concrete before/after fix. Respond ONLY with valid JSON, no markdown:
     const impactBg=parsed.impact==='High'?'#FAECE7':parsed.impact==='Low'?'#EAF3DE':'#FAEEDA';
 
     panel.innerHTML=`
-      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Generated by ${usedModel}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Generated by ${usedModel} · ${fwLabel}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">${parsed.problem_summary||''}</div>
       <div class="fix-before-after">
         <div class="fix-box">
@@ -1681,71 +1745,96 @@ Dimension: ${ann.dimension}
 Issue: ${ann.title}
 Details: ${ann.description}
 
-Search the web and provide:
-1. Why this matters (1-2 sentences, data-backed if possible)
-2. 2-3 concrete real-world examples of companies doing this WELL (name the company, what they do specifically)
-3. One actionable quick fix for this specific issue
+Search the web and find authoritative sources. Provide:
+1. Why this matters — cite a specific study, statistic or source (include the source name)
+2. 2-3 concrete real-world examples of companies doing this WELL — name the company, describe exactly what they do, and provide their actual URL
+3. One specific, actionable quick fix
 
-Format your response as JSON:
+Format ONLY as JSON, no markdown:
 {
-  "why": "string",
+  "why": "string with specific data point",
+  "source": "name of study/publication/company that produced the data",
+  "source_url": "url to source or null",
   "examples": [
-    {"company": "string", "what": "string", "url": "string or null"}
+    {
+      "company": "Company name",
+      "what": "Exactly what they do and why it works",
+      "url": "https://actual-url.com or null"
+    }
   ],
-  "quickfix": "string"
+  "quickfix": "Concrete actionable sentence"
 }
 
-Be specific, cite real companies (Stripe, Linear, Apple, Airbnb, etc.). No generic advice.`;
+Be specific. Cite real companies. No generic advice.`;
 
   try{
     let raw;
     if(claudeKey){
-      // Claude with web search tool
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
         headers:claudeHeaders(claudeKey),
         body:JSON.stringify({
           model:CLAUDE_MODEL,
-          max_tokens:700,
+          max_tokens:800,
           tools:[{type:'web_search_20250305',name:'web_search'}],
           messages:[{role:'user',content:prompt}]
         })});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
       const d=await r.json();
-      // extract text from content blocks
       raw=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     } else {
-      // Groq fallback (no web search but still useful)
-      const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`},
-        body:JSON.stringify({model:GROQ_MODEL,max_tokens:600,temperature:0,
-          messages:[{role:'user',content:prompt}]})});
-      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error')}
-      raw=(await r.json()).choices[0].message.content;
+      const _groqBody2=JSON.stringify({model:GROQ_MODEL,max_tokens:700,temperature:0,
+        messages:[{role:'user',content:prompt}]});
+      const _groqHeaders2={'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`};
+      let _gr2;
+      try{ _gr2=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:_groqHeaders2,body:_groqBody2}); }
+      catch(e){ _gr2=await fetch('https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:_groqHeaders2,body:_groqBody2}); }
+      if(!_gr2.ok){const e=await _gr2.json();throw new Error(e.error?.message||'Groq error')}
+      raw=(await _gr2.json()).choices[0].message.content;
     }
 
     let data;
     try{ data=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
-    catch(e){ 
-      // fallback: show raw text nicely
-      panel.innerHTML=`<div class="bp-content">${raw.replace(/\n/g,'<br>')}</div>`;
+    catch(e){
+      panel.innerHTML=`<div class="bp-content">${raw.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
       btn.textContent='Best practice ↑';
       btn.dataset.loaded='true';
       btn.disabled=false;
       return;
     }
 
+    // ── Render beautifully ──
+    const sourceHtml=data.source
+      ? `<a href="${data.source_url||'#'}" target="_blank" rel="noopener" style="font-size:10px;color:var(--green);text-decoration:none;border-bottom:1px solid var(--green);padding-bottom:1px">↗ ${data.source}</a>`
+      : '';
+
+    const examplesHtml=(data.examples||[]).map((ex,i)=>{
+      const colors=['#DC0018','#D97706','#1A7A4A'];
+      const c=colors[i]||'#888';
+      return`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border)">
+        <div style="width:28px;height:28px;border-radius:2px;background:${c}18;border:1px solid ${c}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:${c}">${ex.company.slice(0,2).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px;display:flex;align-items:center;gap:6px">
+            ${ex.company}
+            ${ex.url?`<a href="${ex.url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--green);font-weight:400;text-decoration:none;border-bottom:1px solid var(--green)">↗ source</a>`:''}
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.55">${ex.what}</div>
+        </div>
+      </div>`;
+    }).join('');
+
     panel.innerHTML=`
-      <div class="bp-content">
-        <strong>Why it matters</strong><br>
-        ${data.why||''}<br><br>
-        <strong>Who does it well</strong>
-        ${(data.examples||[]).map(ex=>`
-          <div class="bp-example">
-            <div class="bp-example-title">${ex.company}${ex.url?` · <a href="${ex.url}" target="_blank" rel="noopener">${ex.url.replace(/https?:\/\//,'').split('/')[0]}</a>`:''}</div>
-            <div class="bp-example-desc">${ex.what}</div>
-          </div>`).join('')}
-        <br><strong>Quick fix</strong><br>
-        ${data.quickfix||''}
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:5px">Why it matters</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">${data.why||''}</div>
+        ${sourceHtml?`<div style="margin-top:6px">${sourceHtml}</div>`:''}
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:8px">Who does it well</div>
+        ${examplesHtml}
+      </div>
+      <div style="background:var(--green-bg);border-left:3px solid var(--green);padding:10px 12px;border-radius:0 2px 2px 0">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);margin-bottom:4px">Quick fix</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.55">${data.quickfix||''}</div>
       </div>`;
 
     btn.textContent='Best practice ↑';
@@ -1929,190 +2018,245 @@ async function exportPDF(){
   // PAGE 3 — Scores summary table
   // ══════════════════════════════
   newPage();
-  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
-  doc.text('Score Summary',ML,y);y+=4;
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+  doc.text('Score Summary',ML,y);y+=5;
   doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
-  doc.line(ML,y,PW-MR,y);y+=6;
+  doc.line(ML,y,PW-MR,y);y+=8;
+
+  // Column positions — fixed, consistent
+  const COL_NUM=ML;
+  const COL_NAME=ML+10;
+  const COL_BAR=ML+105;
+  const BAR_W=30;
+  const COL_SCORE=COL_BAR+BAR_W+4;
+  const COL_RATING=PW-MR;
+  const ROW_H=10;
 
   // Table header
   doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(100,98,94);
-  doc.text('#',ML,y);
-  doc.text('Heuristic',ML+8,y);
-  doc.text('Score',PW-MR-20,y,{align:'right'});
-  doc.text('Rating',PW-MR,y,{align:'right'});
-  y+=3;
+  doc.text('#',COL_NUM,y);
+  doc.text('Heuristic',COL_NAME,y);
+  doc.text('Score',COL_SCORE,y);
+  doc.text('Rating',COL_RATING,y,{align:'right'});
+  y+=2;
   doc.setDrawColor(200,198,194);doc.setLineWidth(0.2);
-  doc.line(ML,y,PW-MR,y);y+=5;
+  doc.line(ML,y,PW-MR,y);
+  y+=ROW_H*0.4;
 
   const scoreEls=document.querySelectorAll('#scoreOverview .score-card');
   scoreEls.forEach((card,i)=>{
     const num=parseFloat(card.querySelector('.score-num')?.textContent)||0;
     const col=scCol(num);
     const rating=num>=8?'Good':num>=6?'Needs improvement':'Poor';
-    if(i%2===0){doc.setFillColor(250,250,248);doc.rect(ML,y-3,CW,8,'F');}
+    const rowY=y;
 
-    // Number — red like NNG
+    // Alternating row background
+    if(i%2===0){
+      doc.setFillColor(250,250,248);
+      doc.rect(ML,rowY-1,CW,ROW_H,'F');
+    }
+
+    // Number
     doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(220,0,24);
-    doc.text(String(i+1),ML+1,y+2);
+    doc.text(String(i+1),COL_NUM+2,rowY+5.5,{align:'center'});
 
-    // Heuristic name
+    // Heuristic name — vertically centred in row
     doc.setFont('helvetica','normal');doc.setTextColor(26,26,24);
-    doc.text(HEURISTIC_FULL[i],ML+8,y+2);
+    const nameLines=doc.splitTextToSize(HEURISTIC_FULL[i],COL_BAR-COL_NAME-4);
+    const nameY=nameLines.length>1?rowY+3:rowY+5.5;
+    doc.text(nameLines,COL_NAME,nameY);
 
-    // Score bar
-    const barX=ML+105, barW=25;
+    // Score bar — vertically centred
+    const barY=rowY+3.5;
     doc.setFillColor(220,218,214);
-    doc.rect(barX,y,barW,3,'F');
+    doc.rect(COL_BAR,barY,BAR_W,3,'F');
     doc.setFillColor(...col);
-    doc.rect(barX,y,(num/10)*barW,3,'F');
+    doc.rect(COL_BAR,barY,(num/10)*BAR_W,3,'F');
 
     // Score number
     doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...col);
-    doc.text(num.toFixed(1),PW-MR-22,y+2.5,{align:'right'});
+    doc.text(num.toFixed(1),COL_SCORE+8,rowY+5.5);
 
-    // Rating label
+    // Rating label — right aligned, same baseline as score
     doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...col);
-    doc.text(rating,PW-MR,y+2.5,{align:'right'});
+    doc.text(rating,COL_RATING,rowY+5.5,{align:'right'});
 
-    y+=8;
+    y+=ROW_H;
   });
 
-  y+=6;
+  y+=4;
   doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
-  doc.line(ML,y,PW-MR,y);y+=8;
+  doc.line(ML,y,PW-MR,y);
+  y+=10;
 
-  // Overall scores
+  // Overall scores — clean label/value pairs
   const overallEls=document.querySelectorAll('#overallRow .overall-card');
   overallEls.forEach(card=>{
     const lbl=card.querySelector('.oc-label')?.textContent||'';
     const num=parseFloat(card.querySelector('.oc-score')?.textContent)||0;
     const sub=card.querySelector('.oc-model')?.textContent||'';
     const col=scCol(num);
-    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+    doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
     doc.text(lbl+':',ML,y);
     doc.setFont('helvetica','bold');doc.setTextColor(...col);
-    doc.text(num.toFixed(1)+' / 10',ML+30,y);
-    doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
-    doc.text('('+sub+')',ML+55,y);
-    y+=6;
+    doc.text(num.toFixed(1)+' / 10',ML+38,y);
+    doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(160,158,154);
+    doc.text('('+sub+')',ML+65,y);
+    y+=7;
   });
 
   // ══════════════════════════════
   // PAGES 4+ — One section per heuristic (NNG style)
   // ══════════════════════════════
 
-  // Group annotations by heuristic dimension
-  const byHeuristic={};
-  currentAnnotations.forEach(ann=>{
-    const dim=ann.dimension||'';
-    if(!byHeuristic[dim]) byHeuristic[dim]=[];
-    byHeuristic[dim].push(ann);
-  });
+  // Map annotations to heuristics by matching dimension to heuristic title words
+  const HEURISTIC_KEYS=[
+    ['visibility','system status'],
+    ['match','real world','language'],
+    ['control','freedom','exit','undo'],
+    ['consistency','standards','convention'],
+    ['error prevention','prevent'],
+    ['recognition','recall','memory'],
+    ['flexibility','efficiency','shortcut'],
+    ['aesthetic','minimalist','design'],
+    ['recover','diagnose','error message'],
+    ['help','documentation']
+  ];
+
+  function matchHeuristic(dimension, hi){
+    const d=(dimension||'').toLowerCase();
+    // Direct match with full heuristic name
+    if(d===HEURISTIC_FULL[hi].toLowerCase()) return true;
+    // Match by keyword
+    return HEURISTIC_KEYS[hi].some(k=>d.includes(k));
+  }
 
   HEURISTIC_FULL.forEach((hTitle,hi)=>{
     newPage();
 
-    // Heuristic number — large red, NNG style
-    doc.setFontSize(48);doc.setFont('helvetica','bold');doc.setTextColor(220,0,24);
-    doc.text(String(hi+1),ML,y+12);
+    // Large heuristic number — NNG style, baseline aligned with title
+    const numStr=String(hi+1);
+    doc.setFontSize(42);doc.setFont('helvetica','bold');doc.setTextColor(220,0,24);
+    doc.text(numStr,ML,y+14);
+    const numW=hi>=9?20:14;
 
-    // Title next to number
-    const numW=hi<9?18:24;
-    const titleLines=doc.splitTextToSize(hTitle,CW-numW);
+    // Title — aligned to right of number
+    const titleLines=doc.splitTextToSize(hTitle,CW-numW-4);
     doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+    const titleStartY=titleLines.length===1?y+14:y+9;
     titleLines.forEach((line,li)=>{
-      doc.text(line,ML+numW,y+(li*8));
+      doc.text(line,ML+numW+4,titleStartY+li*8);
     });
-    y+=Math.max(20,titleLines.length*8+4);
+    y+=Math.max(22,titleLines.length*8+10);
 
-    // Description
+    // Heuristic description
     doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
     const descLines=doc.splitTextToSize(HEURISTIC_DESC[hi],CW);
     doc.text(descLines,ML,y);
-    y+=descLines.length*5+8;
+    y+=descLines.length*5.5+10;
 
-    // Divider
+    // Section divider
     doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
-    doc.line(ML,y,PW-MR,y);y+=6;
+    doc.line(ML,y,PW-MR,y);
+    y+=8;
 
-    // Two-column header: Issues | Recommendations
-    const colMid=ML+CW*0.45;
-    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+    // Two-column layout — fixed split
+    const COL2=ML+CW*0.46;    // start of recommendations column
+    const W_ISSUES=COL2-ML-6;
+    const W_RECS=PW-MR-COL2-2;
+
+    // Column headers
+    doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
     doc.text('Issues',ML,y);
-    doc.text('Recommendations',colMid+4,y);
-    y+=3;
+    doc.text('Recommendations',COL2,y);
+    y+=4;
+
+    // Header underline
     doc.setDrawColor(200,198,194);doc.setLineWidth(0.2);
     doc.line(ML,y,PW-MR,y);
-    doc.line(colMid,y,colMid,y+100); // column divider — drawn long, clipped by content
-    y+=5;
+    y+=6;
 
-    // Find annotations for this heuristic
-    const matchKey=DIMS_SHORT[hi]||hTitle;
-    const anns=currentAnnotations.filter(a=>{
-      const d=(a.dimension||'').toLowerCase();
-      return d===hTitle.toLowerCase()||
-             d===matchKey.toLowerCase()||
-             d.includes(hTitle.toLowerCase().split(' ')[0]);
-    });
+    // Find matching annotations
+    const anns=currentAnnotations.filter(a=>matchHeuristic(a.dimension,hi));
 
     if(anns.length===0){
       doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,178,174);
       doc.text('No issues identified for this heuristic.',ML,y);
-      doc.text('—',colMid+4,y);
       y+=8;
     } else {
       anns.forEach((ann,ai)=>{
         const p=ann.priority||'Medium';
-        const issueLines=doc.splitTextToSize((ann.title||'')+':\n'+(ann.description||''),colMid-ML-4);
-        const recLines=doc.splitTextToSize('Fix: '+ann.description,PW-MR-colMid-4);
-        const blockH=Math.max(issueLines.length,recLines.length)*4.5+10;
-        checkY(blockH+4);
 
+        // Pre-calculate all text to get accurate block height
+        const titleL=doc.splitTextToSize(ann.title||'',W_ISSUES);
+        const issL=doc.splitTextToSize(ann.description||'',W_ISSUES);
+
+        // Build actionable recommendation (not just copy of description)
+        const recRaw=(ann.description||'').trim();
+        const recText=recRaw.endsWith('.')?
+          'Recommendation: '+recRaw.slice(0,-1)+' to improve usability.':
+          'Recommendation: '+recRaw+'.';
+        const recL=doc.splitTextToSize(recText,W_RECS);
+
+        const LINE_H=4.8;
+        const badgeH=7;
+        const titleH=titleL.length*LINE_H;
+        const issH=issL.length*LINE_H;
+        const recH=recL.length*LINE_H;
+        const blockH=badgeH+titleH+issH+4;
+        const totalH=Math.max(blockH,recH+badgeH)+10;
+
+        checkY(totalH+4);
+        const blockY=y;
+
+        // Row separator (except first)
         if(ai>0){
           doc.setDrawColor(220,218,214);doc.setLineWidth(0.15);
-          doc.line(ML,y-1,PW-MR,y-1);
+          doc.line(ML,blockY-2,PW-MR,blockY-2);
         }
+
+        // Vertical column divider
+        doc.setDrawColor(220,218,214);doc.setLineWidth(0.2);
+        doc.line(COL2-3,blockY-1,COL2-3,blockY+totalH-4);
 
         // Priority badge
         doc.setFillColor(...priBg(p));
-        doc.rect(ML,y,16,5,'F');
+        doc.rect(ML,blockY,18,6,'F');
         doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...priCol(p));
-        doc.text(p.toUpperCase(),ML+8,y+3.5,{align:'center'});
-        y+=7;
+        doc.text(p==='0'?'SEV 0':p==='1'?'SEV 1':p==='2'?'SEV 2':p==='3'?'SEV 3':p==='4'?'SEV 4':p.toUpperCase(),
+          ML+9,blockY+4,{align:'center'});
 
-        // Issue title bold
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
-        const titleL=doc.splitTextToSize(ann.title||'',colMid-ML-4);
-        doc.text(titleL,ML,y);
+        const textY=blockY+badgeH+2;
+
+        // Issue title
+        doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+        doc.text(titleL,ML,textY);
 
         // Issue description
         doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
-        const issL=doc.splitTextToSize(ann.description||'',colMid-ML-4);
-        doc.text(issL,ML,y+titleL.length*4.5);
+        doc.text(issL,ML,textY+titleH+1);
 
-        // Recommendation — same description reframed as fix
-        doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
-        const recText='Ensure '+ann.description.charAt(0).toLowerCase()+ann.description.slice(1);
-        const recL=doc.splitTextToSize(recText,PW-MR-colMid-4);
-        doc.text(recL,colMid+4,y);
+        // Recommendation — right column, aligned to top of badge
+        doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
+        doc.text(recL,COL2,blockY+badgeH+2);
 
-        y+=Math.max(titleL.length*4.5+issL.length*4.5, recL.length*4.5)+8;
+        y+=totalH;
       });
     }
 
-    // Bottom divider
-    doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
-    if(y<PH-30){
+    // Closing divider
+    if(y<PH-24){
+      doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
       doc.line(ML,y,PW-MR,y);
     }
   });
 
-  // Update all footers with correct total page count
+  // Update page count in all footers
   const total=doc.internal.getNumberOfPages();
   for(let p=1;p<=total;p++){
     doc.setPage(p);
     doc.setFillColor(255,255,255);
-    doc.rect(PW-MR-10,PH-10,15,8,'F');
+    doc.rect(PW-MR-14,PH-12,18,8,'F');
     doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
     doc.text(p+' / '+total,PW-MR,PH-8,{align:'right'});
   }
