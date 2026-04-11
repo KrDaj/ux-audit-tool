@@ -394,16 +394,8 @@ font-weight: 500;"></textarea>
             <option value="simple">High / Medium / Low</option>
           </select>
         </div>
-        <div class="context-row">
-          <label class="context-label">Frontend framework</label>
-          <select class="context-select" id="frameworkSelect">
-            <option value="">Generic HTML / CSS</option>
-            <option value="angular">Angular (TypeScript + SCSS)</option>
-            <option value="react">React (JSX + CSS Modules)</option>
-            <option value="vue">Vue 3 (Composition API)</option>
-            <option value="svelte">Svelte</option>
-          </select>
-        </div>
+
+
       </div>
 
       <div class="context-label" style="margin-bottom:8px">Persona (optional — all fields optional)</div>
@@ -489,11 +481,50 @@ font-weight: 500;"></textarea>
           <input type="password" id="key-openai" placeholder="sk-..."/>
         </div>
       </div>
-      <p style="font-size:11px;color:var(--text3);margin-bottom:1.25rem"><a href="https://console.groq.com" target="_blank" style="color:var(--text2)">Groq</a> · <a href="https://aistudio.google.com" target="_blank" style="color:var(--text2)">Gemini</a> · <a href="https://console.anthropic.com" target="_blank" style="color:var(--text2)">Claude</a> · <a href="https://platform.openai.com" target="_blank" style="color:var(--text2)">OpenAI</a></p>
+      <div style="margin-bottom:1.25rem">
+        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="cursor:pointer;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:6px 0;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px">
+          <span>How to get an API key</span>
+          <span style="font-size:10px;opacity:0.6">▼</span>
+        </div>
+        <div style="display:none;padding:10px 0;font-size:12px;color:var(--text2);line-height:1.8">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">
+            <div>
+              <span style="font-weight:600;color:var(--text)">Claude</span> — recommended<br>
+              <a href="https://console.anthropic.com" target="_blank" rel="noopener" style="color:var(--red)">console.anthropic.com</a><br>
+              <span style="color:var(--text3);font-size:11px">Vision + evaluator + best practice search. </span>
+            </div>
+            <div>
+              <span style="font-weight:600;color:var(--text)">Groq</span> — free<br>
+              <a href="https://console.groq.com" target="_blank" rel="noopener" style="color:var(--red)">console.groq.com</a><br>
+              <span style="color:var(--text3);font-size:11px">Evaluator + fix generator. </span>
+            </div>
+            <div>
+              <span style="font-weight:600;color:var(--text)">Gemini</span> — free tier<br>
+              <a href="https://aistudio.google.com" target="_blank" rel="noopener" style="color:var(--red)">aistudio.google.com</a><br>
+              <span style="color:var(--text3);font-size:11px">Vision model. Free tier available. </span>
+            </div>
+            <div>
+              <span style="font-weight:600;color:var(--text)">GPT-4o</span><br>
+              <a href="https://platform.openai.com" target="_blank" rel="noopener" style="color:var(--red)">platform.openai.com</a><br>
+              <span style="color:var(--text3);font-size:11px">Vision model. </span>
+            </div>
+          </div>
+          <div style="margin-top:8px;padding:8px;background:var(--amber-bg);font-size:11px;color:var(--amber)">
+            <strong>Tip:</strong> Claude + Groq together gives you vision, scoring from 2 models, fix generation and best practice search — all for under $0.05 per audit.
+          </div>
+        </div>
+      </div>
 
       <div class="run-row">
         <button class="btn-run" id="runBtn" onclick="startAudit()">Run Audit &rarr;</button>
-        <p class="info-note">&#128274; Keys used only in your browser — never stored.</p>
+        <select id="frameworkSelect" style="height:44px;padding:0 10px;font-size:13px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-family:var(--font);outline:none;cursor:pointer;border-radius:var(--r)" title="Code fix language — affects Generate fix →">
+          <option value="">HTML / CSS</option>
+          <option value="angular">Angular</option>
+          <option value="react">React</option>
+          <option value="vue">Vue 3</option>
+          <option value="svelte">Svelte</option>
+        </select>
+        <p class="info-note">&#128274; Keys saved locally in your browser — never sent to any server other than the AI provider.</p>
         <span class="kbd" title="Run audit">⌘ Enter</span>
       </div>
       <div id="errorMsg" class="error-msg"></div>
@@ -778,7 +809,14 @@ function switchTab(name){
 
 function scoreColor(s){return s>=8?'#1D9E75':s>=6?'#BA7517':'#D85A30'}
 function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length}
-function parseJSON(raw){return JSON.parse(raw.replace(/```json|```/g,'').trim())}
+function parseJSON(raw){
+  // Try clean parse first
+  try{ return JSON.parse(raw.replace(/```json|```/g,'').trim()); }catch(e){}
+  // Extract first { } block — handles Claude wrapping JSON in prose/search text
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(m) return JSON.parse(m[0]);
+  throw new Error('No JSON found in response');
+}
 
 // Fetch with timeout
 async function fetchWithTimeout(url,opts,ms=30000){
@@ -1258,9 +1296,18 @@ async function startAudit(){
 
     if(visionResults.length===0)throw new Error('Vision analysis failed. Check your GPT-4o or Gemini key.');
 
-    // Merge annotations from vision models (use first, deduplicate rest by proximity)
+    // Merge annotations — deduplicate similar findings across models
     const primary=visionResults[0].data;
-    currentAnnotations=primary.annotations||[];
+    let mergedAnnotations=primary.annotations||[];
+
+    // If multiple vision models contributed, merge their unique annotations
+    if(visionResults.length>1){
+      visionResults.slice(1).forEach(r=>{
+        const extra=(r.data.annotations||[]);
+        mergedAnnotations=[...mergedAnnotations,...extra];
+      });
+    }
+    currentAnnotations=deduplicateAnnotations(mergedAnnotations);
 
     // Collect all scores
     const allScores=[primary.scores];
@@ -1326,12 +1373,47 @@ function toggleCSSInput(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
+  // ── CSS input debounce ──
   let _cssDebounce=null;
   el('cssInput').addEventListener('input',()=>{
     clearTimeout(_cssDebounce);
     _cssDebounce=setTimeout(parseCSSLive,300);
   });
+
+  // ── Persist API keys in localStorage ──
+  const KEY_IDS=['key-claude','key-groq','key-gemini','key-openai'];
+  const STORE='uxaudit_keys';
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORE)||'{}');
+    KEY_IDS.forEach(id=>{if(saved[id])document.getElementById(id).value=saved[id];});
+  }catch(e){}
+  KEY_IDS.forEach(id=>{
+    document.getElementById(id)?.addEventListener('input',()=>{
+      try{
+        const saved=JSON.parse(localStorage.getItem(STORE)||'{}');
+        saved[id]=document.getElementById(id).value;
+        localStorage.setItem(STORE,JSON.stringify(saved));
+      }catch(e){}
+    });
+  });
 });
+
+// ── Deduplicate annotations by title similarity ──
+function deduplicateAnnotations(anns){
+  const seen=[];
+  return anns.filter(ann=>{
+    const t=(ann.title||'').toLowerCase().trim();
+    // Check if a similar title already exists (>60% word overlap)
+    const isDup=seen.some(s=>{
+      const aWords=new Set(t.split(/\s+/));
+      const bWords=s.split(/\s+/);
+      const overlap=bWords.filter(w=>aWords.has(w)).length;
+      return overlap/Math.max(aWords.size,bWords.length)>0.6;
+    });
+    if(!isDup){seen.push(t);return true;}
+    return false;
+  });
+}
 
 function parseCSSColors(css){
   const colorRegex=/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b|rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)|rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/g;
@@ -1761,34 +1843,47 @@ ${cssCtx?`\nExisting CSS/design tokens:\n${cssCtx.slice(0,1000)}`:''}
 
 Generate a realistic before/after code fix in ${fwLabel}.
 
-${framework==='angular'?`ANGULAR REQUIREMENTS — mandatory:
-- "before" code: show the problematic .component.html template snippet (with realistic *ngIf, *ngFor, [binding], (event) syntax as relevant) AND the broken .component.ts class property/method if relevant
-- "after" code: show the fixed .component.html AND fixed .component.ts AND any .component.scss changes
-- Use Angular 17+ syntax: standalone components, signals or standard @Input/@Output, proper typing
-- No comments explaining what Angular is — write actual working code
-- Format multiline code with real newlines using \\n`:''}
-${framework==='react'?`REACT REQUIREMENTS — mandatory:
-- Use functional components with hooks (useState, useEffect, useMemo as needed)
-- Show JSX + any CSS Module class changes
-- TypeScript props interface if relevant`:''}
-${framework==='vue'?`VUE REQUIREMENTS — mandatory:
-- Use <template>, <script setup lang="ts">, <style scoped>
-- Composition API with ref/computed/defineProps`:''}
-${framework==='svelte'?`SVELTE REQUIREMENTS — mandatory:
-- Use <script lang="ts">, markup, <style>
-- Svelte reactivity ($:, stores) as relevant`:''}
-${!framework?'Show generic HTML + CSS. Keep it concise and realistic.':''}
+${framework==='angular'?`ANGULAR REQUIREMENTS:
+You are showing a targeted code snippet — NOT a full component. The goal is a realistic, copy-paste-ready fix that a developer can apply to their existing Angular project.
+
+RULES:
+- Show only what changes — no boilerplate that stays the same
+- Always prefix each snippet with a file comment: // product.component.html, // product.component.ts, // product.component.scss
+- Use real Angular imports where needed: import { Component, Input, OnInit } from '@angular/core'
+- Always use "export class", explicit return types, and typed interfaces (no "any")
+- Use *ngIf / *ngFor with trackBy, or Angular 17 @if / @for control flow
+- SCSS: only classes actually used in the template
+- No @Component decorator unless it directly relates to the fix
+- No placeholder comments like "// existing code" or "// your logic here"
+- Separate multiple file snippets with a blank line between them`:''}
+${framework==='react'?`REACT REQUIREMENTS:
+Show a targeted, copy-paste-ready snippet — not a full component file.
+- Prefix with file comment: // ProductCard.tsx
+- Typed props interface always: interface Props { price: number; priceRange?: string }
+- Explicit return type: (props: Props): JSX.Element =>
+- Hooks only where genuinely needed for the fix
+- CSS Modules: only classes used in JSX`:''}
+${framework==='vue'?`VUE REQUIREMENTS:
+Show a targeted snippet — prefix with file comment: // ProductCard.vue
+- <template>, <script setup lang="ts">, <style scoped> — only include sections that change
+- Typed defineProps: defineProps<{ price: number; priceRange?: string }>()
+- Composition API: ref<Type>(), computed(() => ...)`:''}
+${framework==='svelte'?`SVELTE REQUIREMENTS:
+Show a targeted snippet — prefix with file comment: // ProductCard.svelte
+- Only include <script lang="ts">, markup, or <style> sections that actually change
+- Typed exports: export let price: number`:''}
+${!framework?'Show a minimal, targeted HTML/CSS snippet. Only what changes — no surrounding boilerplate.':''}
 
 Respond ONLY with valid JSON, no markdown fences:
 {
   "problem_summary": "one sentence describing the exact UX problem",
   "before": {
-    "label": "${framework==='angular'?'component.html (broken)':framework==='react'?'Component.tsx (broken)':framework==='vue'?'Component.vue (broken)':'Before'}",
-    "code": "realistic broken code snippet in ${fwLabel}, max 12 lines, use \\n for newlines"
+    "label": "${framework==='angular'?'Before (relevant snippet)':framework==='react'?'Before (relevant snippet)':framework==='vue'?'Before':framework==='svelte'?'Before':'Before'}",
+    "code": "the broken snippet — prefixed with file comments (e.g. // product.component.html), max 14 lines, use \\n for newlines"
   },
   "after": {
-    "label": "${framework==='angular'?'component.html + .ts + .scss (fixed)':framework==='react'?'Component.tsx (fixed)':framework==='vue'?'Component.vue (fixed)':'After'}",
-    "code": "realistic fixed code snippet in ${fwLabel}, max 14 lines, use \\n for newlines"
+    "label": "${framework==='angular'?'After (copy-paste ready)':framework==='react'?'After (copy-paste ready)':framework==='vue'?'After':framework==='svelte'?'After':'After'}",
+    "code": "the fixed snippet — prefixed with file comments, showing only what changes, max 18 lines, use \\n for newlines"
   },
   "explanation": "1-2 sentences: what changed and why it fixes the UX issue",
   "impact": "High|Medium|Low"
@@ -1911,12 +2006,16 @@ Be specific. Cite real companies. No generic advice.`;
         body:JSON.stringify({
           model:CLAUDE_MODEL,
           max_tokens:800,
+          temperature:0,
+          system:'You are a UX research assistant. Always respond with ONLY a valid JSON object — no prose, no markdown, no preamble, no "Let me search" text. Start your response with { and end with }.',
           tools:[{type:'web_search_20250305',name:'web_search'}],
           messages:[{role:'user',content:prompt}]
         })});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
       const d=await r.json();
-      raw=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+      // Extract last text block — Claude puts final answer after tool_result blocks
+      const textBlocks=d.content.filter(b=>b.type==='text').map(b=>b.text);
+      raw=textBlocks[textBlocks.length-1]||'';
     } else {
       const _groqBody2=JSON.stringify({model:GROQ_MODEL,max_tokens:700,temperature:0,
         messages:[{role:'user',content:prompt}]});
@@ -1929,11 +2028,21 @@ Be specific. Cite real companies. No generic advice.`;
     }
 
     let data;
-    try{ data=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    try{
+      // Robust extraction — find first { ... } block even if surrounded by prose/search text
+      const jsonMatch=raw.match(/\{[\s\S]*\}/);
+      if(!jsonMatch) throw new Error('no JSON found');
+      data=JSON.parse(jsonMatch[0]);
+    }
     catch(e){
-      panel.innerHTML=`<div class="bp-content">${raw.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
-      btn.textContent='Best practice ↑';
-      btn.dataset.loaded='true';
+      // JSON not parseable — show clean message, not raw text
+      panel.innerHTML=`
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;padding:8px 0">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Could not parse response</div>
+          <div style="color:var(--text3);font-size:11px">The AI returned unstructured text. Try clicking "Best practice →" again to retry.</div>
+        </div>`;
+      btn.textContent='Best practice →';
+      btn.dataset.loaded='false';
       btn.disabled=false;
       return;
     }
@@ -2159,31 +2268,35 @@ async function exportPDF(){
   doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
   doc.line(ML,y,PW-MR,y);y+=8;
 
-  // Column positions — fixed, consistent
-  const COL_NUM=ML;
-  const COL_NAME=ML+10;
-  const COL_BAR=ML+105;
-  const BAR_W=30;
-  const COL_SCORE=COL_BAR+BAR_W+4;
-  const COL_RATING=PW-MR;
-  const ROW_H=10;
+  // Column positions — carefully spaced to avoid overlap
+  // A4 = 210mm, ML=MR=20mm → CW=170mm
+  const COL_NUM=ML;           // 20mm  — number
+  const COL_NAME=ML+10;       // 30mm  — heuristic name
+  const COL_BAR=ML+98;        // 118mm — progress bar start
+  const BAR_W=28;             // 28mm  — bar width
+  const COL_SCORE=COL_BAR+BAR_W+3; // 149mm — score number
+  const COL_RATING=PW-MR;    // 190mm — rating (right-aligned)
+  const W_RATING=22;          // reserved width for "Needs improvement"
+  const W_NAME=COL_BAR-COL_NAME-4; // name column width
+  const ROW_H=11;
 
   // Table header
   doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(100,98,94);
-  doc.text('#',COL_NUM,y);
+  doc.text('#',COL_NUM+2,y,{align:'center'});
   doc.text('Heuristic',COL_NAME,y);
   doc.text('Score',COL_SCORE,y);
   doc.text('Rating',COL_RATING,y,{align:'right'});
   y+=2;
   doc.setDrawColor(200,198,194);doc.setLineWidth(0.2);
   doc.line(ML,y,PW-MR,y);
-  y+=ROW_H*0.4;
+  y+=ROW_H*0.35;
 
   const scoreEls=document.querySelectorAll('#scoreOverview .score-card');
   scoreEls.forEach((card,i)=>{
     const num=parseFloat(card.querySelector('.score-num')?.textContent)||0;
     const col=scCol(num);
-    const rating=num>=8?'Good':num>=6?'Needs improvement':'Poor';
+    // Short labels to avoid overflow
+    const rating=num>=8?'Good':num>=6?'Needs work':'Poor';
     const rowY=y;
 
     // Alternating row background
@@ -2192,30 +2305,30 @@ async function exportPDF(){
       doc.rect(ML,rowY-1,CW,ROW_H,'F');
     }
 
-    // Number
+    // Number — centred in its column
     doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(220,0,24);
-    doc.text(String(i+1),COL_NUM+2,rowY+5.5,{align:'center'});
+    doc.text(String(i+1),COL_NUM+2,rowY+6,{align:'center'});
 
-    // Heuristic name — vertically centred in row
+    // Heuristic name — truncate if needed, vertically centred
     doc.setFont('helvetica','normal');doc.setTextColor(26,26,24);
-    const nameLines=doc.splitTextToSize(HEURISTIC_FULL[i],COL_BAR-COL_NAME-4);
-    const nameY=nameLines.length>1?rowY+3:rowY+5.5;
+    const nameLines=doc.splitTextToSize(HEURISTIC_FULL[i],W_NAME);
+    const nameY=nameLines.length>1?rowY+3.5:rowY+6;
     doc.text(nameLines,COL_NAME,nameY);
 
-    // Score bar — vertically centred
-    const barY=rowY+3.5;
+    // Score bar — vertically centred in row
+    const barY=rowY+4;
     doc.setFillColor(220,218,214);
     doc.rect(COL_BAR,barY,BAR_W,3,'F');
     doc.setFillColor(...col);
     doc.rect(COL_BAR,barY,(num/10)*BAR_W,3,'F');
 
-    // Score number
-    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...col);
-    doc.text(num.toFixed(1),COL_SCORE+8,rowY+5.5);
+    // Score number — bold, coloured
+    doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(...col);
+    doc.text(num.toFixed(1),COL_SCORE,rowY+6);
 
-    // Rating label — right aligned, same baseline as score
+    // Rating — right aligned, fits within W_RATING
     doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...col);
-    doc.text(rating,COL_RATING,rowY+5.5,{align:'right'});
+    doc.text(rating,COL_RATING,rowY+6,{align:'right'});
 
     y+=ROW_H;
   });
@@ -2240,6 +2353,81 @@ async function exportPDF(){
     doc.text('('+sub+')',ML+65,y);
     y+=7;
   });
+
+  y+=8;
+  doc.setDrawColor(200,198,194);doc.setLineWidth(0.2);
+  doc.line(ML,y,PW-MR,y);
+  y+=8;
+
+  // ── Severity legend ──
+  const useNielsenScale=document.getElementById('severityScale')?.value!=='simple';
+
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+  doc.text('Legend',ML,y);
+  y+=5;
+
+  if(useNielsenScale){
+    // Nielsen 0–4 severity
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(100,98,94);
+    doc.text('Severity rating (Nielsen):',ML,y);y+=5;
+    const sevItems=[
+      {label:'SEV 0',desc:'Not a usability problem',bg:[235,245,239],fg:[26,122,74]},
+      {label:'SEV 1',desc:'Cosmetic only — fix if time allows',bg:[255,244,224],fg:[138,88,0]},
+      {label:'SEV 2',desc:'Minor usability problem — low priority',bg:[255,237,210],fg:[168,90,0]},
+      {label:'SEV 3',desc:'Major usability problem — important to fix',bg:[253,234,234],fg:[168,0,15]},
+      {label:'SEV 4',desc:'Usability catastrophe — imperative to fix',bg:[220,0,24],fg:[255,255,255]},
+    ];
+    const colW=CW/sevItems.length;
+    sevItems.forEach((s,i)=>{
+      const x=ML+i*colW;
+      doc.setFillColor(...s.bg);
+      doc.rect(x,y,colW-3,6,'F');
+      doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...s.fg);
+      doc.text(s.label,x+(colW-3)/2,y+4.2,{align:'center'});
+      doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+      const dl=doc.splitTextToSize(s.desc,colW-4);
+      doc.text(dl,x,y+8.5);
+    });
+    y+=22;
+  } else {
+    // High/Medium/Low
+    const sevItems=[
+      {label:'HIGH',desc:'Critical — fix immediately',bg:[253,234,234],fg:[168,0,15]},
+      {label:'MEDIUM',desc:'Important — fix soon',bg:[255,244,224],fg:[138,88,0]},
+      {label:'LOW',desc:'Minor — fix if time allows',bg:[235,245,239],fg:[26,122,74]},
+    ];
+    const colW=CW/sevItems.length;
+    sevItems.forEach((s,i)=>{
+      const x=ML+i*colW;
+      doc.setFillColor(...s.bg);
+      doc.rect(x,y,colW-4,6,'F');
+      doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...s.fg);
+      doc.text(s.label,x+(colW-4)/2,y+4.2,{align:'center'});
+      doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+      doc.text(s.desc,x,y+8.5);
+    });
+    y+=18;
+  }
+
+  // ── Score rating legend ──
+  y+=2;
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(100,98,94);
+  doc.text('Score rating:',ML,y);y+=5;
+  const ratingItems=[
+    {label:'Good',range:'8.0 – 10.0',col:[26,122,74]},
+    {label:'Needs work',range:'6.0 – 7.9',col:[138,88,0]},
+    {label:'Poor',range:'0.0 – 5.9',col:[168,0,15]},
+  ];
+  ratingItems.forEach((r,i)=>{
+    const x=ML+i*50;
+    doc.setFillColor(...r.col);
+    doc.rect(x,y,4,4,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...r.col);
+    doc.text(r.label,x+6,y+3.5);
+    doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
+    doc.text(r.range,x+6,y+8);
+  });
+  y+=14;
 
   // ══════════════════════════════
   // PAGES 4+ — One section per heuristic (NNG style)
@@ -2296,10 +2484,10 @@ async function exportPDF(){
     doc.line(ML,y,PW-MR,y);
     y+=8;
 
-    // Two-column layout — fixed split
-    const COL2=ML+CW*0.46;    // start of recommendations column
-    const W_ISSUES=COL2-ML-6;
-    const W_RECS=PW-MR-COL2-2;
+    // Two-column layout — 50/50 split with clear gutter
+    const COL2=ML+CW*0.5;      // exact midpoint
+    const W_ISSUES=COL2-ML-8;  // left column width with gutter
+    const W_RECS=PW-MR-COL2-2; // right column width
 
     // Column headers
     doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
@@ -2326,46 +2514,58 @@ async function exportPDF(){
       anns.forEach((ann,ai)=>{
         const p=ann.priority||'Medium';
 
-        // Pre-calculate all text to get accurate block height
+        // Badge label — respect severity scale
+        const isNielsen=['0','1','2','3','4'].includes(String(p));
+        const badgeLabel=isNielsen?'SEV '+p:p.toUpperCase();
+        const badgeBg=isNielsen
+          ?([[235,245,239],[255,244,224],[255,237,210],[253,234,234],[220,0,24]][parseInt(p)]||[255,244,224])
+          :priBg(p);
+        const badgeFg=isNielsen
+          ?([[26,122,74],[138,88,0],[168,90,0],[168,0,15],[255,255,255]][parseInt(p)]||[138,88,0])
+          :priCol(p);
+
+        // Pre-calculate text blocks
         const titleL=doc.splitTextToSize(ann.title||'',W_ISSUES);
         const issL=doc.splitTextToSize(ann.description||'',W_ISSUES);
 
-        // Build actionable recommendation (not just copy of description)
-        const recRaw=(ann.description||'').trim();
-        const recText=recRaw.endsWith('.')?
-          'Recommendation: '+recRaw.slice(0,-1)+' to improve usability.':
-          'Recommendation: '+recRaw+'.';
+        // Recommendation — use stored recommendation if available, else smart reframe
+        const desc=(ann.description||'').trim().replace(/\.$/,'');
+        const firstWord=desc.split(' ')[0];
+        // Reframe problem statement as action: "The X is Y" → "Ensure X is not Y"
+        const recText=desc.match(/^(The |A |An )/i)
+          ? 'Ensure that '+desc.charAt(0).toLowerCase()+desc.slice(1)+'.'
+          : 'Fix: '+desc.charAt(0).toLowerCase()+desc.slice(1)+'.';
         const recL=doc.splitTextToSize(recText,W_RECS);
 
         const LINE_H=4.8;
-        const badgeH=7;
+        const BADGE_H=7;
+        const BADGE_PAD=3; // space after badge
         const titleH=titleL.length*LINE_H;
         const issH=issL.length*LINE_H;
         const recH=recL.length*LINE_H;
-        const blockH=badgeH+titleH+issH+4;
-        const totalH=Math.max(blockH,recH+badgeH)+10;
+        const leftH=BADGE_H+BADGE_PAD+titleH+1+issH;
+        const blockH=Math.max(leftH,recH)+6; // tight padding
 
-        checkY(totalH+4);
+        checkY(blockH+4);
         const blockY=y;
 
-        // Row separator (except first)
+        // Row separator
         if(ai>0){
           doc.setDrawColor(220,218,214);doc.setLineWidth(0.15);
           doc.line(ML,blockY-2,PW-MR,blockY-2);
         }
 
-        // Vertical column divider
+        // Vertical column divider — exact block height
         doc.setDrawColor(220,218,214);doc.setLineWidth(0.2);
-        doc.line(COL2-3,blockY-1,COL2-3,blockY+totalH-4);
+        doc.line(COL2-4,blockY,COL2-4,blockY+blockH);
 
         // Priority badge
-        doc.setFillColor(...priBg(p));
-        doc.rect(ML,blockY,18,6,'F');
-        doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...priCol(p));
-        doc.text(p==='0'?'SEV 0':p==='1'?'SEV 1':p==='2'?'SEV 2':p==='3'?'SEV 3':p==='4'?'SEV 4':p.toUpperCase(),
-          ML+9,blockY+4,{align:'center'});
+        doc.setFillColor(...badgeBg);
+        doc.rect(ML,blockY,20,6,'F');
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...badgeFg);
+        doc.text(badgeLabel,ML+10,blockY+4.2,{align:'center'});
 
-        const textY=blockY+badgeH+2;
+        const textY=blockY+BADGE_H+BADGE_PAD;
 
         // Issue title
         doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
@@ -2375,11 +2575,11 @@ async function exportPDF(){
         doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
         doc.text(issL,ML,textY+titleH+1);
 
-        // Recommendation — right column, aligned to top of badge
+        // Recommendation — top-aligned to text start (not badge)
         doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
-        doc.text(recL,COL2,blockY+badgeH+2);
+        doc.text(recL,COL2,blockY+BADGE_H+BADGE_PAD);
 
-        y+=totalH;
+        y+=blockH+2;
       });
     }
 

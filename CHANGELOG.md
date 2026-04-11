@@ -5,6 +5,27 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v1.9.0 — April 2026
+
+### Added
+- **API key persistence** — keys saved to `localStorage` on input, restored on page load; no more re-entering after refresh
+- **Onboarding panel** — collapsible "How to get an API key" in the Models card with links to Anthropic, Groq, Gemini, OpenAI consoles
+- **Finding deduplication** — when multiple vision models run in parallel, near-duplicate findings (>60% word overlap) are automatically merged
+- **Code fix language selector** — dropdown next to "Run Audit →"; set once, applies to all "Generate fix →" outputs; options: HTML/CSS, Angular, React, Vue 3, Svelte
+- **PDF severity legend** — Score Summary page now includes a full severity legend (SEV 0–4 with descriptions, or High/Medium/Low) and score rating legend (Good / Needs work / Poor with ranges)
+
+### Improved
+- **Angular fix prompt** — generates targeted, copy-paste-ready snippets with file comments (`// product.component.html`), `export class`, explicit return types, typed interfaces; no fake `@Component` boilerplate
+- **PDF finding blocks** — badge label respects selected severity scale (Nielsen vs simple); tighter spacing; vertical divider matches exact block height; recommendation text reframed as action ("Ensure that…") not copy-paste
+- **Best practice JSON parsing** — extracts last text block from Claude web search response (avoiding "Now let me search…" prose); system prompt enforces JSON-only output
+- **`parseJSON` helper** — falls back to regex extraction (`/\{[\s\S]*\}/`) when direct parse fails; handles all model response formats
+- **Labels cleaned** — removed pricing hints from onboarding; "Code fix language" replaces "Frontend framework"
+
+### Fixed
+- Best practice panel showing raw JSON when Claude web search returned prose before the JSON block
+
+---
+
 ## v1.8.0 — April 2026
 
 ### Added
