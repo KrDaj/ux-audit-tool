@@ -234,6 +234,20 @@
     .region-btn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
     .region-hint{font-size:11px;color:var(--text3)}
     .annotated-wrap{cursor:crosshair}
+    .context-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+    @media(max-width:540px){.context-grid{grid-template-columns:1fr}}
+    .context-row{display:flex;flex-direction:column;gap:5px}
+    .context-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em}
+    .context-select{height:36px;padding:0 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:var(--font);width:100%}
+    .context-select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,0,24,0.08)}
+    .context-input{height:36px;padding:0 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:var(--font);width:100%}
+    .context-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,0,24,0.08)}
+    .severity-badge{font-size:10px;font-weight:700;padding:2px 8px;text-transform:uppercase;letter-spacing:0.06em;border-radius:2px}
+    .sev-0{background:#EBF5EF;color:#1A7A4A}
+    .sev-1{background:#FFF4E0;color:#8A5800}
+    .sev-2{background:#FFF0D0;color:#7A4800}
+    .sev-3{background:#FDEAEA;color:#A8000F}
+    .sev-4{background:#DC0018;color:#fff}
 
     /* ── Export btn ── */
     .btn-export{height:36px;padding:0 16px;background:transparent;color:var(--text);border:1px solid var(--border2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s}
@@ -333,6 +347,73 @@ font-weight: 500;"></textarea>
   <div class="input-card">
     <div class="input-card-header">
       <div class="input-card-num">2</div>
+      <div class="input-card-title">Audit Context</div>
+      <div class="input-card-desc">Optional — improves relevance of findings</div>
+    </div>
+    <div class="input-card-body">
+      <div class="context-grid">
+        <div class="context-row">
+          <label class="context-label">Industry / Context</label>
+          <select class="context-select" id="industrySelect">
+            <option value="">Generic UX/UI Audit</option>
+            <option value="ch-gov">Swiss Government / Bund (Oblique-konform)</option>
+            <option value="ecommerce">E-Commerce / Online Shop</option>
+            <option value="saas">SaaS / Web Application</option>
+            <option value="banking">Banking / Finance</option>
+            <option value="healthcare">Healthcare / Medical</option>
+            <option value="marketing">Marketing / Landing Page</option>
+          </select>
+        </div>
+        <div class="context-row">
+          <label class="context-label">Severity scale</label>
+          <select class="context-select" id="severityScale">
+            <option value="nielsen">Nielsen 0–4 (professional)</option>
+            <option value="simple">High / Medium / Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="context-label" style="margin-bottom:8px">Persona (optional — all fields optional)</div>
+      <div class="context-grid">
+        <div class="context-row">
+          <label class="context-label" style="font-size:10px">Age</label>
+          <input type="text" class="context-input" id="personaAge" placeholder="e.g. 65"/>
+        </div>
+        <div class="context-row">
+          <label class="context-label" style="font-size:10px">Usage frequency</label>
+          <select class="context-select" id="personaFrequency">
+            <option value="">— not specified —</option>
+            <option value="first-time">First-time user</option>
+            <option value="occasional">Occasional (few times/month)</option>
+            <option value="regular">Regular (weekly)</option>
+            <option value="power">Power user (daily)</option>
+          </select>
+        </div>
+        <div class="context-row">
+          <label class="context-label" style="font-size:10px">Tech affinity</label>
+          <select class="context-select" id="personaTech">
+            <option value="">— not specified —</option>
+            <option value="low">Low — rarely uses digital tools</option>
+            <option value="medium">Medium — comfortable online</option>
+            <option value="high">High — tech-savvy</option>
+          </select>
+        </div>
+        <div class="context-row">
+          <label class="context-label" style="font-size:10px">Device</label>
+          <select class="context-select" id="personaDevice">
+            <option value="">— not specified —</option>
+            <option value="desktop">Desktop</option>
+            <option value="mobile">Mobile</option>
+            <option value="tablet">Tablet</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-card">
+    <div class="input-card-header">
+      <div class="input-card-num">3</div>
       <div class="input-card-title">AI Models</div>
       <div class="input-card-desc">Add any key — only configured models run</div>
     </div>
@@ -490,12 +571,27 @@ fileInput.addEventListener('change',e=>handleFile(e.target.files[0]));
 
 function handleFile(file){
   if(!file||!file.type.startsWith('image/'))return;
-  imageMime=file.type;
+  imageMime='image/jpeg'; // always compress to JPEG
   const reader=new FileReader();
   reader.onload=e=>{
-    imageBase64=e.target.result.split(',')[1];
-    const wrap=el('previewWrap');
-    wrap.innerHTML=`<div class="preview-wrap"><img class="preview-img" src="${e.target.result}"/><button class="preview-clear" onclick="clearImage(event)">×</button></div>`;
+    const img=new Image();
+    img.onload=()=>{
+      // Resize to max 1280px width — saves ~75% tokens vs full res
+      const MAX=1280;
+      const scale=img.width>MAX?MAX/img.width:1;
+      const w=Math.round(img.width*scale);
+      const h=Math.round(img.height*scale);
+      const c=document.createElement('canvas');
+      c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const compressed=c.toDataURL('image/jpeg',0.85);
+      imageBase64=compressed.split(',')[1];
+      const origKB=Math.round(e.target.result.length*0.75/1024);
+      const newKB=Math.round(compressed.length*0.75/1024);
+      const wrap=el('previewWrap');
+      wrap.innerHTML=`<div class="preview-wrap"><img class="preview-img" src="${compressed}"/><button class="preview-clear" onclick="clearImage(event)">×</button><div style="font-size:10px;color:var(--text3);margin-top:4px">${w}×${h}px · ${newKB}KB (was ${origKB}KB)</div></div>`;
+    };
+    img.src=e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -547,15 +643,82 @@ async function fetchWithTimeout(url,opts,ms=30000){
 }
 
 // --- Vision system prompt ---
+// --- Audit Context Helpers ---
+function buildIndustryContext(){
+  const v=document.getElementById('industrySelect')?.value||'';
+  const map={
+    'ch-gov':'This is a Swiss federal or cantonal government website. It must comply with the Bund Design System (BIT Oblique), eCH standards, and WCAG 2.1 AA. Evaluate for accessibility, multilingual support (DE/FR/IT), clear institutional language, and Bund brand guidelines.',
+    'ecommerce':'This is an e-commerce / online shop. Focus on conversion optimization, product clarity, trust signals, checkout flow, cart visibility, and mobile shopping experience.',
+    'saas':'This is a SaaS web application. Focus on onboarding clarity, feature discoverability, dashboard information hierarchy, empty states, error handling, and power-user efficiency.',
+    'banking':'This is a banking or financial services interface. Focus on security signalling, data clarity, error prevention in transactions, trust, and accessibility.',
+    'healthcare':'This is a healthcare or medical interface. Focus on clarity of medical information, accessibility, error prevention, stress-reduced design, and multilingual support.',
+    'marketing':'This is a marketing website or landing page. Focus on value proposition clarity, CTA placement, visual hierarchy, page speed perception, and conversion.'
+  };
+  return map[v]||'';
+}
+
+function buildPersonaContext(){
+  const age=document.getElementById('personaAge')?.value.trim()||'';
+  const freq=document.getElementById('personaFrequency')?.value||'';
+  const tech=document.getElementById('personaTech')?.value||'';
+  const device=document.getElementById('personaDevice')?.value||'';
+  const parts=[];
+  if(age)parts.push(`Age: ${age}`);
+  if(freq)parts.push(`Usage frequency: ${freq}`);
+  if(tech)parts.push(`Technical affinity: ${tech}`);
+  if(device)parts.push(`Primary device: ${device}`);
+  if(!parts.length)return'';
+  return`Evaluate this interface from the perspective of a user with the following profile:\n${parts.join('\n')}\nAdjust your findings and severity ratings to reflect the needs, limitations, and expectations of this specific user group.`;
+}
+
+function buildSeverityInstructions(){
+  const scale=document.getElementById('severityScale')?.value||'nielsen';
+  if(scale==='nielsen'){
+    return`Use Nielsen's formal severity scale for priority:
+- 0 = Not a usability problem
+- 1 = Cosmetic problem only (fix if time allows)
+- 2 = Minor usability problem (low priority fix)
+- 3 = Major usability problem (important to fix)
+- 4 = Usability catastrophe (imperative to fix)
+Express priority as: "0"|"1"|"2"|"3"|"4"`;
+  }
+  return`Express priority as: "High"|"Medium"|"Low"`;
+}
+
+function getSeverityLabel(priority){
+  const scale=document.getElementById('severityScale')?.value||'nielsen';
+  if(scale!=='nielsen')return priority;
+  const map={'0':'Severity 0','1':'Severity 1','2':'Severity 2','3':'Severity 3','4':'Severity 4'};
+  return map[priority]||priority;
+}
+
+function getSeverityClass(priority){
+  const scale=document.getElementById('severityScale')?.value||'nielsen';
+  if(scale!=='nielsen'){
+    return priority==='High'?'sev-3':priority==='Low'?'sev-1':'sev-2';
+  }
+  return`sev-${priority}`;
+}
+
 function visionSystem(){
+  const industry=buildIndustryContext();
+  const persona=buildPersonaContext();
+  const severity=buildSeverityInstructions();
+  const useNielsen=document.getElementById('severityScale')?.value!=='simple';
+
   return`You are a senior UX/UI auditor analyzing a website screenshot. Respond ONLY with valid JSON, no markdown, no preamble.
+${industry?'\n\nINDUSTRY CONTEXT:\n'+industry:''}${persona?'\n\nUSER PERSONA:\n'+persona:''}
 
 CRITICAL RULES — follow strictly:
 - Only report issues you can DIRECTLY SEE in the screenshot. Do NOT invent or assume issues.
-- Reference specific visible elements (e.g. "the blue button in the top-right", "the navigation bar", "the hero headline").
+- Reference specific visible elements (e.g. "the blue button in the top-right", "the navigation bar").
 - If a heuristic has no visible issue, give it a score of 7–9 — do not fabricate problems.
 - Be consistent: the same screenshot analyzed twice should yield the same findings.
 - Scores must reflect what is actually visible, not general assumptions about the site type.
+${persona?'- Prioritize findings relevant to the specified user persona.':''}
+${industry?'- Apply industry-specific conventions and expectations listed in the context above.':''}
+
+${severity}
 
 Return this exact schema:
 {
@@ -567,7 +730,7 @@ Return this exact schema:
       "title": "short issue title (max 8 words)",
       "description": "specific description referencing a visible element and how to fix it",
       "dimension": "one of: Visibility of system status|Match with real world|User control & freedom|Consistency & standards|Error prevention|Recognition over recall|Flexibility & efficiency|Aesthetic & minimal design|Help users recover from errors|Help & documentation",
-      "priority": "High|Medium|Low"
+      "priority": "${useNielsen?'0|1|2|3|4':'High|Medium|Low'}"
     }
   ],
   "scores": [n,n,n,n,n,n,n,n,n,n]
@@ -603,12 +766,14 @@ The 10 scores map in order to Nielsen's heuristics: Visibility of system status,
 
 // --- API calls ---
 async function callClaudeVision(key,base64,mime,url,cssCtx=''){
+  const sysPrompt=visionSystem()+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'');
   const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-beta':'prompt-caching-2024-07-31','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,temperature:0,
+      system:[{type:'text',text:sysPrompt,cache_control:{type:'ephemeral'}}],
       messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mime,data:base64}},
-        {type:'text',text:visionSystem()+(el('cssInput').value.trim()?'\n\nCSS provided:\n'+el('cssInput').value.trim().slice(0,1500):'')+'\n\nAnalyze this screenshot'+(url?` of ${url}`:'')+'.'}
+        {type:'text',text:'Analyze this screenshot'+(url?' of '+url:'')+'.'}
       ]}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude vision error')}
   return parseJSON((await r.json()).content[0].text);
@@ -639,10 +804,13 @@ async function callGeminiVision(key,base64,mime,url,cssCtx=''){
 }
 
 async function callClaudeEval(key,findingsSummary){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  // Split evaluatorSystem into cached static part + dynamic findings
+  const staticPart='You are a senior UX/UI auditor providing scoring based on provided findings.\n\nCRITICAL RULES:\n- Base your scores ONLY on the findings listed. Do not invent additional issues.\n- Score 1–4 = serious problem. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.\n- If a heuristic is not mentioned in the findings, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n],"notes":"brief assessment"}\nThe 10 scores map to Nielsen\'s heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.';
+  const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-beta':'prompt-caching-2024-07-31','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,temperature:0,
-      messages:[{role:'user',content:evaluatorSystem(findingsSummary)}]})});
+      system:[{type:'text',text:staticPart,cache_control:{type:'ephemeral'}}],
+      messages:[{role:'user',content:'Here are the findings to score:\n\n'+findingsSummary}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error')}
   return parseJSON((await r.json()).content[0].text);
 }
@@ -765,12 +933,13 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
   const sidebar=el('annSidebar');
   sidebar.innerHTML=annotations.map((ann,i)=>{
     const col=ANNOTATION_COLORS[i]||'#888';
-    const p=(ann.priority||'Medium').toLowerCase();
-    const pcls=p==='high'?'p-high':p==='low'?'p-low':'p-medium';
+    const p=ann.priority||'Medium';
+    const pcls='priority-badge '+getSeverityClass(p);
+    const plbl=getSeverityLabel(p);
     return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})">
       <div class="ann-num" style="background:${col}">${i+1}</div>
       <div class="ann-content">
-        <div class="ann-dim">${ann.dimension||''}<span class="priority-badge ${pcls}">${ann.priority||'Medium'}</span></div>
+        <div class="ann-dim">${ann.dimension||''}<span class="${pcls}">${plbl}</span></div>
         <div class="ann-title">${ann.title}</div>
         <div class="ann-desc">${ann.description}</div>
         <div style="display:flex;gap:0;flex-wrap:wrap">
@@ -883,18 +1052,19 @@ async function startAudit(){
       imgSrc=`data:${mime};base64,${b64}`;
     }
 
-    // Vision models
+    // Vision models — run in parallel for speed
+    renderStep(step++);
     const visionResults=[];
-    for(const id of visionIds){
-      renderStep(step++);
-      try{
-        let res;
-if(id==='claude')res=await callClaudeVision(keys[id],b64,mime,url,_cssCtx);
-        if(id==='openai')res=await callGPTVision(keys[id],b64,mime,url,_cssCtx);
-        if(id==='gemini')res=await callGeminiVision(keys[id],b64,mime,url,_cssCtx);
-        if(res)visionResults.push({id,data:res});
-      }catch(e){console.warn(id,'vision failed:',e.message)}
-    }
+    const visionCalls=visionIds.map(id=>{
+      const call=
+        id==='claude'?callClaudeVision(keys[id],b64,mime,url,_cssCtx):
+        id==='openai'?callGPTVision(keys[id],b64,mime,url,_cssCtx):
+        id==='gemini'?callGeminiVision(keys[id],b64,mime,url,_cssCtx):null;
+      if(!call)return null;
+      return call.then(data=>{if(data)visionResults.push({id,data});})
+                 .catch(e=>console.warn(id,'vision failed:',e.message));
+    }).filter(Boolean);
+    await Promise.all(visionCalls);
 
     if(visionResults.length===0)throw new Error('Vision analysis failed. Check your GPT-4o or Gemini key.');
 
@@ -921,14 +1091,15 @@ if(id==='claude')res=await callClaudeVision(keys[id],b64,mime,url,_cssCtx);
         `${i+1}. [${a.priority}] ${a.dimension}: ${a.title} — ${a.description}`
       ).join('\n');
 
-      for(const id of textIds){
-        try{
-          let res;
-          if(id==='claude')res=await callClaudeEval(keys[id],findingsSummary);
-          if(id==='groq')res=await callGroqEval(keys[id],findingsSummary);
-          if(res?.scores){allScores.push(res.scores);allModelIds.push(id);}
-        }catch(e){console.warn(id,'eval failed:',e.message)}
-      }
+      const evalCalls=textIds.map(id=>{
+        const call=
+          id==='claude'?callClaudeEval(keys[id],findingsSummary):
+          id==='groq'?callGroqEval(keys[id],findingsSummary):null;
+        if(!call)return null;
+        return call.then(res=>{if(res?.scores){allScores.push(res.scores);allModelIds.push(id);}})
+                   .catch(e=>console.warn(id,'eval failed:',e.message));
+      }).filter(Boolean);
+      await Promise.all(evalCalls);
     }
 
     renderStep(step);
@@ -1312,13 +1483,14 @@ async function auditRegion(){
     const newItems=parsed.annotations.map((ann,j)=>{
       const i=startIdx+j;
       const col=ANNOTATION_COLORS[i%ANNOTATION_COLORS.length]||'#888';
-      const p=(ann.priority||'Medium').toLowerCase();
-      const pcls=p==='high'?'p-high':p==='low'?'p-low':'p-medium';
+      const p=ann.priority||'Medium';
+      const pcls='priority-badge '+getSeverityClass(p);
+      const plbl=getSeverityLabel(p);
       return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})" style="border-left:3px solid #1D9E75">
         <div style="position:absolute;font-size:9px;color:#1D9E75;font-weight:600;top:8px;right:10px">REGION</div>
         <div class="ann-num" style="background:${col}">${i+1}</div>
         <div class="ann-content">
-          <div class="ann-dim">${ann.dimension||''}<span class="priority-badge ${pcls}">${ann.priority||'Medium'}</span></div>
+          <div class="ann-dim">${ann.dimension||''}<span class="${pcls}">${plbl}</span></div>
           <div class="ann-title">${ann.title}</div>
           <div class="ann-desc">${ann.description}</div>
           <div style="display:flex;gap:0;flex-wrap:wrap">
