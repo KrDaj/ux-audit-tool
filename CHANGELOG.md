@@ -5,7 +5,29 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.9.0 — April 2026
+## v0.50 — April 2026
+
+### Added
+- **Confidence score per finding** — model returns `confidence: 0–100` per annotation; displayed as colour-coded badge (green ≥80%, amber ≥60%, red <60%); helps distinguish reliable findings from uncertain ones
+- **Edit findings inline** — hover any finding to reveal ✎ Edit button; opens inline form to correct title and description; Save / Cancel
+- **Delete findings** — ✕ button removes a finding from sidebar and canvas instantly
+- **Move pin** — "📍 Move pin" in edit form activates crosshair mode; next click on the screenshot repositions the pin to the correct element
+- **Element description in prompt** — model must now name the UI element before giving coordinates (e.g. "price range slider track in top-left sidebar"); coordinate and description are cross-checked for consistency
+- **20×20 reference grid** — finer grid overlay (up from 10×10) gives model 2-decimal coordinate precision (±2.5% vs ±5%)
+- **Gemini 2.5 Flash** — upgraded from deprecated `gemini-1.5-flash-latest`; handles Thinking block response format correctly
+- **How it works** — three-panel strip below hero: 01 Upload → 02 Analyse → 03 Export
+- **Sticky Run Audit button** — appears at bottom of screen when main button scrolls out of view; synced framework dropdown
+- **Results section separator** — visual divider between input and results areas
+- **Favicon** — red SVG square with "UX" in browser tab
+- **Meta description** — for browser and sharing previews
+
+### Fixed
+- Gemini 2.5 Flash response parsing — model returns Thinking blocks before JSON answer; now correctly extracts last non-thought text part
+- Footer cleaned up — removed redundant "UX Audit Tool · Keys stay in your browser" text; now shows only source references and version
+
+---
+
+## v0.45 — April 2026
 
 ### Added
 - **API key persistence** — keys saved to `localStorage` on input, restored on page load; no more re-entering after refresh
@@ -26,7 +48,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.8.0 — April 2026
+## v0.40 — April 2026
 
 ### Added
 - **Results fade-in** — findings appear with a 0.4s opacity transition instead of appearing abruptly
@@ -48,7 +70,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.7.0 — April 2026
+## v0.35 — April 2026
 
 ### Added
 - **Frontend framework dropdown** in Audit Context card — Angular, React, Vue 3, Svelte, or Generic HTML/CSS; "Generate fix →" produces framework-specific code
@@ -73,7 +95,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.6.0 — April 2026
+## v0.30 — April 2026
 
 ### Fixed
 - Constants self-reference bug (`CLAUDE_MODEL = CLAUDE_MODEL`) causing `ReferenceError` on load
@@ -91,7 +113,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.5.0 — April 2026
+## v0.25 — April 2026
 
 ### Optimised — Performance
 - **Screenshot compression** — images resized to max 1280 px, JPEG 85% quality before sending; saves ~75% vision tokens; size shown in preview
@@ -111,7 +133,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.4.0 — April 2026
+## v0.20 — April 2026
 
 ### Added
 - **Persona-based audit** — optional fields for age, usage frequency, tech affinity and device; findings are prioritised for the specified user group
@@ -124,7 +146,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.3.0 — April 2026
+## v0.15 — April 2026
 
 ### Added
 - **Screenshot compression** — images are resized to max 1280 px width and compressed to JPEG 85 % before sending; saves ~75 % of vision tokens with negligible quality loss; size info shown in preview
@@ -139,7 +161,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.2.0 — April 2026
+## v0.10 — April 2026
 
 ### Added
 - **PDF export — NNG Heuristic Evaluation Workbook format** — structured as a formal workbook inspired by the Nielsen Norman Group template
@@ -156,7 +178,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.1.0 — April 2026
+## v0.05 — April 2026
 
 ### Added
 - **WCAG 2.1 contrast checker tab** — samples colours from the screenshot using the relative luminance formula; reports Fail / AA / AAA with hex codes and contrast ratios
@@ -181,7 +203,7 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
-## v1.0.0 — April 2026
+## v0.01 — April 2026
 
 ### Added
 - Initial release

@@ -4,6 +4,9 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>UX Audit — Multi-model Analysis</title>
+  <meta name="description" content="AI-powered UX/UI audit tool. Upload a screenshot, get annotated findings scored against Nielsen's 10 heuristics and WCAG 2.1 — in under 3 minutes."/>
+  <meta name="theme-color" content="#DC0018"/>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23DC0018'/><text x='5' y='23' font-family='helvetica' font-weight='bold' font-size='18' fill='white'>UX</text></svg>"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap&font-display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
@@ -237,6 +240,21 @@
     .fix-box{background:var(--surface);border:1px solid var(--border);padding:10px}
     .fix-box-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
     .fix-box pre{font-size:11px;font-family:monospace;white-space:pre-wrap;line-height:1.5;color:var(--text2)}
+    .conf-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:0.04em;margin-left:6px}
+    .conf-high{background:#EBF5EF;color:#1A7A4A}
+    .conf-mid{background:#FFF4E0;color:#8A5800}
+    .conf-low{background:#FDEAEA;color:#A8000F}
+    .ann-item-actions{display:flex;gap:4px;margin-left:auto;flex-shrink:0;opacity:0;transition:opacity 0.15s}
+    .ann-item:hover .ann-item-actions{opacity:1}
+    .ann-action-btn{height:22px;padding:0 7px;font-size:10px;font-weight:600;border:1px solid var(--border2);background:var(--bg);color:var(--text3);cursor:pointer;font-family:var(--font);border-radius:var(--r)}
+    .ann-action-btn:hover{background:var(--bg2);color:var(--text)}
+    .ann-action-btn.danger:hover{background:#FDEAEA;color:var(--red);border-color:var(--red)}
+    .ann-edit-form{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+    .ann-edit-input{font-family:var(--font);font-size:12px;padding:5px 8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);outline:none;border-radius:var(--r);width:100%}
+    .ann-edit-input:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(220,0,24,0.08)}
+    .ann-edit-textarea{font-family:var(--font);font-size:12px;padding:5px 8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);outline:none;border-radius:var(--r);width:100%;resize:vertical;min-height:60px;line-height:1.5}
+    .ann-edit-textarea:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(220,0,24,0.08)}
+    .drag-pin{cursor:crosshair!important}
 
     /* ── CSS input ── */
     .css-input-wrap{margin-bottom:1.25rem}
@@ -276,6 +294,10 @@
 
     /* ── Footer ── */
     footer{border-top:1px solid var(--border);margin-top:3rem;padding:1.5rem 2rem;background:var(--surface)}
+    .sticky-run{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 2rem;display:none;align-items:center;justify-content:space-between;z-index:100;gap:12px}
+    .sticky-run.visible{display:flex}
+    .sticky-run-label{font-size:13px;color:var(--text2)}
+    .sticky-run-label strong{color:var(--text)}
     .footer-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
     .footer-left{font-size:12px;color:var(--text3)}
     .footer-links{display:flex;gap:16px;flex-wrap:wrap}
@@ -325,6 +347,25 @@
 </div>
 
 <main class="main">
+
+  <!-- How it works -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2rem;overflow:hidden">
+    <div style="background:var(--surface);padding:1.25rem 1.5rem">
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">01 — Upload</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Add your screenshot</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.55">Drag & drop a PNG, JPG or WebP. Paste CSS from Figma for precise WCAG analysis.</div>
+    </div>
+    <div style="background:var(--surface);padding:1.25rem 1.5rem">
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">02 — Analyse</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">AI evaluates the interface</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.55">Vision AI annotates issues directly on the screenshot, scored against Nielsen's 10 heuristics.</div>
+    </div>
+    <div style="background:var(--surface);padding:1.25rem 1.5rem">
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">03 — Export</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Get actionable results</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.55">Download a PDF workbook, generate code fixes per finding, or look up best practices.</div>
+    </div>
+  </div>
 
   <div class="section-label">Input</div>
 
@@ -537,6 +578,11 @@ font-weight: 500;"></textarea>
   </div>
 
   <div class="results" id="results">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-top:0.5rem">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)">Results</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
     <div class="results-header">
       <div class="section-label" style="flex:1;margin-bottom:0">Results</div>
       <button onclick="exportPDF()" class="btn-export">Export PDF &darr;</button>
@@ -584,19 +630,12 @@ font-weight: 500;"></textarea>
 
 <footer>
   <div class="footer-inner">
-    <div class="footer-left">UX Audit Tool &nbsp;&middot;&nbsp; Keys stay in your browser &nbsp;&middot;&nbsp; <span style="opacity:0.6">v1.7.0</span></div>
-    <div class="footer-links">
-      <a href="https://console.groq.com" target="_blank">Groq (free)</a>
-      <a href="https://aistudio.google.com" target="_blank">Gemini</a>
-      <a href="https://console.anthropic.com" target="_blank">Claude</a>
+    <div class="footer-left" style="font-size:10px;color:var(--text3)">
+      ¹ <a href="https://www.nngroup.com/articles/" target="_blank" rel="noopener">nngroup.com/articles</a> &nbsp;
+      ² <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
+      ³ <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
-  </div>
-  <div class="footer-inner" style="margin-top:8px;padding-top:10px;border-top:1px solid var(--border)">
-    <div style="font-size:10px;color:var(--text3);line-height:1.8">
-      ¹ Nielsen Norman Group &mdash; <a href="https://www.nngroup.com/articles/" target="_blank" rel="noopener">nngroup.com/articles</a> &nbsp;
-      ² Baymard Institute &mdash; <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
-      ³ W3C WCAG 2.1 &mdash; <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
-    </div>
+    <div style="font-size:10px;color:var(--text3)">v0.50</div>
   </div>
 </footer>
 
@@ -609,7 +648,7 @@ const el = id => document.getElementById(id);
 const CLAUDE_MODEL  = 'claude-sonnet-4-20250514';
 const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GPT_MODEL     = 'gpt-4o';
-const GEMINI_MODEL  = 'gemini-1.5-flash-latest';
+const GEMINI_MODEL  = 'gemini-2.5-flash';
 const ANTHROPIC_VER = '2023-06-01';
 
 // Claude headers helper — avoids repeating 4 header keys every call
@@ -638,7 +677,7 @@ const DIMS_SHORT=['System status','Real world match','Control & freedom','Consis
 const MODEL_META={
   claude:{name:'Claude',color:'#D97706',sub:'claude-sonnet-4-20250514',vision:true},
   openai:{name:'GPT-4o',color:'#10A37F',sub:'gpt-4o',vision:true},
-  gemini:{name:'Gemini',color:'#4285F4',sub:'gemini-1.5-flash-latest',vision:true},
+  gemini:{name:'Gemini',color:'#4285F4',sub:'gemini-2.5-flash',vision:true},
   groq:  {name:'Groq',  color:'#F55036',sub:'llama-3.3-70b-versatile',vision:false}
 };
 
@@ -912,8 +951,10 @@ Return this exact schema:
   "annotations": [
     {
       "id": 1,
+      "element": "precise description of the UI element (e.g. 'price range slider track in top-left sidebar', 'blue CTA button in hero section', 'navigation dropdown arrow right of Clothing label')",
       "x": 0.45,
       "y": 0.12,
+      "confidence": 85,
       "title": "short issue title (max 8 words)",
       "description": "specific description referencing a visible element and how to fix it",
       "dimension": "one of: Visibility of system status|Match with real world|User control & freedom|Consistency & standards|Error prevention|Recognition over recall|Flexibility & efficiency|Aesthetic & minimal design|Help users recover from errors|Help & documentation",
@@ -924,7 +965,11 @@ Return this exact schema:
 }
 
 Rules:
-- x and y are fractional coordinates (0.0–1.0). x=0 is left, x=1 is right, y=0 is top, y=1 is bottom.
+- "confidence" is your certainty (0–100) that this is a real, visible issue. 90–100 = clearly visible problem. 60–89 = likely issue but some ambiguity. Below 60 = uncertain — only include if clearly visible.
+- STEP 1: Identify the exact UI element causing the issue. Write it in "element" — be specific (location + visual appearance).
+- STEP 2: Use the grid labels visible in the image (e.g. "0.35,0.20") to find the nearest intersection to that element. Set x and y to the grid coordinates of the element's center — not a rough guess.
+- x=0 is left, x=1 is right, y=0 is top, y=1 is bottom.
+- The element description and coordinates must agree — if you write "top-left sidebar", x should be < 0.3 and y should be < 0.4.
 - Provide 5–8 annotations for VISIBLE issues only.
 - The 10 scores map in order to Nielsen's heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation. Each 1–10.
 - Score 1–4 = serious problem clearly visible. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.`;
@@ -987,9 +1032,19 @@ async function callGeminiVision(key,base64,mime,url,cssCtx='',sys=null){
   ];
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,{method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0,maxOutputTokens:1500}})});
+    body:JSON.stringify({
+      contents:[{parts}],
+      generationConfig:{temperature:0,maxOutputTokens:8192}
+    })});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Gemini error')}
-  return parseJSON((await r.json()).candidates[0].content.parts[0].text);
+  const d=await r.json();
+  // Gemini 2.5 Flash may return thinking blocks before the actual response
+  // Find the last text part which contains the JSON answer
+  const responseParts=d.candidates[0].content.parts;
+  const textPart=responseParts.filter(p=>p.text&&!p.thought).pop()
+    ||responseParts.filter(p=>p.text).pop();
+  if(!textPart) throw new Error('Gemini returned no text response');
+  return parseJSON(textPart.text);
 }
 
 async function callClaudeEval(key,findingsSummary){
@@ -1036,6 +1091,56 @@ async function callGroqEval(key,findingsSummary){
 
 
 // --- Draw annotations on canvas ---
+// ── Grid overlay for improved coordinate accuracy ──
+// Draws a subtle 10×10 reference grid on the image before sending to model.
+// The model uses grid intersections as anchor points → much more precise x/y coordinates.
+async function addGridOverlay(b64,mime){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.width;
+      c.height=img.height;
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0);
+
+      const COLS=20,ROWS=20;
+      const cw=img.width/COLS;
+      const ch=img.height/ROWS;
+
+      // Subtle grid lines — very light, won't distract the model
+      ctx.strokeStyle='rgba(100,100,255,0.15)';
+      ctx.lineWidth=1;
+      for(let i=1;i<COLS;i++){
+        ctx.beginPath();ctx.moveTo(i*cw,0);ctx.lineTo(i*cw,img.height);ctx.stroke();
+      }
+      for(let j=1;j<ROWS;j++){
+        ctx.beginPath();ctx.moveTo(0,j*ch);ctx.lineTo(img.width,j*ch);ctx.stroke();
+      }
+
+      // Coordinate labels at grid intersections — tiny, precise reference points
+      ctx.font=`bold ${Math.max(7,Math.round(img.width*0.005))}px monospace`;
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      for(let i=1;i<COLS;i++){
+        for(let j=1;j<ROWS;j++){
+          const px=(i/COLS).toFixed(2);
+          const py=(j/ROWS).toFixed(2);
+          const lx=i*cw, ly=j*ch;
+          // White halo
+          ctx.fillStyle='rgba(255,255,255,0.65)';
+          ctx.fillRect(lx-12,ly-6,24,12);
+          // Label text
+          ctx.fillStyle='rgba(60,60,180,0.55)';
+          ctx.fillText(`${px},${py}`,lx,ly);
+        }
+      }
+      resolve(c.toDataURL('image/jpeg',0.88).split(',')[1]);
+    };
+    img.src=`data:${mime};base64,${b64}`;
+  });
+}
+
 function drawAnnotations(annotations,img,canvas){
   const W=img.naturalWidth||img.width;
   const H=img.naturalHeight||img.height;
@@ -1117,7 +1222,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     sel.width=img.naturalWidth;
     sel.height=img.naturalHeight;
     drawAnnotations(annotations,img,canvas);
-    setupCanvasClick(annotations,img,canvas);
+    setupCanvasClickWithDrag(annotations,img,canvas);
     initRegionCanvas();
   };
 
@@ -1144,13 +1249,24 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     const p=ann.priority||'Medium';
     const pcls='priority-badge '+getSeverityClass(p);
     const plbl=getSeverityLabel(p);
+    const conf=ann.confidence!=null?ann.confidence:null;
+    const confCls=conf==null?'':conf>=80?'conf-high':conf>=60?'conf-mid':'conf-low';
+    const confHtml=conf!=null?`<span class="conf-badge ${confCls}">${conf}% confidence</span>`:'';
     return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})">
       <div class="ann-num" style="background:${col}">${i+1}</div>
-      <div class="ann-content">
-        <div class="ann-dim">${ann.dimension||''}<span class="${pcls}">${plbl}</span></div>
-        <div class="ann-title">${ann.title}</div>
-        <div class="ann-desc">${ann.description}</div>
-        <div style="display:flex;gap:0;flex-wrap:wrap">
+      <div class="ann-content" style="flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap">
+          <div class="ann-dim" style="flex:1">${ann.dimension||''}<span class="${pcls}">${plbl}</span>${confHtml}</div>
+          <div class="ann-item-actions" onclick="event.stopPropagation()">
+            <button class="ann-action-btn" onclick="startEditAnnotation(${i})" title="Edit finding">✎ Edit</button>
+            <button class="ann-action-btn danger" onclick="deleteAnnotation(${i})" title="Delete finding">✕</button>
+          </div>
+        </div>
+        <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
+        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}</div>`:''}
+        <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
+        <div id="ann-edit-${i}" style="display:none"></div>
+        <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
           <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
           <button class="fix-btn" onclick="event.stopPropagation();loadFix(${i},this)" data-loaded="false">Generate fix →</button>
         </div>
@@ -1221,9 +1337,159 @@ window.selectAnnotation=function(idx){
   activeAnnIdx=idx;
   const img=el('annotatedImg');
   const canvas=el('annotationCanvas');
-  // Only do full redraw if active state changed — avoids full canvas repaint on every click
   if(prev!==idx) drawAnnotations(currentAnnotations,img,canvas);
   document.querySelectorAll('.ann-item').forEach((el,i)=>el.classList.toggle('active-ann',i===idx));
+};
+
+// ── Delete annotation ──
+window.deleteAnnotation=function(idx){
+  currentAnnotations.splice(idx,1);
+  const img=el('annotatedImg');
+  const canvas=el('annotationCanvas');
+  drawAnnotations(currentAnnotations,img,canvas);
+  setupCanvasClickWithDrag(currentAnnotations,img,canvas);
+  // Re-render sidebar
+  renderResults._refreshSidebar(currentAnnotations);
+};
+
+// ── Edit annotation inline ──
+window.startEditAnnotation=function(idx){
+  const ann=currentAnnotations[idx];
+  const editDiv=document.getElementById('ann-edit-'+idx);
+  const titleDiv=document.getElementById('ann-title-'+idx);
+  const descDiv=document.getElementById('ann-desc-'+idx);
+  if(!editDiv)return;
+  // Toggle
+  if(editDiv.style.display==='block'){
+    editDiv.style.display='none';
+    return;
+  }
+  editDiv.innerHTML=`
+    <div class="ann-edit-form" onclick="event.stopPropagation()">
+      <input class="ann-edit-input" id="edit-title-${idx}" value="${ann.title.replace(/"/g,'&quot;')}" placeholder="Title"/>
+      <textarea class="ann-edit-textarea" id="edit-desc-${idx}" placeholder="Description">${ann.description}</textarea>
+      <div style="display:flex;gap:6px">
+        <button class="ann-action-btn" style="background:var(--red);color:#fff;border-color:var(--red)"
+          onclick="event.stopPropagation();saveEditAnnotation(${idx})">Save</button>
+        <button class="ann-action-btn" onclick="event.stopPropagation();document.getElementById('ann-edit-${idx}').style.display='none'">Cancel</button>
+        <button class="ann-action-btn" style="margin-left:auto"
+          onclick="event.stopPropagation();startDragPin(${idx})" title="Click then click on image to reposition">
+          📍 Move pin
+        </button>
+      </div>
+    </div>`;
+  editDiv.style.display='block';
+};
+
+window.saveEditAnnotation=function(idx){
+  const title=document.getElementById('edit-title-'+idx)?.value.trim();
+  const desc=document.getElementById('edit-desc-'+idx)?.value.trim();
+  if(title) currentAnnotations[idx].title=title;
+  if(desc) currentAnnotations[idx].description=desc;
+  document.getElementById('ann-title-'+idx).textContent=currentAnnotations[idx].title;
+  document.getElementById('ann-desc-'+idx).textContent=currentAnnotations[idx].description;
+  document.getElementById('ann-edit-'+idx).style.display='none';
+};
+
+// ── Drag pin to new position ──
+let _dragPinIdx=-1;
+window.startDragPin=function(idx){
+  _dragPinIdx=idx;
+  const wrap=el('annotatedWrap');
+  wrap.classList.add('drag-pin');
+  // Close edit form
+  document.getElementById('ann-edit-'+idx).style.display='none';
+  // Show hint
+  const hint=el('regionHint');
+  if(hint){hint.textContent='Click on the image to reposition pin '+( idx+1);hint.style.color='var(--red)';}
+};
+
+// Hook into canvas click for drag-pin mode
+function setupCanvasClickWithDrag(annotations,img,canvas){
+  canvas.style.pointerEvents='auto';
+  // Remove old listener by cloning
+  const newCanvas=canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas,canvas);
+
+  newCanvas.addEventListener('click',e=>{
+    const rect=newCanvas.getBoundingClientRect();
+    const scaleX=newCanvas.width/rect.width;
+    const scaleY=newCanvas.height/rect.height;
+    const cx=(e.clientX-rect.left)*scaleX;
+    const cy=(e.clientY-rect.top)*scaleY;
+    const W=newCanvas.width;
+    const H=newCanvas.height;
+
+    // Drag pin mode
+    if(_dragPinIdx>=0){
+      currentAnnotations[_dragPinIdx].x=cx/W;
+      currentAnnotations[_dragPinIdx].y=cy/H;
+      _dragPinIdx=-1;
+      el('annotatedWrap').classList.remove('drag-pin');
+      const hint=el('regionHint');
+      if(hint){hint.textContent='';hint.style.color='';}
+      drawAnnotations(currentAnnotations,img,newCanvas);
+      return;
+    }
+
+    // Normal click — select annotation
+    const r=Math.min(W,H)*0.036;
+    let hit=-1;
+    annotations.forEach((ann,i)=>{
+      const ax=ann.x*W;
+      const ay=ann.y*H;
+      if(Math.hypot(cx-ax,cy-ay)<r)hit=i;
+    });
+    activeAnnIdx=hit;
+    drawAnnotations(annotations,img,newCanvas);
+    document.querySelectorAll('.ann-item').forEach((el,i)=>{
+      el.classList.toggle('active-ann',i===hit);
+      if(i===hit)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  });
+}
+
+// Helper to refresh sidebar without full re-render
+renderResults._refreshSidebar=function(annotations){
+  const sidebar=el('annSidebar');
+  if(!sidebar)return;
+  // Re-run the sidebar render part
+  const img=el('annotatedImg');
+  const canvas=el('annotationCanvas');
+  // Rebuild sidebar HTML
+  sidebar.innerHTML=annotations.map((ann,i)=>{
+    const col=ANNOTATION_COLORS[i]||'#888';
+    const p=ann.priority||'Medium';
+    const pcls='priority-badge '+getSeverityClass(p);
+    const plbl=getSeverityLabel(p);
+    const conf=ann.confidence!=null?ann.confidence:null;
+    const confCls=conf==null?'':conf>=80?'conf-high':conf>=60?'conf-mid':'conf-low';
+    const confHtml=conf!=null?`<span class="conf-badge ${confCls}">${conf}% confidence</span>`:'';
+    return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})">
+      <div class="ann-num" style="background:${col}">${i+1}</div>
+      <div class="ann-content" style="flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap">
+          <div class="ann-dim" style="flex:1">${ann.dimension||''}<span class="${pcls}">${plbl}</span>${confHtml}</div>
+          <div class="ann-item-actions" onclick="event.stopPropagation()">
+            <button class="ann-action-btn" onclick="startEditAnnotation(${i})" title="Edit finding">✎ Edit</button>
+            <button class="ann-action-btn danger" onclick="deleteAnnotation(${i})" title="Delete finding">✕</button>
+          </div>
+        </div>
+        <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
+        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}</div>`:''}
+        <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
+        <div id="ann-edit-${i}" style="display:none"></div>
+        <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
+          <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
+          <button class="fix-btn" onclick="event.stopPropagation();loadFix(${i},this)" data-loaded="false">Generate fix →</button>
+        </div>
+        <div class="bp-panel" id="bp-${i}"></div>
+        <div class="fix-panel" id="fix-${i}"></div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="padding:16px;color:var(--text3);font-size:13px">All findings removed.</div>';
+  drawAnnotations(annotations,img,canvas);
+  setupCanvasClickWithDrag(annotations,img,canvas);
 };
 
 // --- Main audit ---
@@ -1278,6 +1544,11 @@ async function startAudit(){
     } else {
       imgSrc=`data:${mime};base64,${b64}`;
     }
+
+    // ── Draw reference grid onto image before sending to model ──
+    // This gives the model precise anchor points for coordinate estimation
+    b64=await addGridOverlay(b64,mime);
+    mime='image/jpeg';
 
     // Vision models — run in parallel for speed
     renderStep(step++);
@@ -1396,6 +1667,27 @@ document.addEventListener('DOMContentLoaded',()=>{
       }catch(e){}
     });
   });
+
+  // ── Sticky Run button — show after scrolling past the main run button ──
+  const sticky=document.getElementById('stickyRun');
+  const runBtn=document.getElementById('runBtn');
+  const stickyFw=document.getElementById('frameworkSelectSticky');
+  const mainFw=document.getElementById('frameworkSelect');
+
+  // Sync framework options to sticky select
+  if(stickyFw&&mainFw){
+    Array.from(mainFw.options).forEach(o=>{
+      stickyFw.appendChild(new Option(o.text,o.value));
+    });
+    // Keep both selects in sync
+    mainFw.addEventListener('change',()=>stickyFw.value=mainFw.value);
+    stickyFw.addEventListener('change',()=>mainFw.value=stickyFw.value);
+  }
+
+  const observer=new IntersectionObserver(([e])=>{
+    sticky?.classList.toggle('visible',!e.isIntersecting);
+  },{threshold:0});
+  if(runBtn) observer.observe(runBtn);
 });
 
 // ── Deduplicate annotations by title similarity ──
@@ -2607,5 +2899,12 @@ async function exportPDF(){
 }
 
 </script>
+<div class="sticky-run" id="stickyRun">
+  <div class="sticky-run-label">Ready to audit? <strong>Configure above and run.</strong></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="frameworkSelectSticky" style="height:36px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-family:var(--font);outline:none;border-radius:var(--r)" onchange="document.getElementById('frameworkSelect').value=this.value"></select>
+    <button class="btn-run" style="height:36px;font-size:13px" onclick="startAudit()">Run Audit →</button>
+  </div>
+</div>
 </body>
 </html>
