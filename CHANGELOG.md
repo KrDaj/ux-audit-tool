@@ -5,6 +5,31 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.60 — April 2026
+
+### Improved — Swiss Government / Oblique Context
+- **Expanded Oblique audit checklist** — Swiss Gov context now checks explicitly against BIT Oblique Design System standards (oblique.bit.admin.ch):
+  - Layout: `ob-master-layout`, service navigation, breadcrumbs, `ob-column-layout`
+  - Typography: Frutiger font, formal institutional language, DE/FR/IT multilingual support
+  - Colour: Confederation Red `#DC0018`, Oblique palette only, WCAG 2.1 AA (4.5:1 text, 3:1 UI)
+  - Components: `ob-button`, `ob-form-field`, `ob-input`, `ob-select`, `ob-table`, `ob-dialog` — no raw HTML inputs
+  - Accessibility: eCH-0059 + WCAG 2.1 AA — alt text, label associations, keyboard navigation, focus states, skip navigation
+  - Data formats: `DD.MM.YYYY`, `1'000.00`, `CHF` (not `$`), no Google Fonts
+
+---
+
+## v0.55 — April 2026
+
+### Improved — Pin Accuracy
+- **Zone-based coordinate system** — replaced unreliable grid overlay with explicit 3×3 zone anchoring (top/middle/bottom × left/center/right); model must declare zone before giving x/y coordinates, enforcing consistency
+- **Zone shown in sidebar** — each finding shows zone label next to element description (e.g. `📍 Clothing dropdown (bottom-left)`) for quick verification
+- **Grid overlay removed** — subtle grid labels in JPEG were not reliably readable by vision models; zone approach is more robust
+
+### Fixed
+- Gemini display label updated from "1.5 Flash" to "2.5 Flash"
+
+---
+
 ## v0.50 — April 2026
 
 ### Added

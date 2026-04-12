@@ -489,7 +489,7 @@ font-weight: 500;"></textarea>
           <div class="model-dot" style="background:#4285F4"></div>
           <div class="model-info">
             <div class="model-name">Gemini</div>
-            <div class="model-sub">Google · 1.5 Flash</div>
+            <div class="model-sub">Google · 2.5 Flash</div>
             <span class="model-cap cap-vision">Vision</span>
           </div>
           <input type="password" id="key-gemini" placeholder="AIza..."/>
@@ -635,7 +635,7 @@ font-weight: 500;"></textarea>
       ² <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
       ³ <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
-    <div style="font-size:10px;color:var(--text3)">v0.50</div>
+    <div style="font-size:10px;color:var(--text3)">v0.60</div>
   </div>
 </footer>
 
@@ -873,7 +873,51 @@ async function fetchWithTimeout(url,opts,ms=30000){
 function buildIndustryContext(){
   const v=document.getElementById('industrySelect')?.value||'';
   const map={
-    'ch-gov':'This is a Swiss federal or cantonal government website. It must comply with the Bund Design System (BIT Oblique), eCH standards, and WCAG 2.1 AA. Evaluate for accessibility, multilingual support (DE/FR/IT), clear institutional language, and Bund brand guidelines.',
+    'ch-gov':`This is a Swiss federal or cantonal government application that must comply with the BIT Oblique Design System (oblique.bit.admin.ch) and Swiss Confederation standards.
+
+OBLIQUE DESIGN SYSTEM REQUIREMENTS — check each explicitly:
+
+LAYOUT & STRUCTURE:
+- Master layout with ob-master-layout component: fixed header with service navigation (ob-service-navigation), main navigation, and footer
+- ob-nav-tree or horizontal navigation for main sections
+- Breadcrumb navigation (ob-breadcrumb) for deep page hierarchies
+- Correct use of ob-column-layout for content areas
+- No custom layouts that bypass Oblique's master layout structure
+
+TYPOGRAPHY & LANGUAGE:
+- Frutiger font family (the Swiss Confederation typeface) or system fallback
+- All UI text must support DE, FR, IT — check for hardcoded language
+- Formal institutional language — no casual or marketing language
+- Labels must be descriptive and complete (no icon-only buttons without labels)
+
+COLOUR & BRANDING:
+- Primary: Confederation red (#DC0018 or Oblique's $red variable)
+- No arbitrary brand colours — only Oblique palette
+- WCAG 2.1 AA contrast minimum (4.5:1 for text, 3:1 for UI components)
+- Swiss coat of arms / Confederation logo used correctly if present
+
+COMPONENTS:
+- Buttons: ob-button with correct variants (primary, secondary, tertiary)
+- Forms: ob-form-field wrappers, ob-input, ob-select — not raw HTML inputs
+- Tables: ob-table with proper headers, sorting, pagination
+- Alerts/notifications: ob-notification component
+- No custom modal implementations — use ob-dialog
+- Date inputs: Swiss format DD.MM.YYYY
+
+ACCESSIBILITY (eCH-0059 & WCAG 2.1 AA mandatory):
+- All images have alt text
+- Form fields have associated labels (not placeholder-only)
+- Keyboard navigation works for all interactive elements
+- Focus states clearly visible
+- Error messages are descriptive and linked to fields
+- Skip navigation link present
+
+DATA & PRIVACY:
+- No external font loading (Google Fonts) — must use local/CDN-served Frutiger
+- Cookie consent if tracking present
+- Data labels in CH-format (dates DD.MM.YYYY, numbers 1'000.00, currency CHF not $)
+
+Flag any violation of these standards as a finding.`,
     'ecommerce':'This is an e-commerce / online shop. Focus on conversion optimization, product clarity, trust signals, checkout flow, cart visibility, and mobile shopping experience.',
     'saas':'This is a SaaS web application. Focus on onboarding clarity, feature discoverability, dashboard information hierarchy, empty states, error handling, and power-user efficiency.',
     'banking':'This is a banking or financial services interface. Focus on security signalling, data clarity, error prevention in transactions, trust, and accessibility.',
@@ -951,7 +995,8 @@ Return this exact schema:
   "annotations": [
     {
       "id": 1,
-      "element": "precise description of the UI element (e.g. 'price range slider track in top-left sidebar', 'blue CTA button in hero section', 'navigation dropdown arrow right of Clothing label')",
+      "element": "precise description of the UI element (e.g. 'price range slider track in top-left sidebar', 'blue CTA button in hero section', 'Clothing dropdown arrow at bottom of left filter panel')",
+      "zone": "one of: top-left|top-center|top-right|middle-left|middle-center|middle-right|bottom-left|bottom-center|bottom-right",
       "x": 0.45,
       "y": 0.12,
       "confidence": 85,
@@ -966,10 +1011,19 @@ Return this exact schema:
 
 Rules:
 - "confidence" is your certainty (0–100) that this is a real, visible issue. 90–100 = clearly visible problem. 60–89 = likely issue but some ambiguity. Below 60 = uncertain — only include if clearly visible.
-- STEP 1: Identify the exact UI element causing the issue. Write it in "element" — be specific (location + visual appearance).
-- STEP 2: Use the grid labels visible in the image (e.g. "0.35,0.20") to find the nearest intersection to that element. Set x and y to the grid coordinates of the element's center — not a rough guess.
-- x=0 is left, x=1 is right, y=0 is top, y=1 is bottom.
-- The element description and coordinates must agree — if you write "top-left sidebar", x should be < 0.3 and y should be < 0.4.
+- STEP 1: Identify the exact UI element. Write it in "element" with its visual location (e.g. "bottom of left sidebar", "top navigation bar", "second product card row").
+- STEP 2: Assign the correct "zone" from the 3×3 grid: top/middle/bottom × left/center/right. This is your primary positioning anchor.
+- STEP 3: Set x and y to refine within that zone:
+  * top-left: x=0.05–0.33, y=0.05–0.33
+  * top-center: x=0.34–0.66, y=0.05–0.33
+  * top-right: x=0.67–0.95, y=0.05–0.33
+  * middle-left: x=0.05–0.33, y=0.34–0.66
+  * middle-center: x=0.34–0.66, y=0.34–0.66
+  * middle-right: x=0.67–0.95, y=0.34–0.66
+  * bottom-left: x=0.05–0.33, y=0.67–0.95
+  * bottom-center: x=0.34–0.66, y=0.67–0.95
+  * bottom-right: x=0.67–0.95, y=0.67–0.95
+- The zone and x/y MUST be consistent. "bottom-left" means x < 0.34 AND y > 0.66 — no exceptions.
 - Provide 5–8 annotations for VISIBLE issues only.
 - The 10 scores map in order to Nielsen's heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation. Each 1–10.
 - Score 1–4 = serious problem clearly visible. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.`;
@@ -1263,7 +1317,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
           </div>
         </div>
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
-        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}</div>`:''}
+        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?' <span style="opacity:0.6">(${ann.zone})</span>':''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
         <div id="ann-edit-${i}" style="display:none"></div>
         <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
@@ -1476,7 +1530,7 @@ renderResults._refreshSidebar=function(annotations){
           </div>
         </div>
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
-        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}</div>`:''}
+        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?' <span style="opacity:0.6">(${ann.zone})</span>':''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
         <div id="ann-edit-${i}" style="display:none"></div>
         <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
@@ -1545,10 +1599,7 @@ async function startAudit(){
       imgSrc=`data:${mime};base64,${b64}`;
     }
 
-    // ── Draw reference grid onto image before sending to model ──
-    // This gives the model precise anchor points for coordinate estimation
-    b64=await addGridOverlay(b64,mime);
-    mime='image/jpeg';
+    // Zone-based positioning — no grid overlay needed
 
     // Vision models — run in parallel for speed
     renderStep(step++);
