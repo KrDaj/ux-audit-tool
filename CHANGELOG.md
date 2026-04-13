@@ -5,6 +5,19 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.65 — April 2026
+
+### Added
+- **TECHNICAL.md** — new internal reference document covering architecture decisions, prompt design, token optimisation, CORS strategy, coordinate system rationale, and known limitations
+- **Recommendation field per finding** — model now returns a concrete `recommendation` alongside each finding; displayed as green accent block directly in the sidebar without needing to click "Generate fix →"
+- **Improved vision prompt** — complete rewrite for higher finding quality: role framing ("15 years experience"), ✓/✗ quality checklists, concrete examples in schema, confidence ≥70 gate, explicit "no quota filling" rule, persona calibration, industry violations as mandatory findings
+
+### Fixed
+- Nav logo cursor changed from pointer to default — no longer suggests the logo is clickable
+- Hamburger icon replaced with magnifier/search icon — no longer misleads users into expecting a navigation menu
+
+---
+
 ## v0.60 — April 2026
 
 ### Improved — Swiss Government / Oblique Context

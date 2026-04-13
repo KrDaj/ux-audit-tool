@@ -314,9 +314,9 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a class="nav-logo" href="#">
+    <a class="nav-logo" href="#" onclick="event.preventDefault()" style="cursor:default">
       <div class="nav-logo-mark">
-        <svg viewBox="0 0 16 16"><path d="M2 2h12v2H2zm0 5h8v2H2zm0 5h10v2H2z"/></svg>
+        <svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4" stroke="#fff" stroke-width="1.5" fill="none"/><line x1="9.5" y1="9.5" x2="13" y2="13" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="4.5" y1="6.5" x2="8.5" y2="6.5" stroke="#fff" stroke-width="1" stroke-linecap="round"/><line x1="6.5" y1="4.5" x2="6.5" y2="8.5" stroke="#fff" stroke-width="1" stroke-linecap="round"/></svg>
       </div>
       <div>
         <div class="nav-logo-text">UX Audit</div>
@@ -324,6 +324,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.65</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -635,7 +636,7 @@ font-weight: 500;"></textarea>
       ² <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
       ³ <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
-    <div style="font-size:10px;color:var(--text3)">v0.60</div>
+    <div style="font-size:10px;color:var(--text3)">v0.65</div>
   </div>
 </footer>
 
@@ -976,32 +977,48 @@ function visionSystem(){
   const severity=buildSeverityInstructions();
   const useNielsen=document.getElementById('severityScale')?.value!=='simple';
 
-  return`You are a senior UX/UI auditor analyzing a website screenshot. Respond ONLY with valid JSON, no markdown, no preamble.
+  return`You are a senior UX/UI auditor with 15 years of experience conducting heuristic evaluations for government agencies and enterprise software. You are known for being precise, evidence-based, and actionable — never vague or generic.
+
+Analyze the provided screenshot and identify real usability problems that would negatively impact users.
 ${industry?'\n\nINDUSTRY CONTEXT:\n'+industry:''}${persona?'\n\nUSER PERSONA:\n'+persona:''}
 
-CRITICAL RULES — follow strictly:
-- Only report issues you can DIRECTLY SEE in the screenshot. Do NOT invent or assume issues.
-- Reference specific visible elements (e.g. "the blue button in the top-right", "the navigation bar").
-- If a heuristic has no visible issue, give it a score of 7–9 — do not fabricate problems.
-- Be consistent: the same screenshot analyzed twice should yield the same findings.
-- Scores must reflect what is actually visible, not general assumptions about the site type.
-${persona?'- Prioritize findings relevant to the specified user persona.':''}
-${industry?'- Apply industry-specific conventions and expectations listed in the context above.':''}
+WHAT MAKES A HIGH-QUALITY FINDING:
+✓ Cites a specific visible element ("the red '20% OFF' badge on the Corporate Mid Back chair")
+✓ Explains WHY it is a problem for the user ("users cannot see the original price, making the discount meaningless")
+✓ Gives a concrete fix that a developer can implement ("Show the original price crossed out in grey next to the badge")
+✓ Would not apply to every website — it is specific to THIS interface
+
+WHAT TO AVOID — do not report:
+✗ Generic issues that apply to any website ("navigation could be clearer")
+✗ Assumptions about content you cannot see ("users might be confused by...")
+✗ Issues that are clearly intentional design decisions without clear usability impact
+✗ More than 7 findings — quality over quantity
+✗ Any finding you are less than 70% confident about
+
+CRITICAL RULES:
+- Only report what you can DIRECTLY SEE in the screenshot
+- Every finding must name the specific element and its location
+- description = what is wrong and why it hurts users
+- recommendation = exactly what to change, starting with a verb
+- Same screenshot analyzed twice → same findings (be consistent)
+${persona?'- Weight findings by impact on the specified user persona — a 65-year-old low-tech user has different pain points than a power user':''}
+${industry?'- Flag any violation of the industry standards listed above as a separate finding':''}
 
 ${severity}
 
-Return this exact schema:
+Return this exact JSON schema — no markdown, no preamble:
 {
   "annotations": [
     {
       "id": 1,
-      "element": "precise description of the UI element (e.g. 'price range slider track in top-left sidebar', 'blue CTA button in hero section', 'Clothing dropdown arrow at bottom of left filter panel')",
+      "element": "specific UI element with location (e.g. 'red 20% OFF badge on Corporate Mid Back chair card, middle-right product grid')",
       "zone": "one of: top-left|top-center|top-right|middle-left|middle-center|middle-right|bottom-left|bottom-center|bottom-right",
       "x": 0.45,
       "y": 0.12,
       "confidence": 85,
-      "title": "short issue title (max 8 words)",
-      "description": "specific description referencing a visible element and how to fix it",
+      "title": "concise issue title, max 8 words",
+      "description": "What is wrong and why it hurts users — specific, references the visible element, max 2 sentences",
+      "recommendation": "What to do — concrete, implementable, starts with a verb (Add / Replace / Remove / Show / Label / Move / Increase), max 2 sentences",
       "dimension": "one of: Visibility of system status|Match with real world|User control & freedom|Consistency & standards|Error prevention|Recognition over recall|Flexibility & efficiency|Aesthetic & minimal design|Help users recover from errors|Help & documentation",
       "priority": "${useNielsen?'0|1|2|3|4':'High|Medium|Low'}"
     }
@@ -1009,24 +1026,19 @@ Return this exact schema:
   "scores": [n,n,n,n,n,n,n,n,n,n]
 }
 
-Rules:
-- "confidence" is your certainty (0–100) that this is a real, visible issue. 90–100 = clearly visible problem. 60–89 = likely issue but some ambiguity. Below 60 = uncertain — only include if clearly visible.
-- STEP 1: Identify the exact UI element. Write it in "element" with its visual location (e.g. "bottom of left sidebar", "top navigation bar", "second product card row").
-- STEP 2: Assign the correct "zone" from the 3×3 grid: top/middle/bottom × left/center/right. This is your primary positioning anchor.
-- STEP 3: Set x and y to refine within that zone:
-  * top-left: x=0.05–0.33, y=0.05–0.33
-  * top-center: x=0.34–0.66, y=0.05–0.33
-  * top-right: x=0.67–0.95, y=0.05–0.33
-  * middle-left: x=0.05–0.33, y=0.34–0.66
-  * middle-center: x=0.34–0.66, y=0.34–0.66
-  * middle-right: x=0.67–0.95, y=0.34–0.66
-  * bottom-left: x=0.05–0.33, y=0.67–0.95
-  * bottom-center: x=0.34–0.66, y=0.67–0.95
-  * bottom-right: x=0.67–0.95, y=0.67–0.95
-- The zone and x/y MUST be consistent. "bottom-left" means x < 0.34 AND y > 0.66 — no exceptions.
-- Provide 5–8 annotations for VISIBLE issues only.
-- The 10 scores map in order to Nielsen's heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation. Each 1–10.
-- Score 1–4 = serious problem clearly visible. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.`;
+POSITIONING RULES:
+- STEP 1: Name the element precisely in "element" field
+- STEP 2: Choose "zone" — which of the 9 regions is the element in?
+- STEP 3: Set x/y within that zone's range:
+  top-left(x:0.05–0.33,y:0.05–0.33) top-center(x:0.34–0.66,y:0.05–0.33) top-right(x:0.67–0.95,y:0.05–0.33)
+  middle-left(x:0.05–0.33,y:0.34–0.66) middle-center(x:0.34–0.66,y:0.34–0.66) middle-right(x:0.67–0.95,y:0.34–0.66)
+  bottom-left(x:0.05–0.33,y:0.67–0.95) bottom-center(x:0.34–0.66,y:0.67–0.95) bottom-right(x:0.67–0.95,y:0.67–0.95)
+- Zone and x/y MUST agree — "bottom-left" means x<0.34 AND y>0.66, no exceptions
+
+SCORING:
+- 10 scores map to Nielsen's heuristics in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation
+- 1–4=serious visible problem, 5–6=minor issue, 7–9=acceptable, 10=exemplary
+- If a heuristic has no visible issue, score 7–9 — never fabricate problems for low scores`;
 }
 
 // --- Evaluator system prompt (text-only models) ---
@@ -1319,6 +1331,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
         ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?' <span style="opacity:0.6">(${ann.zone})</span>':''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
+        ${ann.recommendation?`<div style="margin-top:6px;padding:7px 10px;background:var(--green-bg);border-left:2px solid var(--green);font-size:12px;color:var(--text2);line-height:1.5"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:3px">Recommendation</span>${ann.recommendation}</div>`:''}
         <div id="ann-edit-${i}" style="display:none"></div>
         <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
           <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
@@ -1532,6 +1545,7 @@ renderResults._refreshSidebar=function(annotations){
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
         ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?' <span style="opacity:0.6">(${ann.zone})</span>':''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
+        ${ann.recommendation?`<div style="margin-top:6px;padding:7px 10px;background:var(--green-bg);border-left:2px solid var(--green);font-size:12px;color:var(--text2);line-height:1.5"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:3px">Recommendation</span>${ann.recommendation}</div>`:''}
         <div id="ann-edit-${i}" style="display:none"></div>
         <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
           <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
