@@ -304,6 +304,10 @@
     .footer-links a{font-size:12px;color:var(--text3);text-decoration:none}
     .footer-links a:hover{color:var(--text)}
 
+    /* ── Info tooltip ── */
+    .info-tip{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--border2);color:var(--text3);font-size:9px;font-weight:700;cursor:default;margin-left:4px;flex-shrink:0;vertical-align:middle}
+    #info-tooltip{position:fixed;background:var(--text);color:var(--bg);font-size:11px;font-weight:400;padding:6px 9px;white-space:normal;max-width:220px;line-height:1.45;border-radius:3px;z-index:9999;pointer-events:none;display:none;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+
     /* ── Utility ── */
     .card{background:var(--surface);border:1px solid var(--border);padding:1.5rem;margin-bottom:1.25rem}
   </style>
@@ -324,7 +328,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.80</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.85</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -422,7 +426,7 @@ font-weight: 500;"></textarea>
     <div class="input-card-body">
       <div class="context-grid">
         <div class="context-row">
-          <label class="context-label">Industry / Context</label>
+          <label class="context-label">Industry / Context<span class="info-tip" data-tip="Sets industry-specific evaluation criteria. Swiss Gov enables full Oblique Design System compliance checks.">i</span></label>
           <select class="context-select" id="industrySelect">
             <option value="">Generic UX/UI Audit</option>
             <option value="ch-gov">Swiss Government / Bund (Oblique-konform)</option>
@@ -434,49 +438,98 @@ font-weight: 500;"></textarea>
           </select>
         </div>
         <div class="context-row">
-          <label class="context-label">Severity scale</label>
+          <label class="context-label">Severity scale<span class="info-tip" data-tip="Nielsen 0–4 is the professional standard used in UX research. High/Medium/Low is simpler for stakeholder reports.">i</span></label>
           <select class="context-select" id="severityScale">
             <option value="nielsen">Nielsen 0–4 (professional)</option>
             <option value="simple">High / Medium / Low</option>
           </select>
         </div>
-
-
+        <div class="context-row">
+          <label class="context-label">Country / Region<span class="info-tip" data-tip="Localises findings to regional standards — currency format, date format, accessibility laws, and best practice sources.">i</span></label>
+          <select class="context-select" id="countrySelect">
+            <option value="">— not specified —</option>
+            <option value="ch">🇨🇭 Switzerland</option>
+            <option value="de">🇩🇪 Germany</option>
+            <option value="at">🇦🇹 Austria</option>
+            <option value="eu">🇪🇺 European Union</option>
+            <option value="uk">🇬🇧 United Kingdom</option>
+            <option value="us">🇺🇸 United States</option>
+            <option value="other">🌍 Other</option>
+          </select>
+        </div>
       </div>
 
-      <div class="context-label" style="margin-bottom:8px">Persona (optional — all fields optional)</div>
-      <div class="context-grid">
-        <div class="context-row">
-          <label class="context-label" style="font-size:10px">Age</label>
-          <input type="text" class="context-input" id="personaAge" placeholder="e.g. 65"/>
+      <!-- Page Context — collapsible -->
+      <div style="border-top:1px solid var(--border);margin-top:4px">
+        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.ctx-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'" style="cursor:pointer;padding:8px 0;display:flex;align-items:center;gap:6px;user-select:none">
+          <span class="ctx-arrow" style="font-size:9px;color:var(--text3)">▶</span>
+          <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Page Context</span>
+          <span style="font-size:11px;color:var(--text3);font-weight:400">(optional — helps the AI focus on what matters)</span>
         </div>
-        <div class="context-row">
-          <label class="context-label" style="font-size:10px">Usage frequency</label>
-          <select class="context-select" id="personaFrequency">
-            <option value="">— not specified —</option>
-            <option value="first-time">First-time user</option>
-            <option value="occasional">Occasional (few times/month)</option>
-            <option value="regular">Regular (weekly)</option>
-            <option value="power">Power user (daily)</option>
-          </select>
+        <div style="display:none;padding-bottom:10px">
+          <div class="context-grid">
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Product<span class="info-tip" data-tip="What does this page do? e.g. 'Building permit application form, Canton Bern' or 'SaaS dashboard for HR managers'">i</span></label>
+              <input type="text" class="context-input" id="contextProduct" placeholder="e.g. Building permit form, Canton Bern"/>
+            </div>
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Step in flow<span class="info-tip" data-tip="Where is this page in the user journey? e.g. 'Step 3 of 5 — assigning responsible persons' or 'After login, before checkout'">i</span></label>
+              <input type="text" class="context-input" id="contextFlow" placeholder="e.g. Step 3 of 5 — document upload"/>
+            </div>
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Known issues<span class="info-tip" data-tip="Share existing user feedback or analytics. e.g. '40% drop-off at step 3' or 'Users often miss the submit button'. The AI will prioritise these areas.">i</span></label>
+              <input type="text" class="context-input" id="contextKnown" placeholder="e.g. 40% drop-off at step 3"/>
+            </div>
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Do not audit<span class="info-tip" data-tip="Elements that cannot be changed, e.g. 'Left sidebar is a global Oblique component' or 'Header is fixed by brand guidelines'. The AI will ignore these.">i</span></label>
+              <input type="text" class="context-input" id="contextExclude" placeholder="e.g. Left sidebar — global component"/>
+            </div>
+          </div>
         </div>
-        <div class="context-row">
-          <label class="context-label" style="font-size:10px">Tech affinity</label>
-          <select class="context-select" id="personaTech">
-            <option value="">— not specified —</option>
-            <option value="low">Low — rarely uses digital tools</option>
-            <option value="medium">Medium — comfortable online</option>
-            <option value="high">High — tech-savvy</option>
-          </select>
+      </div>
+
+      <!-- Persona — collapsible -->
+      <div style="border-top:1px solid var(--border)">
+        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.ctx-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'" style="cursor:pointer;padding:8px 0;display:flex;align-items:center;gap:6px;user-select:none">
+          <span class="ctx-arrow" style="font-size:9px;color:var(--text3)">▶</span>
+          <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Persona</span>
+          <span style="font-size:11px;color:var(--text3);font-weight:400">(optional)</span>
         </div>
-        <div class="context-row">
-          <label class="context-label" style="font-size:10px">Device</label>
-          <select class="context-select" id="personaDevice">
-            <option value="">— not specified —</option>
-            <option value="desktop">Desktop</option>
-            <option value="mobile">Mobile</option>
-            <option value="tablet">Tablet</option>
-          </select>
+        <div style="display:none;padding-bottom:10px">
+          <div class="context-grid">
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Age<span class="info-tip" data-tip="Typical user age affects readability, interaction patterns and accessibility needs. e.g. '65' for older users who may need larger text and simpler navigation.">i</span></label>
+              <input type="text" class="context-input" id="personaAge" placeholder="e.g. 65"/>
+            </div>
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Usage frequency<span class="info-tip" data-tip="How often does this user interact with the product? First-time users need more guidance; power users benefit from shortcuts.">i</span></label>
+              <select class="context-select" id="personaFrequency">
+                <option value="">— not specified —</option>
+                <option value="first-time">First-time user</option>
+                <option value="occasional">Occasional (few times/month)</option>
+                <option value="regular">Regular (weekly)</option>
+                <option value="power">Power user (daily)</option>
+              </select>
+            </div>
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Tech affinity<span class="info-tip" data-tip="How comfortable is this user with digital tools? Low affinity means the AI will flag complex interactions, jargon and unclear error messages more severely.">i</span></label>
+              <select class="context-select" id="personaTech">
+                <option value="">— not specified —</option>
+                <option value="low">Low — rarely uses digital tools</option>
+                <option value="medium">Medium — comfortable online</option>
+                <option value="high">High — tech-savvy</option>
+              </select>
+            </div>
+            <div class="context-row">
+              <label class="context-label" style="font-size:10px">Device<span class="info-tip" data-tip="Primary device used to access this interface. Affects how the AI evaluates touch targets, navigation and responsive layout issues.">i</span></label>
+              <select class="context-select" id="personaDevice">
+                <option value="">— not specified —</option>
+                <option value="desktop">Desktop</option>
+                <option value="mobile">Mobile</option>
+                <option value="tablet">Tablet</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -526,6 +579,24 @@ font-weight: 500;"></textarea>
           </div>
           <input type="password" id="key-openai" placeholder="sk-..."/>
         </div>
+        <div class="model-row">
+          <div class="model-dot" style="background:#E63946"></div>
+          <div class="model-info">
+            <div class="model-name">Apertus</div>
+            <div class="model-sub">Swiss AI · ETH/EPFL · 8B</div>
+            <span class="model-cap cap-text">Evaluator</span>
+          </div>
+          <input type="password" id="key-apertus" placeholder="hf_..."/>
+        </div>
+        <div class="model-row">
+          <div class="model-dot" style="background:#24292F"></div>
+          <div class="model-info">
+            <div class="model-name">GitHub Models</div>
+            <div class="model-sub">Llama 3.3 70B · free tier</div>
+            <span class="model-cap cap-text">Evaluator</span>
+          </div>
+          <input type="password" id="key-github" placeholder="ghp_..."/>
+        </div>
       </div>
       <div style="margin-bottom:1.25rem">
         <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="cursor:pointer;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:6px 0;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px">
@@ -537,26 +608,36 @@ font-weight: 500;"></textarea>
             <div>
               <span style="font-weight:600;color:var(--text)">Claude</span> — recommended<br>
               <a href="https://console.anthropic.com" target="_blank" rel="noopener" style="color:var(--red)">console.anthropic.com</a><br>
-              <span style="color:var(--text3);font-size:11px">Vision + evaluator + best practice search. </span>
-            </div>
-            <div>
-              <span style="font-weight:600;color:var(--text)">Groq</span> — free<br>
-              <a href="https://console.groq.com" target="_blank" rel="noopener" style="color:var(--red)">console.groq.com</a><br>
-              <span style="color:var(--text3);font-size:11px">Evaluator + fix generator. </span>
+              <span style="color:var(--text3);font-size:11px">Vision + evaluator + best practice search.</span>
             </div>
             <div>
               <span style="font-weight:600;color:var(--text)">Gemini</span> — free tier<br>
               <a href="https://aistudio.google.com" target="_blank" rel="noopener" style="color:var(--red)">aistudio.google.com</a><br>
-              <span style="color:var(--text3);font-size:11px">Vision model. Free tier available. </span>
+              <span style="color:var(--text3);font-size:11px">Vision model. Free tier available.</span>
+            </div>
+            <div>
+              <span style="font-weight:600;color:var(--text)">Groq</span> — free<br>
+              <a href="https://console.groq.com" target="_blank" rel="noopener" style="color:var(--red)">console.groq.com</a><br>
+              <span style="color:var(--text3);font-size:11px">Evaluator + fix generator.</span>
+            </div>
+            <div>
+              <span style="font-weight:600;color:var(--text)">Apertus</span> — Swiss AI<br>
+              <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" style="color:var(--red)">huggingface.co/settings/tokens</a><br>
+              <span style="color:var(--text3);font-size:11px">Evaluator. Swiss-made, GDPR-compliant.</span>
             </div>
             <div>
               <span style="font-weight:600;color:var(--text)">GPT-4o</span><br>
               <a href="https://platform.openai.com" target="_blank" rel="noopener" style="color:var(--red)">platform.openai.com</a><br>
-              <span style="color:var(--text3);font-size:11px">Vision model. </span>
+              <span style="color:var(--text3);font-size:11px">Vision model.</span>
+            </div>
+            <div>
+              <span style="font-weight:600;color:var(--text)">GitHub Models</span><br>
+              <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" style="color:var(--red)">github.com/settings/tokens</a><br>
+              <span style="color:var(--text3);font-size:11px">Evaluator. Use <strong>Tokens (classic)</strong> — no scopes needed. Fine-grained tokens don't work.</span>
             </div>
           </div>
           <div style="margin-top:8px;padding:8px;background:var(--amber-bg);font-size:11px;color:var(--amber)">
-            <strong>Tip:</strong> Claude + Groq together gives you vision, scoring from 2 models, fix generation and best practice search — all for under $0.05 per audit.
+            <strong>Tip:</strong> Claude + Groq + Apertus + GitHub Models gives you 4 evaluators for more reliable scoring. Apertus is Swiss-made — ideal for Bundesamt use.
           </div>
         </div>
       </div>
@@ -619,6 +700,7 @@ font-weight: 500;"></textarea>
     <div class="tab-panel" id="tab-scores">
       <div class="card">
         <div class="models-used" id="modelsUsed"></div>
+        <div id="modelWarnings"></div>
         <div class="overall-row" id="overallRow"></div>
         <div class="scores-grid" id="scoreOverview"></div>
       </div>
@@ -655,6 +737,10 @@ const GROQ_MODEL    = 'llama-3.3-70b-versatile';
 const GPT_MODEL     = 'gpt-4o';
 const GEMINI_MODEL  = 'gemini-2.5-flash';
 const ANTHROPIC_VER = '2023-06-01';
+const APERTUS_MODEL = 'swiss-ai/Apertus-8B-Instruct-2509'; // kept for reference
+const GITHUB_MODEL  = 'meta/Llama-3.3-70B-Instruct';
+const GITHUB_BASE   = 'https://models.github.ai/inference/chat/completions';
+const HF_BASE = 'https://router.huggingface.co/v1/chat/completions';
 
 // Claude headers helper — avoids repeating 4 header keys every call
 function claudeHeaders(key, extra={}){
@@ -683,7 +769,9 @@ const MODEL_META={
   claude:{name:'Claude',color:'#D97706',sub:'claude-sonnet-4-20250514',vision:true, weight:1.0},
   openai:{name:'GPT-4o',color:'#10A37F',sub:'gpt-4o',vision:true, weight:0.9},
   gemini:{name:'Gemini',color:'#4285F4',sub:'gemini-2.5-flash',vision:true, weight:0.9},
-  groq:  {name:'Groq',  color:'#F55036',sub:'llama-3.3-70b-versatile',vision:false, weight:0.6}
+  groq:    {name:'Groq',    color:'#F55036',sub:'llama-3.3-70b-versatile',vision:false, weight:0.6},
+  apertus: {name:'Apertus', color:'#E63946',sub:'Apertus-8B-Instruct',vision:false, weight:0.65},
+  github:  {name:'GitHub',  color:'#24292F',sub:'GPT-4o via GitHub Models',vision:false, weight:0.75}
 };
 
 const ANNOTATION_COLORS=['#E24B4A','#E24B4A','#EF9F27','#EF9F27','#639922','#639922','#4285F4','#4285F4'];
@@ -979,6 +1067,82 @@ function buildPersonaContext(){
   return`Evaluate this interface from the perspective of a user with the following profile:\n${parts.join('\n')}\nAdjust your findings and severity ratings to reflect the needs, limitations, and expectations of this specific user group.`;
 }
 
+function buildCountryContext(){
+  const c=document.getElementById('countrySelect')?.value||'';
+  if(!c)return'';
+  const map={
+    ch:`Regional context: Switzerland.
+- Currency: CHF — format as "CHF 12.00" or "12.00 CHF", never "$" or "€" unless explicitly shown
+- Date format: DD.MM.YYYY (e.g. 13.04.2026)
+- Languages: DE/FR/IT/RM — flag any content that appears in English only
+- Accessibility law: BehiG (Behindertengleichstellungsgesetz) — aligns with WCAG 2.1 AA
+- Privacy law: nDSG (Swiss Data Protection Act) — similar to GDPR but distinct
+- Best practice sources: prefer Swiss-specific sources, nngroup.com, or European standards
+- Flag any US-centric UX patterns (e.g. ZIP code, imperial units, US phone formats) as inappropriate`,
+
+    de:`Regional context: Germany.
+- Currency: EUR — format as "12,00 €" (comma as decimal separator)
+- Date format: DD.MM.YYYY
+- Accessibility law: BITV 2.0 / WCAG 2.1 AA mandatory for public sector
+- Privacy law: DSGVO (GDPR) — flag cookie consent issues, data collection without consent
+- Language: German — flag English-only UI elements
+- Prefer: German UX standards, European sources over US-centric references`,
+
+    at:`Regional context: Austria.
+- Currency: EUR — format as "12,00 €"
+- Date format: DD.MM.YYYY
+- Accessibility law: WZG (Web-Zugänglichkeits-Gesetz) / WCAG 2.1 AA
+- Privacy law: DSGVO (GDPR)
+- Language: German (Austrian variant)
+- Prefer European sources and standards`,
+
+    eu:`Regional context: European Union.
+- Currency: EUR for most member states — flag USD or GBP as inappropriate unless relevant
+- Date format: DD.MM.YYYY or ISO 8601 (YYYY-MM-DD)
+- Accessibility law: European Accessibility Act (EAA) — WCAG 2.1 AA minimum
+- Privacy law: GDPR — flag missing cookie consent, unclear data handling
+- Languages: localisation expected — flag English-only content
+- Prefer: European Commission guidelines, W3C/WAI standards`,
+
+    uk:`Regional context: United Kingdom.
+- Currency: GBP (£) — format as "£12.00"
+- Date format: DD/MM/YYYY
+- Accessibility law: Equality Act 2010 / Public Sector Bodies Accessibility Regulations (WCAG 2.1 AA)
+- Privacy law: UK GDPR / Data Protection Act 2018
+- Language: British English — flag American English spelling as inconsistent
+- Prefer: GOV.UK Design System, GDS patterns, Nielsen Norman Group`,
+
+    us:`Regional context: United States.
+- Currency: USD ($) — format as "$12.00"
+- Date format: MM/DD/YYYY
+- Accessibility law: ADA / Section 508 — WCAG 2.1 AA
+- Privacy law: varies by state (CCPA for California)
+- Language: American English
+- Prefer: Nielsen Norman Group, Baymard Institute, WCAG, US Web Design System (USWDS)`,
+
+    other:`Regional context: unspecified international.
+- Avoid US-centric or UK-centric assumptions
+- Use ISO standards where applicable (ISO 8601 dates, SI units)
+- Flag currency symbols and date formats as potentially region-specific
+- Prefer: W3C/WAI standards, Nielsen Norman Group`
+  };
+  return map[c]||'';
+}
+
+function buildPageContext(){
+  const product=document.getElementById('contextProduct')?.value.trim()||'';
+  const flow=document.getElementById('contextFlow')?.value.trim()||'';
+  const known=document.getElementById('contextKnown')?.value.trim()||'';
+  const exclude=document.getElementById('contextExclude')?.value.trim()||'';
+  const parts=[];
+  if(product)parts.push(`Product/purpose: ${product}`);
+  if(flow)parts.push(`Step in flow: ${flow}`);
+  if(known)parts.push(`Known issues (prioritise these areas): ${known}`);
+  if(exclude)parts.push(`Do NOT audit these elements (they are fixed/global): ${exclude}`);
+  if(!parts.length)return'';
+  return parts.join('\n');
+}
+
 function buildSeverityInstructions(){
   const scale=document.getElementById('severityScale')?.value||'nielsen';
   if(scale==='nielsen'){
@@ -1011,20 +1175,22 @@ function getSeverityClass(priority){
 function visionSystem(){
   const industry=buildIndustryContext();
   const persona=buildPersonaContext();
+  const pageCtx=buildPageContext();
+  const country=buildCountryContext();
   const severity=buildSeverityInstructions();
   const useNielsen=document.getElementById('severityScale')?.value!=='simple';
 
   return`You are a senior UX/UI auditor with 15 years of experience conducting heuristic evaluations for government agencies and enterprise software. Your findings are trusted because every one is specific, verifiable, and actionable. A vague finding damages your professional reputation more than no finding at all.
 
 Analyze the provided screenshot and identify real usability problems that would negatively impact users.
-${industry?'\n\nINDUSTRY CONTEXT:\n'+industry:''}${persona?'\n\nUSER PERSONA:\n'+persona:''}
+${pageCtx?'\n\nPAGE CONTEXT:\n'+pageCtx:''}${country?'\n\nREGIONAL CONTEXT:\n'+country:''}${industry?'\n\nINDUSTRY CONTEXT:\n'+industry:''}${persona?'\n\nUSER PERSONA:\n'+persona:''}
 
 STEP 1 — OBSERVE BEFORE YOU EVALUATE (mandatory scratchpad):
 Before writing any findings, mentally list what you can literally see:
 - Which UI components are present? (buttons, forms, navigation, cards, inputs, badges)
 - What text labels, prices, icons, ratings are visible?
 - What is the page structure? (header, sidebar, content grid, footer)
-Write this in the "_reasoning" field of each finding. Only report issues based on observed elements.
+Use this mental checklist before writing each finding. Only report issues based on observed elements.
 
 STEP 2 — EVALUATE each observed element against Nielsen's heuristics and industry context.
 
@@ -1070,7 +1236,6 @@ Return ONLY this JSON — no markdown, no preamble, no trailing text:
   "annotations": [
     {
       "id": 1,
-      "_reasoning": "I can see: [list the specific elements you observed that led to this finding — e.g. 'price label reads 120.00$ with dollar after number, visible on 3 product cards in middle and right columns']",
       "element": "exact element with precise location (e.g. 'red 20% OFF badge on Corporate Mid Back chair card, middle-right product grid, row 1')",
       "zone": "one of: top-left|top-center|top-right|middle-left|middle-center|middle-right|bottom-left|bottom-center|bottom-right",
       "x": 0.45,
@@ -1129,14 +1294,19 @@ async function callClaudeVision(key,base64,mime,url,cssCtx='',sys=null){
   const sysPrompt=(sys||visionSystem())+(cssCtx?'\n\nCSS provided:\n'+cssCtx.slice(0,1500):'');
   const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:claudeHeaders(key,{'anthropic-beta':'prompt-caching-2024-07-31'}),
-    body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1500,temperature:0,
+    body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:2000,temperature:0,
       system:[{type:'text',text:sysPrompt,cache_control:{type:'ephemeral'}}],
       messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mime,data:base64}},
         {type:'text',text:'Analyze this screenshot'+(url?' of '+url:'')+'.'}
       ]}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude vision error')}
-  return parseJSON((await r.json()).content[0].text);
+  const d=await r.json();
+  const text=d.content?.find(b=>b.type==='text')?.text||d.content?.[0]?.text;
+  if(!text) throw new Error('Claude vision returned no text');
+  const parsed=parseJSON(text);
+  console.log('Claude parsed scores:',parsed?.scores,'annotations:',parsed?.annotations?.length);
+  return parsed;
 }
 
 async function callGPTVision(key,base64,mime,url,cssCtx='',sys=null){
@@ -1147,7 +1317,7 @@ async function callGPTVision(key,base64,mime,url,cssCtx='',sys=null){
   ];
   const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-    body:JSON.stringify({model:GPT_MODEL,max_tokens:1500,temperature:0,messages:[{role:'user',content}]})});
+    body:JSON.stringify({model:GPT_MODEL,max_tokens:2000,temperature:0,messages:[{role:'user',content}]})});
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'GPT-4o error')}
   return parseJSON((await r.json()).choices[0].message.content);
 }
@@ -1167,12 +1337,17 @@ async function callGeminiVision(key,base64,mime,url,cssCtx='',sys=null){
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Gemini error')}
   const d=await r.json();
   // Gemini 2.5 Flash may return thinking blocks before the actual response
-  // Find the last text part which contains the JSON answer
-  const responseParts=d.candidates[0].content.parts;
+  const responseParts=d.candidates?.[0]?.content?.parts;
+  if(!responseParts){
+    console.warn('Gemini: no candidates in response',d);
+    throw new Error('Gemini returned empty response');
+  }
   const textPart=responseParts.filter(p=>p.text&&!p.thought).pop()
     ||responseParts.filter(p=>p.text).pop();
   if(!textPart) throw new Error('Gemini returned no text response');
-  return parseJSON(textPart.text);
+  const parsed=parseJSON(textPart.text);
+  console.log('Gemini parsed scores:',parsed?.scores,'annotations:',parsed?.annotations?.length);
+  return parsed;
 }
 
 async function callClaudeEval(key,findingsSummary){
@@ -1187,6 +1362,61 @@ async function callClaudeEval(key,findingsSummary){
   return parseJSON((await r.json()).content[0].text);
 }
 
+
+async function callApertusEval(key,findingsSummary){
+  const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
+
+  const body=JSON.stringify({
+    model:APERTUS_MODEL,
+    messages:[{role:'user',content:prompt}],
+    max_tokens:200,
+    temperature:0
+  });
+  const headers={'Content-Type':'application/json','Authorization':`Bearer ${key}`};
+
+  let r;
+  try{
+    r=await fetch(HF_BASE,{method:'POST',headers,body});
+  }catch(e){
+    // CORS fallback via proxy
+    r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(HF_BASE),{method:'POST',headers,body});
+  }
+  if(!r.ok){
+    const e=await r.json().catch(()=>({}));
+    const msg=e.error?.message||e.message||JSON.stringify(e)||'Apertus error';
+    const friendly=
+      r.status===402?'Free quota exceeded — top up at huggingface.co/settings/billing':
+      r.status===401?'Invalid HF token':
+      r.status===429?'Rate limit — try again later':
+      msg;
+    throw new Error(friendly);
+  }
+  return parseJSON((await r.json()).choices[0].message.content);
+}
+
+async function callGitHubEval(key,findingsSummary){
+  const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
+
+  const body=JSON.stringify({model:GITHUB_MODEL,messages:[{role:'user',content:prompt}],max_tokens:200,temperature:0});
+  const headers={'Content-Type':'application/json','Authorization':`Bearer ${key}`};
+  let r;
+  try{
+    r=await fetch(GITHUB_BASE,{method:'POST',headers,body});
+  }catch(e){
+    r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(GITHUB_BASE),{method:'POST',headers,body});
+  }
+  if(!r.ok){
+    const e=await r.json().catch(()=>({}));
+    const msg=e.error?.message||e.message||JSON.stringify(e)||'GitHub Models error';
+    const friendly=
+      r.status===403?'Model not available — try a different model or check token permissions':
+      r.status===429?'Rate limit — try again later':
+      r.status===401?'Invalid GitHub token':
+      msg;
+    throw new Error(friendly);
+  }
+  return parseJSON((await r.json()).choices[0].message.content);
+}
 
 async function callGroqEval(key,findingsSummary){
   const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
@@ -1277,10 +1507,30 @@ function drawAnnotations(annotations,img,canvas){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
 
-  annotations.forEach((ann,i)=>{
-    const x=ann.x*W;
-    const y=ann.y*H;
-    const r=Math.min(W,H)*0.028;
+  // Collision detection — spread pins that are too close
+  const r=Math.min(W,H)*0.028;
+  const minDist=r*2.4; // minimum distance between pin centres
+  const positions=annotations.map(ann=>({x:ann.x*W,y:ann.y*H}));
+  for(let i=1;i<positions.length;i++){
+    for(let j=0;j<i;j++){
+      const dx=positions[i].x-positions[j].x;
+      const dy=positions[i].y-positions[j].y;
+      const dist=Math.hypot(dx,dy);
+      if(dist<minDist){
+        // Push pin i away from pin j
+        const angle=dist>0?Math.atan2(dy,dx):Math.PI/4*(i%4);
+        const push=minDist-dist;
+        positions[i].x+=Math.cos(angle)*push;
+        positions[i].y+=Math.sin(angle)*push;
+        // Clamp to canvas bounds
+        positions[i].x=Math.max(r,Math.min(W-r,positions[i].x));
+        positions[i].y=Math.max(r,Math.min(H-r,positions[i].y));
+      }
+    }
+  }
+
+  positions.forEach((pos,i)=>{
+    const {x,y}=pos;
     const col=ANNOTATION_COLORS[i]||'#888';
     const isActive=(i===activeAnnIdx);
 
@@ -1340,11 +1590,11 @@ function setupCanvasClick(annotations,img,canvas){
 }
 
 // --- Render results ---
-function renderResults(imgSrc,annotations,allScores,activeModelIds){
+function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[]){
   // annotated image
   const img=el('annotatedImg');
-  img.src=imgSrc;
-  img.onload=()=>{
+
+  const setupCanvas=()=>{
     const canvas=el('annotationCanvas');
     const sel=el('selectionCanvas');
     sel.width=img.naturalWidth;
@@ -1353,6 +1603,14 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     setupCanvasClickWithDrag(annotations,img,canvas);
     initRegionCanvas();
   };
+
+  if(img.src===imgSrc&&img.complete&&img.naturalWidth>0){
+    // Image already cached — draw immediately
+    setupCanvas();
+  } else {
+    img.onload=setupCanvas;
+    img.src=imgSrc;
+  }
 
   // run WCAG check — use CSS colors if available, else sample from image
   const cssInput=el('cssInput').value.trim();
@@ -1391,7 +1649,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
           </div>
         </div>
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
-        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?' <span style="opacity:0.6">(${ann.zone})</span>':''}</div>`:''}
+        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?` <span style="opacity:0.6">(${ann.zone})</span>`:''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
         ${ann.recommendation?`<div style="margin-top:6px;padding:7px 10px;background:var(--green-bg);border-left:2px solid var(--green);font-size:12px;color:var(--text2);line-height:1.5"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:3px">Recommendation</span>${ann.recommendation}</div>`:''}
         <div id="ann-edit-${i}" style="display:none"></div>
@@ -1419,6 +1677,23 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     const m=MODEL_META[id];
     return`<span class="model-badge" style="background:${m.color}22;color:${m.color}">${m.name}</span>`;
   }).join('');
+
+  // Model warnings — show failed models with reason
+  const warnEl=el('modelWarnings');
+  if(warnEl){
+    if(modelErrors.length>0){
+      warnEl.innerHTML=modelErrors.map(({id,msg})=>{
+        const m=MODEL_META[id];
+        const name=m?m.name:id;
+        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:var(--amber-bg);border-left:3px solid var(--amber);font-size:11px">
+          <span style="font-weight:600;color:var(--amber)">${name}</span>
+          <span style="color:var(--text2)">${msg}</span>
+        </div>`;
+      }).join('');
+    } else {
+      warnEl.innerHTML='';
+    }
+  }
 
   el('overallRow').innerHTML=
     (allScores.length>1?`<div class="overall-card" style="border-top:3px solid ${scoreColor(combinedAvg)}">
@@ -1531,20 +1806,23 @@ window.startDragPin=function(idx){
 };
 
 // Hook into canvas click for drag-pin mode
+// Track current click handler so we can remove it
+let _canvasClickHandler=null;
+
 function setupCanvasClickWithDrag(annotations,img,canvas){
   canvas.style.pointerEvents='auto';
-  // Remove old listener by cloning
-  const newCanvas=canvas.cloneNode(true);
-  canvas.parentNode.replaceChild(newCanvas,canvas);
 
-  newCanvas.addEventListener('click',e=>{
-    const rect=newCanvas.getBoundingClientRect();
-    const scaleX=newCanvas.width/rect.width;
-    const scaleY=newCanvas.height/rect.height;
+  // Remove previous listener cleanly
+  if(_canvasClickHandler) canvas.removeEventListener('click',_canvasClickHandler);
+
+  _canvasClickHandler=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width;
+    const scaleY=canvas.height/rect.height;
     const cx=(e.clientX-rect.left)*scaleX;
     const cy=(e.clientY-rect.top)*scaleY;
-    const W=newCanvas.width;
-    const H=newCanvas.height;
+    const W=canvas.width;
+    const H=canvas.height;
 
     // Drag pin mode
     if(_dragPinIdx>=0){
@@ -1554,7 +1832,7 @@ function setupCanvasClickWithDrag(annotations,img,canvas){
       el('annotatedWrap').classList.remove('drag-pin');
       const hint=el('regionHint');
       if(hint){hint.textContent='';hint.style.color='';}
-      drawAnnotations(currentAnnotations,img,newCanvas);
+      drawAnnotations(currentAnnotations,img,canvas);
       return;
     }
 
@@ -1567,12 +1845,14 @@ function setupCanvasClickWithDrag(annotations,img,canvas){
       if(Math.hypot(cx-ax,cy-ay)<r)hit=i;
     });
     activeAnnIdx=hit;
-    drawAnnotations(annotations,img,newCanvas);
+    drawAnnotations(annotations,img,canvas);
     document.querySelectorAll('.ann-item').forEach((el,i)=>{
       el.classList.toggle('active-ann',i===hit);
       if(i===hit)el.scrollIntoView({behavior:'smooth',block:'nearest'});
     });
-  });
+  };
+
+  canvas.addEventListener('click',_canvasClickHandler);
 }
 
 // Helper to refresh sidebar without full re-render
@@ -1602,7 +1882,7 @@ renderResults._refreshSidebar=function(annotations){
           </div>
         </div>
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
-        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?' <span style="opacity:0.6">(${ann.zone})</span>':''}</div>`:''}
+        ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?` <span style="opacity:0.6">(${ann.zone})</span>`:''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
         ${ann.recommendation?`<div style="margin-top:6px;padding:7px 10px;background:var(--green-bg);border-left:2px solid var(--green);font-size:12px;color:var(--text2);line-height:1.5"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:3px">Recommendation</span>${ann.recommendation}</div>`:''}
         <div id="ann-edit-${i}" style="display:none"></div>
@@ -1626,7 +1906,9 @@ async function startAudit(){
     openai:document.getElementById('key-openai').value.trim(),
     gemini:document.getElementById('key-gemini').value.trim(),
     claude:document.getElementById('key-claude').value.trim(),
-    groq:document.getElementById('key-groq').value.trim()
+    groq:document.getElementById('key-groq').value.trim(),
+    apertus:document.getElementById('key-apertus').value.trim(),
+    github:document.getElementById('key-github').value.trim()
   };
   const errEl=el('errorMsg');
   errEl.textContent='';
@@ -1678,28 +1960,61 @@ async function startAudit(){
     renderStep(step++);
     const _sys=visionSystem(); // build once, reuse across all model calls
     const visionResults=[];
+    const visionErrors=[];
+
+    // Helper: call a vision model with one automatic retry after 3s
+    const callWithRetry=async(id,callFn)=>{
+      try{
+        return await callFn();
+      }catch(e){
+        console.warn(id,'vision failed, retrying in 3s:',e.message);
+        await new Promise(r=>setTimeout(r,3000));
+        return await callFn();
+      }
+    };
+
     const visionCalls=visionIds.map(id=>{
-      const call=
+      const callFn=()=>
         id==='claude'?callClaudeVision(keys[id],b64,mime,url,_cssCtx,_sys):
         id==='openai'?callGPTVision(keys[id],b64,mime,url,_cssCtx,_sys):
         id==='gemini'?callGeminiVision(keys[id],b64,mime,url,_cssCtx,_sys):null;
-      if(!call)return null;
-      return call.then(data=>{
+      if(!callFn())return null;
+      return callWithRetry(id,callFn).then(data=>{
         if(!data) return console.warn(id,'returned null');
-        // Validate scores array — must be exactly 10 numbers
         if(!Array.isArray(data.scores)||data.scores.length!==10){
           console.warn(id,'invalid scores — got:',data.scores);
-          // Try to recover: fill missing scores with 7
           data.scores=Array.from({length:10},(_,i)=>
             (Array.isArray(data.scores)&&typeof data.scores[i]==='number')?data.scores[i]:7
           );
         }
         visionResults.push({id,data});
-      }).catch(e=>console.warn(id,'vision failed:',e.message));
+      }).catch(e=>{
+        const msg=e.message||'Unknown error';
+        const friendly=
+          msg.includes('503')||msg.includes('high demand')||msg.includes('Overloaded')?'Overloaded — try again later':
+          msg.includes('402')||msg.includes('Payment')?'Free quota exceeded':
+          msg.includes('401')||msg.includes('Invalid')?'Invalid API key':
+          msg.slice(0,80);
+        visionErrors.push({id,msg:friendly});
+        console.warn(id,'vision failed after retry:',msg);
+      });
     }).filter(Boolean);
+
     await Promise.all(visionCalls);
 
-    if(visionResults.length===0)throw new Error('Vision analysis failed. Check your GPT-4o or Gemini key.');
+    // If all failed but Claude key exists and wasn't already tried — use as last resort
+    if(visionResults.length===0&&keys.claude&&!visionIds.includes('claude')){
+      console.warn('All vision models failed — trying Claude as fallback');
+      try{
+        const data=await callClaudeVision(keys.claude,b64,mime,url,_cssCtx,_sys);
+        if(data) visionResults.push({id:'claude',data});
+      }catch(e){ visionErrors.push('Claude (fallback): '+e.message); }
+    }
+
+    if(visionResults.length===0){
+      const errDetail=visionErrors.length>0?'\n'+visionErrors.join('\n'):'';
+      throw new Error('All vision models unavailable — please try again in a moment.'+errDetail);
+    }
 
     // Merge annotations — deduplicate similar findings across models
     const primary=visionResults[0].data;
@@ -1715,19 +2030,24 @@ async function startAudit(){
     currentAnnotations=deduplicateAnnotations(mergedAnnotations);
 
     // Collect all scores — validate each before adding
-    const allScores=[primary.scores];
-    const allModelIds=[visionResults[0].id];
+    const allScores=[];
+    const allModelIds=[];
 
-    if(visionResults.length>1){
-      visionResults.slice(1).forEach(r=>{
-        if(Array.isArray(r.data.scores)&&r.data.scores.length===10){
-          allScores.push(r.data.scores);
-          allModelIds.push(r.id);
-        } else {
-          console.warn(r.id,'scores invalid, skipping from average');
-        }
+    visionResults.forEach(r=>{
+      const scores=r.data.scores;
+      if(!Array.isArray(scores)||scores.length===0){
+        console.warn(r.id,'no scores returned — skipping');
+        return;
+      }
+      // Pad to 10 if shorter, truncate if longer, coerce to numbers
+      const numScores=Array.from({length:10},(_,i)=>{
+        const v=scores[i];
+        return typeof v==='number'&&!isNaN(v)?v:7;
       });
-    }
+      allScores.push(numScores);
+      allModelIds.push(r.id);
+      console.log(r.id,'scores:',numScores);
+    });
 
     // Text evaluator models
     if(textIds.length>0){
@@ -1739,14 +2059,31 @@ async function startAudit(){
       const evalCalls=textIds.map(id=>{
         const call=
           id==='claude'?callClaudeEval(keys[id],findingsSummary):
-          id==='groq'?callGroqEval(keys[id],findingsSummary):null;
+          id==='groq'?callGroqEval(keys[id],findingsSummary):
+          id==='apertus'?callApertusEval(keys[id],findingsSummary):
+          id==='github'?callGitHubEval(keys[id],findingsSummary):null;
         if(!call)return null;
-        return call.then(res=>{if(res?.scores){allScores.push(res.scores);allModelIds.push(id);}})
-                   .catch(e=>{
-                     // Groq fails with CORS on GitHub Pages — fail silently, Claude covers scoring
-                     if(e.message==='Failed to fetch'||e.message.includes('CORS'))return;
-                     console.warn(id,'eval failed:',e.message);
-                   });
+        return call.then(res=>{
+          if(!res?.scores){console.warn(id,'eval returned no scores:',res);return;}
+          const numScores=Array.from({length:10},(_,i)=>{
+            const v=res.scores[i];
+            const n=typeof v==='number'?v:parseFloat(v);
+            return isNaN(n)?7:Math.min(10,Math.max(0,n));
+          });
+          allScores.push(numScores);
+          allModelIds.push(id);
+          console.log(id,'eval scores:',numScores);
+        }).catch(e=>{
+          const msg=e.message||'Unknown error';
+          const friendly=
+            msg.includes('402')||msg.includes('Payment')?'Free quota exceeded — check billing':
+            msg.includes('403')||msg.includes('No access')?'Access denied — model may require verified account':
+            msg.includes('503')||msg.includes('high demand')||msg.includes('Overloaded')?'Overloaded — try again later':
+            msg.includes('Failed to fetch')||msg.includes('CORS')?'Network error (CORS) — try again':
+            msg.slice(0,80);
+          visionErrors.push({id,msg:friendly});
+          console.warn(id,'eval failed:',msg);
+        });
       }).filter(Boolean);
       await Promise.all(evalCalls);
     }
@@ -1755,7 +2092,7 @@ async function startAudit(){
     finishProgressTicker();
     setTimeout(()=>{
       el('progressSection').style.display='none';
-      renderResults(imgSrc,currentAnnotations,allScores,allModelIds);
+      renderResults(imgSrc,currentAnnotations,allScores,allModelIds,visionErrors);
     },700);
 
   }catch(e){
@@ -1789,7 +2126,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   // ── Persist API keys in localStorage ──
-  const KEY_IDS=['key-claude','key-groq','key-gemini','key-openai'];
+  const KEY_IDS=['key-claude','key-groq','key-gemini','key-openai','key-apertus','key-github'];
   const STORE='uxaudit_keys';
   try{
     const saved=JSON.parse(localStorage.getItem(STORE)||'{}');
@@ -1996,6 +2333,7 @@ async function runWCAGCheck(imageDataUrl){
 }
 
 function renderWCAG(results){
+  window._lastWCAGResults=results; // store for PDF export
   const {failing,borderline,passing,totalChecked}=results;
   const fromCSS=results.fromCSS||false;
   const all=[...failing,...borderline,...passing];
@@ -2404,17 +2742,20 @@ Respond ONLY with valid JSON, no markdown fences:
 
   try{
     let raw;
-    const usedModel = groqKey ? 'Groq' : 'Claude';
+    const usedModel = isApertus ? 'Apertus' : groqKey ? 'Groq' : 'Claude';
 
     if(groqKey){
-      // Groq — free, fast, good enough for code fixes
-      const _groqBody=JSON.stringify({model:GROQ_MODEL,max_tokens:900,temperature:0,
+      // Groq or Apertus — free, fast, good enough for code fixes
+      const _fixModel=isApertus?APERTUS_MODEL:GROQ_MODEL;
+      const _fixUrl=isApertus?HF_BASE:'https://api.groq.com/openai/v1/chat/completions';
+      const _fixUrlProxy=isApertus?'https://corsproxy.io/?url='+encodeURIComponent(HF_BASE):'https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions';
+      const _groqBody=JSON.stringify({model:_fixModel,max_tokens:900,temperature:0,
         messages:[{role:'user',content:prompt}]});
       const _groqHeaders={'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`};
       let _gr;
-      try{ _gr=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:_groqHeaders,body:_groqBody}); }
-      catch(e){ _gr=await fetch('https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:_groqHeaders,body:_groqBody}); }
-      if(!_gr.ok){const e=await _gr.json();throw new Error(e.error?.message||'Groq error');}
+      try{ _gr=await fetch(_fixUrl,{method:'POST',headers:_groqHeaders,body:_groqBody}); }
+      catch(e){ _gr=await fetch(_fixUrlProxy,{method:'POST',headers:_groqHeaders,body:_groqBody}); }
+      if(!_gr.ok){const e=await _gr.json();throw new Error(e.error?.message||'Fix generator error');}
       raw=(await _gr.json()).choices[0].message.content;
     } else {
       // Claude fallback
@@ -2470,7 +2811,7 @@ async function loadBestPractice(idx, btn){
 
   // need claude key
   const claudeKey=document.getElementById('key-claude').value.trim();
-  const groqKey=document.getElementById('key-groq').value.trim();
+  const groqKey=document.getElementById('key-groq').value.trim()||document.getElementById('key-apertus').value.trim();
   if(!claudeKey && !groqKey){
     alert('Add a Claude or Groq key to load best practices.');
     return;
@@ -2485,12 +2826,15 @@ async function loadBestPractice(idx, btn){
 
   const industry=document.getElementById('industrySelect')?.value||'';
   const isSwissGov=industry==='ch-gov';
+  const country=document.getElementById('countrySelect')?.value||'';
+  const countryCtx=buildCountryContext();
 
   const prompt=`You are a UX expert. A UX audit found this issue:
 
 Dimension: ${ann.dimension}
 Issue: ${ann.title}
 Details: ${ann.description}
+${countryCtx?'\nREGIONAL CONTEXT:\n'+countryCtx:''}
 
 Search the web and find authoritative sources. Provide:
 1. Why this matters — cite a specific study, statistic or source (include the source name)
@@ -2503,7 +2847,7 @@ For any Oblique/Swiss Gov related findings, prioritise these authoritative sourc
 - Accessibility: https://www.ech.ch (eCH standards, especially eCH-0059)
 - WCAG: https://www.w3.org/WAI/WCAG21/
 Do NOT reference swiss.github.io/styleguide — this is outdated and replaced by Oblique.`:''}
-${!isSwissGov?`Prefer authoritative sources: Nielsen Norman Group (nngroup.com), Baymard Institute (baymard.com), W3C (w3.org), MDN, or the official design system of the company in question.`:''}
+${!isSwissGov?`Prefer authoritative sources relevant to the regional context above. Avoid US-centric sources unless the region is US.`:''}
 
 Format ONLY as JSON, no markdown:
 {
@@ -2526,12 +2870,12 @@ Be specific. Cite real companies and real URLs. No generic advice.`;
     let raw;
     if(claudeKey){
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-        headers:claudeHeaders(claudeKey),
+        headers:claudeHeaders(claudeKey,{'anthropic-beta':'prompt-caching-2024-07-31'}),
         body:JSON.stringify({
           model:CLAUDE_MODEL,
           max_tokens:800,
           temperature:0,
-          system:'You are a UX research assistant. Always respond with ONLY a valid JSON object — no prose, no markdown, no preamble, no "Let me search" text. Start your response with { and end with }.',
+          system:[{type:'text',text:'You are a UX research assistant. Always respond with ONLY a valid JSON object — no prose, no markdown, no preamble, no "Let me search" text. Start your response with { and end with }.',cache_control:{type:'ephemeral'}}],
           tools:[{type:'web_search_20250305',name:'web_search'}],
           messages:[{role:'user',content:prompt}]
         })});
@@ -2608,6 +2952,8 @@ Be specific. Cite real companies and real URLs. No generic advice.`;
 
     btn.textContent='Best practice ↑';
     btn.dataset.loaded='true';
+    // Store data on annotation for PDF export
+    if(currentAnnotations[idx]) currentAnnotations[idx]._bp=data;
   }catch(e){
     panel.innerHTML=`<div class="bp-content" style="color:var(--red)">Error: ${e.message}</div>`;
     btn.textContent='Best practice →';
@@ -2616,6 +2962,16 @@ Be specific. Cite real companies and real URLs. No generic advice.`;
 }
 
 // --- PDF Export ---
+// Strip HTML tags and citation markup from Best Practice text for PDF export
+function stripBP(s){
+  if(!s)return'';
+  return String(s)
+    .replace(/<cite[^>]*>([\s\S]*?)<\/cite>/gi,'$1')
+    .replace(/<[^>]+>/g,'')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+
 async function exportPDF(){
   const btn=event.target;
   btn.textContent='Generating...';
@@ -2954,6 +3310,119 @@ async function exportPDF(){
   y+=14;
 
   // ══════════════════════════════
+  // PAGE — WCAG Contrast Analysis
+  // ══════════════════════════════
+  const wcagData=window._lastWCAGResults;
+  if(wcagData&&(wcagData.failing.length>0||wcagData.borderline.length>0||wcagData.passing.length>0)){
+    newPage();
+
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+    doc.text('WCAG 2.1 Contrast Analysis',ML,y);y+=5;
+    doc.setDrawColor(26,26,24);doc.setLineWidth(0.5);
+    doc.line(ML,y,PW-MR,y);y+=8;
+
+    // Mode banner
+    const isCSS=wcagData.fromCSS;
+    doc.setFillColor(isCSS?235:255,isCSS?245:244,isCSS?239:224);
+    doc.rect(ML,y,CW,8,'F');
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+    doc.setTextColor(isCSS?26:138,isCSS?122:88,isCSS?74:0);
+    doc.text(isCSS?'✓ Precise mode — colours extracted from CSS (exact hex values)':'⚠ Estimated mode — colours sampled from screenshot pixels',ML+3,y+5.5);
+    y+=13;
+
+    // Summary row
+    const sumCols=[
+      {label:'Failing AA',val:wcagData.failing.length,col:[168,0,15],bg:[253,234,234]},
+      {label:'AA only',val:wcagData.borderline.length,col:[138,88,0],bg:[255,244,224]},
+      {label:'AAA pass',val:wcagData.passing.length,col:[26,122,74],bg:[235,245,239]},
+      {label:'Total checked',val:wcagData.totalChecked,col:[60,58,54],bg:[245,245,243]},
+    ];
+    const sumW=CW/4;
+    sumCols.forEach((s,i)=>{
+      const x=ML+i*sumW;
+      doc.setFillColor(...s.bg);
+      doc.rect(x,y,sumW-3,18,'F');
+      doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(...s.col);
+      doc.text(String(s.val),x+(sumW-3)/2,y+11,{align:'center'});
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+      doc.text(s.label,x+(sumW-3)/2,y+16,{align:'center'});
+    });
+    y+=24;
+
+    // WCAG thresholds note
+    doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+    doc.text('Normal text: 4.5:1 minimum (AA) · 7:1 (AAA) · Large text (18pt+): 3:1 minimum (AA)',ML,y);
+    y+=10;
+
+    // Colour pair cards
+    const allPairs=[
+      ...wcagData.failing.map(p=>({...p,status:'fail'})),
+      ...wcagData.borderline.map(p=>({...p,status:'warn'})),
+      ...wcagData.passing.map(p=>({...p,status:'pass'}))
+    ];
+
+    if(allPairs.length>0){
+      // Section header
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+      doc.text('Colour Combinations',ML,y);y+=4;
+      doc.setDrawColor(200,198,194);doc.setLineWidth(0.2);
+      doc.line(ML,y,PW-MR,y);y+=5;
+
+      // Draw colour pair as row
+      allPairs.forEach(p=>{
+        checkY(14);
+        const bgHex=p.bgHex||(p.bg?rgbToHex(p.bg.r,p.bg.g,p.bg.b):'#FFFFFF');
+        const fgHex=p.fgHex||(p.fg?rgbToHex(p.fg.r,p.fg.g,p.fg.b):'#000000');
+        const ratio=p.ratio.toFixed(2);
+        const aaa=p.ratio>=7,pass=p.ratio>=4.5;
+        const statusCol=aaa?[26,122,74]:pass?[138,88,0]:[168,0,15];
+        const statusBg=aaa?[235,245,239]:pass?[255,244,224]:[253,234,234];
+        const statusText=aaa?'AAA Pass':pass?'AA only':'Fail';
+
+        // BG swatch
+        const hexToRgb=h=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return[r,g,b];};
+        doc.setFillColor(...hexToRgb(bgHex));
+        doc.rect(ML,y,10,10,'F');
+        doc.setDrawColor(200,198,194);doc.setLineWidth(0.2);
+        doc.rect(ML,y,10,10,'S');
+
+        // FG swatch
+        doc.setFillColor(...hexToRgb(fgHex));
+        doc.rect(ML+11,y,10,10,'F');
+        doc.rect(ML+11,y,10,10,'S');
+
+        // "Aa" preview
+        doc.setFillColor(...hexToRgb(bgHex));
+        doc.rect(ML+23,y,16,10,'F');
+        doc.setFontSize(9);doc.setFont('helvetica','bold');
+        doc.setTextColor(...hexToRgb(fgHex));
+        doc.text('Aa',ML+31,y+7,{align:'center'});
+
+        // Hex values
+        doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+        doc.text(bgHex+' / '+fgHex,ML+42,y+4);
+
+        // Ratio
+        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+        doc.text(ratio+':1',ML+42,y+9);
+
+        // Status badge
+        doc.setFillColor(...statusBg);
+        doc.rect(PW-MR-22,y+1.5,22,7,'F');
+        doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...statusCol);
+        doc.text(statusText,PW-MR-11,y+6.5,{align:'center'});
+
+        y+=13;
+      });
+    }
+
+    // WCAG legend
+    y+=4;
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
+    doc.text('WCAG 2.1 Web Content Accessibility Guidelines — https://www.w3.org/TR/WCAG21/',ML,y);
+  }
+
+  // ══════════════════════════════
   // PAGES 4+ — One section per heuristic (NNG style)
   // ══════════════════════════════
 
@@ -3114,6 +3583,90 @@ async function exportPDF(){
     }
   });
 
+  // ══════════════════════════════
+  // PAGE — Best Practices & Quick Fixes (dedicated page)
+  // ══════════════════════════════
+  const allBpAnns=currentAnnotations.filter(a=>a._bp);
+  if(allBpAnns.length>0){
+    newPage();
+    // Page title
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(26,122,74);
+    doc.text('Best Practices & Quick Fixes',ML,y);y+=5;
+    doc.setDrawColor(26,122,74);doc.setLineWidth(0.5);
+    doc.line(ML,y,PW-MR,y);y+=8;
+    doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+    doc.text('Evidence-based recommendations from authoritative UX research sources.',ML,y);y+=10;
+
+    allBpAnns.forEach((ann,i)=>{
+      const bp=ann._bp;
+      checkY(40);
+
+      // Finding reference
+      doc.setFillColor(245,245,243);
+      doc.rect(ML,y,CW,8,'F');
+      doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+      doc.text(stripBP(ann.title),ML+3,y+5.5);
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+      doc.text(ann.dimension||'',PW-MR,y+5.5,{align:'right'});
+      y+=11;
+
+      // Why it matters
+      if(bp.why){
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(26,122,74);
+        doc.text('Why it matters',ML,y);y+=4.5;
+        doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
+        const whyL=doc.splitTextToSize(stripBP(bp.why),CW);
+        doc.text(whyL,ML,y);y+=whyL.length*4.5;
+        if(bp.source){
+          doc.setFontSize(7);doc.setTextColor(150,148,144);
+          doc.text('Source: '+stripBP(bp.source)+(bp.source_url?' — '+bp.source_url:''),ML,y);
+          y+=5;
+        }
+        y+=2;
+      }
+
+      // Quick fix
+      if(bp.quickfix){
+        doc.setFillColor(235,245,239);
+        doc.rect(ML,y,CW,1.5,'F');
+        y+=4;
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(26,122,74);
+        doc.text('Quick Fix',ML,y);y+=4.5;
+        doc.setFont('helvetica','normal');doc.setTextColor(26,26,24);
+        const fixL=doc.splitTextToSize(stripBP(bp.quickfix),CW);
+        doc.text(fixL,ML,y);y+=fixL.length*4.5+3;
+      }
+
+      // Examples
+      if(bp.examples?.length>0){
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(60,58,54);
+        doc.text('Who does it well',ML,y);y+=4.5;
+        bp.examples.slice(0,3).forEach(ex=>{
+          if(!ex.what)return;
+          checkY(14);
+          doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+          doc.text(stripBP(ex.company)||'Example',ML+3,y);y+=4;
+          doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
+          const exL=doc.splitTextToSize(stripBP(ex.what),CW-6);
+          doc.text(exL,ML+3,y);y+=exL.length*4.2;
+          if(ex.url){
+            doc.setFontSize(6.5);doc.setTextColor(150,148,144);
+            doc.text(ex.url,ML+3,y);y+=4;
+          }
+          y+=2;
+        });
+      }
+
+      // Separator between findings
+      if(i<allBpAnns.length-1){
+        y+=3;
+        doc.setDrawColor(220,218,214);doc.setLineWidth(0.2);
+        doc.line(ML,y,PW-MR,y);
+        y+=6;
+      }
+    });
+  }
+
   // Update page count in all footers
   const total=doc.internal.getNumberOfPages();
   for(let p=1;p<=total;p++){
@@ -3138,5 +3691,33 @@ async function exportPDF(){
     <button class="btn-run" style="height:36px;font-size:13px" onclick="startAudit()">Run Audit →</button>
   </div>
 </div>
-</body>
+<div id="info-tooltip"></div>
+<script>
+// Global smart tooltip for .info-tip elements
+(function(){
+  const tip=document.getElementById('info-tooltip');
+  document.addEventListener('mouseover',e=>{
+    const el=e.target.closest('.info-tip');
+    if(!el||!el.dataset.tip)return;
+    tip.textContent=el.dataset.tip;
+    tip.style.display='block';
+    const r=el.getBoundingClientRect();
+    const tw=tip.offsetWidth, th=tip.offsetHeight;
+    const vw=window.innerWidth, vh=window.innerHeight;
+    // Prefer above, fallback below
+    let top=r.top-th-6;
+    if(top<8) top=r.bottom+6;
+    // Centre horizontally, clamp to viewport
+    let left=r.left+r.width/2-tw/2;
+    if(left<8) left=8;
+    if(left+tw>vw-8) left=vw-tw-8;
+    tip.style.top=top+'px';
+    tip.style.left=left+'px';
+  });
+  document.addEventListener('mouseout',e=>{
+    if(e.target.closest('.info-tip')) tip.style.display='none';
+  });
+  document.addEventListener('scroll',()=>{ tip.style.display='none'; },{passive:true});
+})();
+</script>
 </html>

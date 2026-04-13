@@ -5,6 +5,39 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.85 — April 2026
+
+### Added
+- **Apertus evaluator** — Swiss AI model (ETH/EPFL, 8B) via Hugging Face router; weight ×0.65; free HF account needed
+- **GitHub Models evaluator** — Llama 3.3 70B via GitHub Models API; weight ×0.75; free with classic GitHub token (ghp_...)
+- **Country / Region dropdown** — CH, DE, AT, EU, UK, US, Other; injects regional prompt instructions (currency format, date format, accessibility law, privacy law, preferred sources) into both vision analysis and best practice search
+- **Page Context fields** — Product, Step in flow, Known issues, Do not audit; collapsible section in Audit Context card
+- **Persona collapsible** — Age, Frequency, Tech affinity, Device now in collapsible section
+- **Info tooltips (i)** — hover tooltips on all Audit Context labels; JS-positioned to avoid viewport clipping
+- **Model warning banners** — failed models shown inline in Nielsen Scores tab with friendly error messages (quota exceeded, overloaded, access denied) — no F12 needed
+- **Best Practices dedicated PDF page** — BP findings rendered on own page after heuristics; includes Why it matters, Quick Fix, Who does it well with URLs
+- **WCAG page in PDF** — colour pair matrix with mode banner, summary counts, and WCAG 2.1 reference
+- **Collision detection for pins** — overlapping annotation pins automatically spread apart
+
+### Improved
+- **Vision retry logic** — each vision model retries once after 3s on failure; Claude used as last resort fallback
+- **Claude vision tokens** — increased to 2000; `_reasoning` field removed from JSON schema (was causing silent truncation)
+- **Error messages** — HTTP 402/403/429/503 mapped to human-readable labels for Apertus, GitHub Models, Gemini
+- **Onboarding grid** — restructured to 3×2 layout (Claude/Gemini, Groq/Apertus, GPT-4o/GitHub Models)
+- **GitHub Models token instruction** — clarified: Classic token (ghp_...) required; fine-grained tokens don't work
+- **Best Practice prompt** — country context injected; sources now region-aware
+- **stripBP()** — global HTML/cite-tag stripper for clean PDF text output
+
+### Fixed
+- **Canvas pins offset** — replaced `cloneNode` with `removeEventListener` + named handler; pins now draw at correct coordinates
+- **`${ann.zone}` literal in sidebar** — was plain string, now template literal; zone name displays correctly
+- **Gemini score missing** — score array length validation now pads to 10 instead of dropping; string scores coerced via parseFloat
+- **`callGroqEval` missing function header** — body was accidentally placed in global scope after Apertus insertion; restored
+- **`stripBP` hoisting error** — moved from `const` inside exportPDF to global `function`; resolves ReferenceError on PDF export
+- **PDF Best Practice formatting** — `<cite>` tags and HTML stripped before rendering; text no longer bleeds across columns
+
+---
+
 ## v0.80 — April 2026
 
 ### Improved
