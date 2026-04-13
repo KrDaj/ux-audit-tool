@@ -5,6 +5,27 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.70 — April 2026
+
+### Added
+- **Weighted score averaging** — model scores are now weighted by role and quality: Claude ×1.0, GPT-4o ×0.9, Gemini ×0.9, Groq ×0.6 (text-only, no vision); weights shown in model badges for transparency
+- **WCAG colour matrix** — visual grid in WCAG tab showing all colour combinations as preview swatches with contrast ratio and AA/AAA pass/fail status
+- **Precise vs Estimated mode banner** — WCAG tab now clearly distinguishes CSS-based (exact) from pixel-sampled (estimated) analysis with green/amber indicator
+- **CSS input explanation** — expanded hint in Figma CSS toggle explaining why CSS gives more precise results and how to copy it from Figma Dev Mode
+
+### Improved
+- **Vision prompt — 6 prompt engineering improvements:**
+  - Scratchpad/chain-of-thought: model observes before evaluating (`_reasoning` field)
+  - 3-step self-check before each finding
+  - Confidence calibration with concrete anchor examples (95–100 / 80–94 / 70–79)
+  - Reputation reward signal: "a vague finding damages your reputation more than no finding"
+  - Concrete bad-finding examples with explanations
+  - Persona impact made explicit per finding
+- **Evaluator prompt** — now actively sceptical ("challenge severity, vision models tend to over-report")
+- **Best Practice sources** — Swiss Gov context now explicitly references `oblique.bit.admin.ch` and blocks the outdated `swiss.github.io/styleguide`; non-gov context prefers NNG, Baymard, W3C
+
+---
+
 ## v0.65 — April 2026
 
 ### Added

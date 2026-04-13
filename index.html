@@ -324,7 +324,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.65</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.70</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -392,10 +392,14 @@
       <div class="css-input-wrap">
         <div class="css-toggle" onclick="toggleCSSInput()">
           <span class="css-toggle-label">Paste CSS from Figma Dev Mode</span>
-          <span class="css-toggle-badge">Precise WCAG</span>
+          <span class="css-toggle-badge" title="CSS input gives exact hex values → WCAG ratios calculated to 2 decimal places. Without CSS, colours are sampled from pixels — less accurate.">⬆ Precise WCAG</span>
           <span id="cssArrow" style="font-size:11px;color:var(--text3);margin-left:auto">▼ expand</span>
         </div>
         <div id="cssInputArea" style="display:none">
+          <div style="font-size:12px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);padding:10px 12px;margin-bottom:8px;line-height:1.6">
+            <strong style="color:var(--text)">Why paste CSS?</strong> — CSS gives exact hex values (e.g. <code style="font-family:monospace;font-size:11px;background:var(--bg3);padding:1px 4px">#DC0018</code>) → WCAG contrast ratios calculated to 2 decimal places. Without CSS, colours are estimated from screenshot pixels — less precise, especially for similar shades.<br>
+            <span style="color:var(--text2)">In Figma Dev Mode: select a frame → Copy → Copy as CSS. In browser: DevTools → Elements → Styles → copy relevant rules.</span>
+          </div>
           <textarea class="css-textarea" id="cssInput" placeholder="Paste CSS here — from Figma Dev Mode, browser DevTools, or any CSS file.
 
 Example:
@@ -636,7 +640,7 @@ font-weight: 500;"></textarea>
       ² <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
       ³ <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
-    <div style="font-size:10px;color:var(--text3)">v0.65</div>
+    <div style="font-size:10px;color:var(--text3)">v0.70</div>
   </div>
 </footer>
 
@@ -676,10 +680,10 @@ const DIMS=[
 const DIMS_SHORT=['System status','Real world match','Control & freedom','Consistency','Error prevention','Recognition','Flexibility','Aesthetics','Error recovery','Documentation'];
 
 const MODEL_META={
-  claude:{name:'Claude',color:'#D97706',sub:'claude-sonnet-4-20250514',vision:true},
-  openai:{name:'GPT-4o',color:'#10A37F',sub:'gpt-4o',vision:true},
-  gemini:{name:'Gemini',color:'#4285F4',sub:'gemini-2.5-flash',vision:true},
-  groq:  {name:'Groq',  color:'#F55036',sub:'llama-3.3-70b-versatile',vision:false}
+  claude:{name:'Claude',color:'#D97706',sub:'claude-sonnet-4-20250514',vision:true, weight:1.0},
+  openai:{name:'GPT-4o',color:'#10A37F',sub:'gpt-4o',vision:true, weight:0.9},
+  gemini:{name:'Gemini',color:'#4285F4',sub:'gemini-2.5-flash',vision:true, weight:0.9},
+  groq:  {name:'Groq',  color:'#F55036',sub:'llama-3.3-70b-versatile',vision:false, weight:0.6}
 };
 
 const ANNOTATION_COLORS=['#E24B4A','#E24B4A','#EF9F27','#EF9F27','#639922','#639922','#4285F4','#4285F4'];
@@ -849,6 +853,24 @@ function switchTab(name){
 
 function scoreColor(s){return s>=8?'#1D9E75':s>=6?'#BA7517':'#D85A30'}
 function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length}
+
+// Weighted average — uses MODEL_META weights per model id
+function weightedAvg(scores, modelIds){
+  if(!scores.length) return 0;
+  // scores = array of score arrays, modelIds = matching array of model ids
+  const DIMS_COUNT=10;
+  return Array.from({length:DIMS_COUNT},(_,i)=>{
+    let sum=0, totalW=0;
+    scores.forEach((s,idx)=>{
+      const v=s[i];
+      if(v==null||isNaN(v)) return;
+      const w=MODEL_META[modelIds[idx]]?.weight||1.0;
+      sum+=v*w;
+      totalW+=w;
+    });
+    return totalW>0?sum/totalW:0;
+  });
+}
 function parseJSON(raw){
   // Try clean parse first
   try{ return JSON.parse(raw.replace(/```json|```/g,'').trim()); }catch(e){}
@@ -977,48 +999,71 @@ function visionSystem(){
   const severity=buildSeverityInstructions();
   const useNielsen=document.getElementById('severityScale')?.value!=='simple';
 
-  return`You are a senior UX/UI auditor with 15 years of experience conducting heuristic evaluations for government agencies and enterprise software. You are known for being precise, evidence-based, and actionable — never vague or generic.
+  return`You are a senior UX/UI auditor with 15 years of experience conducting heuristic evaluations for government agencies and enterprise software. Your findings are trusted because every one is specific, verifiable, and actionable. A vague finding damages your professional reputation more than no finding at all.
 
 Analyze the provided screenshot and identify real usability problems that would negatively impact users.
 ${industry?'\n\nINDUSTRY CONTEXT:\n'+industry:''}${persona?'\n\nUSER PERSONA:\n'+persona:''}
 
-WHAT MAKES A HIGH-QUALITY FINDING:
-✓ Cites a specific visible element ("the red '20% OFF' badge on the Corporate Mid Back chair")
-✓ Explains WHY it is a problem for the user ("users cannot see the original price, making the discount meaningless")
-✓ Gives a concrete fix that a developer can implement ("Show the original price crossed out in grey next to the badge")
-✓ Would not apply to every website — it is specific to THIS interface
+STEP 1 — OBSERVE BEFORE YOU EVALUATE (mandatory scratchpad):
+Before writing any findings, mentally list what you can literally see:
+- Which UI components are present? (buttons, forms, navigation, cards, inputs, badges)
+- What text labels, prices, icons, ratings are visible?
+- What is the page structure? (header, sidebar, content grid, footer)
+Write this in the "_reasoning" field of each finding. Only report issues based on observed elements.
 
-WHAT TO AVOID — do not report:
-✗ Generic issues that apply to any website ("navigation could be clearer")
-✗ Assumptions about content you cannot see ("users might be confused by...")
-✗ Issues that are clearly intentional design decisions without clear usability impact
-✗ More than 7 findings — quality over quantity
-✗ Any finding you are less than 70% confident about
+STEP 2 — EVALUATE each observed element against Nielsen's heuristics and industry context.
+
+STEP 3 — SELF-CHECK each finding before including it:
+□ Can I name the exact element and its screen location?
+□ Would a developer know exactly what to change from my recommendation?
+□ Is this specific to THIS screenshot — not a generic design principle?
+□ Am I 70%+ confident this is a real visible problem?
+If any answer is NO → remove the finding.
+
+CONFIDENCE CALIBRATION — calibrate honestly:
+95–100: Unambiguous, clearly visible ("price shows '120.00$' with symbol after number, violating CHF format")
+80–94: Clearly visible, minor interpretation needed ("star rating shows '(0)' — likely means no reviews but ambiguous")
+70–79: Subtle but visible ("dropdown shows no visual distinction between open/closed state")
+Below 70: Do not include — it is a guess, not a finding
+
+WHAT MAKES A HIGH-QUALITY FINDING:
+✓ Names the exact element with location: "the red '20% OFF' badge on Corporate Mid Back chair, middle-right product grid row 1"
+✓ Explains user impact: "users cannot determine the original price, making the discount meaningless"
+✓ Gives an implementable fix: "Show the original price crossed out in grey (e.g. '150.00 CHF') directly left of the badge"
+✓ Specific to THIS interface — would not appear in a generic audit
+
+CONCRETE BAD EXAMPLES — never write anything like these:
+✗ "The navigation lacks clear hierarchy" — generic, applies to every website
+✗ "Users might struggle to find the checkout" — assumption about unseen content
+✗ "Button styling could be improved" — no specific element or problem
+✗ "The layout feels cluttered" — subjective opinion, no actionable fix
+✗ "Consider adding more whitespace" — design preference, not a heuristic violation
 
 CRITICAL RULES:
-- Only report what you can DIRECTLY SEE in the screenshot
-- Every finding must name the specific element and its location
-- description = what is wrong and why it hurts users
-- recommendation = exactly what to change, starting with a verb
-- Same screenshot analyzed twice → same findings (be consistent)
-${persona?'- Weight findings by impact on the specified user persona — a 65-year-old low-tech user has different pain points than a power user':''}
-${industry?'- Flag any violation of the industry standards listed above as a separate finding':''}
+- Only report what you DIRECTLY SEE — no assumptions about hidden pages or user flows
+- Maximum 7 findings. Quality over quantity: 4 precise findings beat 8 vague ones
+- description = what is wrong + user impact (2 sentences max)
+- recommendation = exactly what to change, starting with: Add / Replace / Remove / Show / Label / Move / Increase / Decrease
+- Consistency: same screenshot twice → same findings
+${persona?'- Persona impact: explicitly consider how this specific user's age, tech affinity, device and usage frequency changes the severity of each finding':''}
+${industry?'- Industry violations: each violation of the standards above is a mandatory finding, even if minor':''}
 
 ${severity}
 
-Return this exact JSON schema — no markdown, no preamble:
+Return ONLY this JSON — no markdown, no preamble, no trailing text:
 {
   "annotations": [
     {
       "id": 1,
-      "element": "specific UI element with location (e.g. 'red 20% OFF badge on Corporate Mid Back chair card, middle-right product grid')",
+      "_reasoning": "I can see: [list the specific elements you observed that led to this finding — e.g. 'price label reads 120.00$ with dollar after number, visible on 3 product cards in middle and right columns']",
+      "element": "exact element with precise location (e.g. 'red 20% OFF badge on Corporate Mid Back chair card, middle-right product grid, row 1')",
       "zone": "one of: top-left|top-center|top-right|middle-left|middle-center|middle-right|bottom-left|bottom-center|bottom-right",
       "x": 0.45,
       "y": 0.12,
       "confidence": 85,
       "title": "concise issue title, max 8 words",
-      "description": "What is wrong and why it hurts users — specific, references the visible element, max 2 sentences",
-      "recommendation": "What to do — concrete, implementable, starts with a verb (Add / Replace / Remove / Show / Label / Move / Increase), max 2 sentences",
+      "description": "What is wrong and why it hurts this user — references the visible element, max 2 sentences",
+      "recommendation": "What to change — concrete, implementable, starts with a verb, max 2 sentences",
       "dimension": "one of: Visibility of system status|Match with real world|User control & freedom|Consistency & standards|Error prevention|Recognition over recall|Flexibility & efficiency|Aesthetic & minimal design|Help users recover from errors|Help & documentation",
       "priority": "${useNielsen?'0|1|2|3|4':'High|Medium|Low'}"
     }
@@ -1026,40 +1071,42 @@ Return this exact JSON schema — no markdown, no preamble:
   "scores": [n,n,n,n,n,n,n,n,n,n]
 }
 
-POSITIONING RULES:
-- STEP 1: Name the element precisely in "element" field
-- STEP 2: Choose "zone" — which of the 9 regions is the element in?
-- STEP 3: Set x/y within that zone's range:
-  top-left(x:0.05–0.33,y:0.05–0.33) top-center(x:0.34–0.66,y:0.05–0.33) top-right(x:0.67–0.95,y:0.05–0.33)
-  middle-left(x:0.05–0.33,y:0.34–0.66) middle-center(x:0.34–0.66,y:0.34–0.66) middle-right(x:0.67–0.95,y:0.34–0.66)
-  bottom-left(x:0.05–0.33,y:0.67–0.95) bottom-center(x:0.34–0.66,y:0.67–0.95) bottom-right(x:0.67–0.95,y:0.67–0.95)
-- Zone and x/y MUST agree — "bottom-left" means x<0.34 AND y>0.66, no exceptions
+POSITIONING — 3 steps, always:
+1. Name element in "element" with screen location
+2. Choose "zone": top/middle/bottom × left/center/right
+3. Set x/y within that zone:
+   top-left(x:0.05–0.33,y:0.05–0.33) top-center(x:0.34–0.66,y:0.05–0.33) top-right(x:0.67–0.95,y:0.05–0.33)
+   middle-left(x:0.05–0.33,y:0.34–0.66) middle-center(x:0.34–0.66,y:0.34–0.66) middle-right(x:0.67–0.95,y:0.34–0.66)
+   bottom-left(x:0.05–0.33,y:0.67–0.95) bottom-center(x:0.34–0.66,y:0.67–0.95) bottom-right(x:0.67–0.95,y:0.67–0.95)
+Zone and x/y MUST agree — "bottom-left" forces x<0.34 AND y>0.66, no exceptions.
 
-SCORING:
-- 10 scores map to Nielsen's heuristics in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation
-- 1–4=serious visible problem, 5–6=minor issue, 7–9=acceptable, 10=exemplary
-- If a heuristic has no visible issue, score 7–9 — never fabricate problems for low scores`;
+SCORES: 10 values for Nielsen's heuristics in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.
+1–4=serious visible problem · 5–6=minor issue · 7–9=acceptable · 10=exemplary
+Never give low scores for heuristics with no visible evidence — score 7 if nothing seen.`;
 }
 
 // --- Evaluator system prompt (text-only models) ---
 function evaluatorSystem(findingsSummary){
-  return`You are a senior UX/UI auditor. Another AI has already performed a visual analysis of a website screenshot and found the following issues:
+  return`You are a senior UX/UI auditor providing independent scoring calibration. A vision AI has analyzed a screenshot and found these issues:
 
 ${findingsSummary}
 
-CRITICAL RULES:
-- Base your scores ONLY on the findings listed above. Do not invent additional issues.
-- Be consistent and calibrated: if the findings describe minor issues, scores should be 6–8, not 2–3.
-- Score 1–4 = serious problem. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.
-- If a heuristic is not mentioned in the findings, score it 7 (assume acceptable unless evidence suggests otherwise).
+Your role is to critically assess and calibrate the scores — not to rubber-stamp the vision model's findings. Be sceptical: vision models tend to over-report severity.
 
-Respond ONLY with valid JSON:
+SCORING RULES:
+- Score ONLY based on the findings listed — do not invent additional issues
+- Challenge severity: if findings describe minor cosmetic issues, scores should be 6–8, not 3–5
+- If a heuristic is not mentioned in the findings, score it 7 — never assume problems that weren't found
+- Score 1–4 = serious problem with clear user impact · 5–6 = minor issue · 7–9 = acceptable · 10 = exemplary
+- Be consistent across heuristics — a single minor finding should not drag an entire heuristic below 5
+
+Respond ONLY with valid JSON, no markdown:
 {
   "scores": [n,n,n,n,n,n,n,n,n,n],
-  "notes": "brief overall assessment in 1-2 sentences"
+  "notes": "1-2 sentences: overall quality assessment and any score calibration decisions"
 }
 
-The 10 scores map in order to Nielsen's heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation. Each 1–10.`;
+Heuristic order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.`;
 }
 
 // --- API calls ---
@@ -1349,16 +1396,13 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     </div>
   </div>`;
 
-  // scores tab
-  const combinedScores=DIMS.map((_,i)=>{
-    const vals=allScores.map(s=>s[i]).filter(v=>v!=null&&!isNaN(v));
-    return vals.length>0?avg(vals):0;
-  });
+  // scores tab — weighted average based on model role and quality
+  const combinedScores=weightedAvg(allScores,activeModelIds);
   const combinedAvg=avg(combinedScores.filter(s=>s>0)).toFixed(1);
 
   el('modelsUsed').innerHTML=activeModelIds.map(id=>{
     const m=MODEL_META[id];
-    return`<span class="model-badge" style="background:${m.color}22;color:${m.color}">${m.name}</span>`;
+    return`<span class="model-badge" style="background:${m.color}22;color:${m.color}" title="Score weight: ${m.weight}">${m.name} ×${m.weight}</span>`;
   }).join('');
 
   el('overallRow').innerHTML=
@@ -1378,7 +1422,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
     }).join('');
 
   el('scoreOverview').innerHTML=DIMS.map((d,i)=>{
-    const sc=avg(allScores.map(s=>s[i]||5)).toFixed(1);
+    const sc=combinedScores[i]>0?combinedScores[i].toFixed(1):avg(allScores.map(s=>s[i]||5)).toFixed(1);
     const short=DIMS_SHORT[i]||d;
     return`<div class="score-card">
       <div class="score-tooltip">${d}</div>
@@ -1925,6 +1969,65 @@ async function runWCAGCheck(imageDataUrl){
 
 function renderWCAG(results){
   const {failing,borderline,passing,totalChecked}=results;
+  const fromCSS=results.fromCSS||false;
+  const all=[...failing,...borderline,...passing];
+
+  // ── Colour matrix — all unique colours as swatches ──
+  function buildMatrix(pairs){
+    if(!pairs.length) return '';
+    // Collect all unique colours
+    const colMap=new Map();
+    pairs.forEach(p=>{
+      const bg=p.bgHex||rgbToHex(p.bg.r,p.bg.g,p.bg.b);
+      const fg=p.fgHex||rgbToHex(p.fg.r,p.fg.g,p.fg.b);
+      if(!colMap.has(bg)) colMap.set(bg,{hex:bg,label:'BG'});
+      if(!colMap.has(fg)) colMap.set(fg,{hex:fg,label:'FG'});
+    });
+    const cols=Array.from(colMap.values()).slice(0,8);
+
+    // Build grid: each row = bg colour, each column = fg colour
+    let matrixHTML=`<div style="margin-bottom:1.5rem">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:10px">Colour Combination Matrix</div>
+      <div style="overflow-x:auto">
+      <table style="border-collapse:collapse;font-size:11px">
+        <thead><tr>
+          <th style="padding:4px 8px;color:var(--text3);font-weight:500;text-align:left">BG → FG</th>`;
+    cols.forEach(c=>{
+      matrixHTML+=`<th style="padding:4px 6px;text-align:center"><div style="width:24px;height:24px;background:${c.hex};border:1px solid var(--border);margin:0 auto 3px" title="${c.hex}"></div><div style="color:var(--text3);font-family:monospace;font-size:9px">${c.hex}</div></th>`;
+    });
+    matrixHTML+='</tr></thead><tbody>';
+
+    cols.forEach(bgCol=>{
+      matrixHTML+=`<tr><td style="padding:4px 8px"><div style="display:flex;align-items:center;gap:6px"><div style="width:16px;height:16px;background:${bgCol.hex};border:1px solid var(--border);flex-shrink:0"></div><span style="font-family:monospace;font-size:9px;color:var(--text3)">${bgCol.hex}</span></div></td>`;
+      cols.forEach(fgCol=>{
+        if(bgCol.hex===fgCol.hex){
+          matrixHTML+=`<td style="padding:4px 6px;text-align:center"><div style="width:44px;height:32px;background:var(--bg2);margin:0 auto;border:1px solid var(--border)"></div></td>`;
+          return;
+        }
+        // Find ratio for this pair
+        const match=all.find(p=>{
+          const b=p.bgHex||rgbToHex(p.bg.r,p.bg.g,p.bg.b);
+          const f=p.fgHex||rgbToHex(p.fg.r,p.fg.g,p.fg.b);
+          return (b===bgCol.hex&&f===fgCol.hex)||(b===fgCol.hex&&f===bgCol.hex);
+        });
+        if(match){
+          const r=match.ratio;
+          const pass=r>=4.5,aaa=r>=7;
+          const bg=aaa?'#E1F5EE':pass?'#FAEEDA':'#FCEBEB';
+          const col=aaa?'#1D9E75':pass?'#EF9F27':'#E24B4A';
+          matrixHTML+=`<td style="padding:4px 6px;text-align:center">
+            <div style="width:44px;height:32px;background:${bgCol.hex};border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:11px;font-weight:700;color:${fgCol.hex}">Aa</div>
+            <div style="font-size:9px;font-weight:700;color:${col};background:${bg};padding:1px 3px;margin-top:2px;text-align:center">${r.toFixed(1)}:1</div>
+          </td>`;
+        } else {
+          matrixHTML+=`<td style="padding:4px 6px;text-align:center"><div style="width:44px;height:32px;background:${bgCol.hex};border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:11px;font-weight:700;color:${fgCol.hex}">Aa</div></td>`;
+        }
+      });
+      matrixHTML+='</tr>';
+    });
+    matrixHTML+='</tbody></table></div></div>';
+    return matrixHTML;
+  }
 
   function pairCard(p,status){
     const ratio=p.ratio.toFixed(2);
@@ -1932,7 +2035,7 @@ function renderWCAG(results){
     const fgHex=p.fgHex||rgbToHex(p.fg.r,p.fg.g,p.fg.b);
     const statusColor=status==='fail'?'#E24B4A':status==='warn'?'#EF9F27':'#1D9E75';
     const statusBg=status==='fail'?'#FCEBEB':status==='warn'?'#FAEEDA':'#E1F5EE';
-    const statusText=status==='fail'?'Fail':status==='warn'?'AA only':'AAA Pass';
+    const statusText=status==='fail'?'Fail AA':status==='warn'?'Pass AA only':'Pass AAA';
     return`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
       <div style="display:flex;gap:0;border-radius:4px;overflow:hidden;flex-shrink:0;border:0.5px solid var(--border)">
         <div style="width:32px;height:32px;background:${bgHex}"></div>
@@ -1950,7 +2053,7 @@ function renderWCAG(results){
     <div style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap">
       <div style="flex:1;min-width:100px;background:${failing.length>0?'#FCEBEB':'#E1F5EE'};border-radius:var(--rs);padding:12px;text-align:center">
         <div style="font-size:22px;font-weight:600;color:${failing.length>0?'#E24B4A':'#1D9E75'}">${failing.length}</div>
-        <div style="font-size:11px;color:${failing.length>0?'#993C1D':'#0F6E56'}">Failing pairs</div>
+        <div style="font-size:11px;color:${failing.length>0?'#993C1D':'#0F6E56'}">Failing AA</div>
       </div>
       <div style="flex:1;min-width:100px;background:#FAEEDA;border-radius:var(--rs);padding:12px;text-align:center">
         <div style="font-size:22px;font-weight:600;color:#EF9F27">${borderline.length}</div>
@@ -1962,15 +2065,23 @@ function renderWCAG(results){
       </div>
       <div style="flex:1;min-width:100px;background:var(--bg2);border-radius:var(--rs);padding:12px;text-align:center">
         <div style="font-size:22px;font-weight:600;color:var(--text)">${totalChecked}</div>
-        <div style="font-size:11px;color:var(--text2)">Pairs sampled</div>
+        <div style="font-size:11px;color:var(--text2)">Pairs checked</div>
       </div>
     </div>
 
-    <p style="font-size:12px;color:var(--text3);margin-bottom:1rem;line-height:1.5">${results.fromCSS?'Colors extracted directly from your CSS — 100% precise WCAG 2.1 calculation.':'Colors sampled from your screenshot using the WCAG 2.1 relative luminance formula. For pixel-perfect results, paste your CSS above.'} Large text (18pt+) requires 3:1, normal text 4.5:1 for AA compliance.</p>
+    <div style="font-size:12px;padding:8px 12px;margin-bottom:1.25rem;border-left:2px solid ${fromCSS?'var(--green)':'var(--amber)'};background:${fromCSS?'var(--green-bg)':'var(--amber-bg)'};color:var(--text2);line-height:1.6">
+      ${fromCSS
+        ?'<strong style="color:var(--green)">✓ Precise mode</strong> — colours extracted from your CSS. WCAG ratios are exact to 2 decimal places using the WCAG 2.1 relative luminance formula.'
+        :'<strong style="color:var(--amber)">⚠ Estimated mode</strong> — colours sampled from screenshot pixels. For exact results, paste your CSS from Figma Dev Mode or browser DevTools above. CSS gives pixel-perfect hex values → precise ratios.'}
+      Normal text requires 4.5:1 (AA) or 7:1 (AAA). Large text (18pt+) requires 3:1 (AA).
+    </div>
 
-    ${failing.length>0?`<div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px">Failing combinations (below 4.5:1)</div>${failing.map(p=>pairCard(p,'fail')).join('')}`:''}
-    ${borderline.length>0?`<div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px;margin-top:12px">Borderline — AA only (4.5–7:1)</div>${borderline.map(p=>pairCard(p,'warn')).join('')}`:''}
-    ${passing.length>0?`<div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px;margin-top:12px">Passing AAA (7:1+)</div>${passing.map(p=>pairCard(p,'pass')).join('')}`:''}
+    ${all.length>=2?buildMatrix(all):''}
+
+    ${failing.length>0?`<div style="font-size:12px;font-weight:600;color:#E24B4A;margin-bottom:8px;margin-top:4px">❌ Failing combinations (below 4.5:1)</div>${failing.map(p=>pairCard(p,'fail')).join('')}`:''}
+    ${borderline.length>0?`<div style="font-size:12px;font-weight:600;color:#EF9F27;margin-bottom:8px;margin-top:16px">⚠ Borderline — AA only (4.5–7:1)</div>${borderline.map(p=>pairCard(p,'warn')).join('')}`:''}
+    ${passing.length>0?`<div style="font-size:12px;font-weight:600;color:#1D9E75;margin-bottom:8px;margin-top:16px">✓ Passing AAA (7:1+)</div>${passing.map(p=>pairCard(p,'pass')).join('')}`:''}
+    ${all.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:2rem">No colour pairs found. Paste CSS from Figma Dev Mode for a precise analysis.</div>':''}
   `;
 }
 
@@ -2327,6 +2438,9 @@ async function loadBestPractice(idx, btn){
   panel.classList.add('open');
   panel.innerHTML='<div class="bp-loading">Searching for best practices and real-world examples...</div>';
 
+  const industry=document.getElementById('industrySelect')?.value||'';
+  const isSwissGov=industry==='ch-gov';
+
   const prompt=`You are a UX expert. A UX audit found this issue:
 
 Dimension: ${ann.dimension}
@@ -2337,6 +2451,14 @@ Search the web and find authoritative sources. Provide:
 1. Why this matters — cite a specific study, statistic or source (include the source name)
 2. 2-3 concrete real-world examples of companies doing this WELL — name the company, describe exactly what they do, and provide their actual URL
 3. One specific, actionable quick fix
+
+${isSwissGov?`IMPORTANT — This is a Swiss federal government application using the BIT Oblique Design System.
+For any Oblique/Swiss Gov related findings, prioritise these authoritative sources:
+- Primary: https://oblique.bit.admin.ch (official Oblique documentation — current)
+- Accessibility: https://www.ech.ch (eCH standards, especially eCH-0059)
+- WCAG: https://www.w3.org/WAI/WCAG21/
+Do NOT reference swiss.github.io/styleguide — this is outdated and replaced by Oblique.`:''}
+${!isSwissGov?`Prefer authoritative sources: Nielsen Norman Group (nngroup.com), Baymard Institute (baymard.com), W3C (w3.org), MDN, or the official design system of the company in question.`:''}
 
 Format ONLY as JSON, no markdown:
 {
@@ -2353,7 +2475,7 @@ Format ONLY as JSON, no markdown:
   "quickfix": "Concrete actionable sentence"
 }
 
-Be specific. Cite real companies. No generic advice.`;
+Be specific. Cite real companies and real URLs. No generic advice.`;
 
   try{
     let raw;
