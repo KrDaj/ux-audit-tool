@@ -2,13 +2,13 @@
 
 Internal reference for architecture decisions, prompt design, and implementation details.  
 Not a changelog — for version history see `CHANGELOG.md`.  
-Last updated: v0.70
+Last updated: v0.80
 
 ---
 
 ## Architecture Overview
 
-Single-file browser application (`index.html`, ~146kb). No backend, no build step, no dependencies.  
+Single-file browser application (`index.html`, ~147kb). No backend, no build step, no dependencies.  
 Deployed via GitHub Pages at `https://krdaj.github.io/ux-audit-tool`.
 
 All API calls are made directly from the browser to AI provider endpoints. Data never passes through an intermediate server.
@@ -256,6 +256,8 @@ function weightedAvg(scores, modelIds) {
 
 Weights are defined in `MODEL_META` per model. The combined score and all per-heuristic scores use weighted averaging. Individual model score cards still show unweighted scores for transparency.
 
+**Score validation** — before any model's scores are added to `allScores`, the array is validated: must be exactly 10 numbers. If malformed (e.g. Gemini thinking blocks truncate the JSON), missing values are filled with `7` (neutral). This prevents silent dropout from the combined average.
+
 ---
 
 ## Prompt Engineering Techniques (v0.70)
@@ -302,7 +304,7 @@ User pastes CSS from Figma Dev Mode or browser DevTools. Exact hex values extrac
 Pixel colours sampled from the screenshot canvas. Less accurate — JPEG compression and anti-aliasing affect sampled values. Shown with amber "⚠ Estimated mode" banner with prompt to paste CSS.
 
 **Colour combination matrix**
-All unique colours found are displayed as a grid — each cell shows the "Aa" preview with ratio and colour-coded pass/fail. Max 8 colours shown (64 combinations). Built purely from extracted colours — no DOM access required.
+All unique colours found are displayed as a full-width CSS grid (`grid-template-columns: 80px repeat(n, 1fr)`). Each cell shows the "Aa" preview with ratio and colour-coded pass/fail badge. Max 8 colours (64 combinations). Legend below: AAA / AA only / Fail. No `<table>`, no horizontal scroll — scales to full card width. Built purely from extracted colours — no DOM access required.
 
 **How to get CSS from Figma**
 Select a frame → Inspect panel → Copy as CSS. Paste into the CSS input field. The tool extracts all hex colour values automatically.
@@ -320,4 +322,4 @@ Select a frame → Inspect panel → Copy as CSS. Paste into the CSS input field
 | No audit history | Can't compare scores over time | PDF export per audit |
 | Gemini Free Tier: 10 req/min, 500/day | Rate limiting on heavy use | Upgrade to paid or use Claude only |
 | Gemini Free Tier: possible data training | Privacy concern for sensitive screens | Use Claude only for confidential UIs |
-| Single HTML file — ~146kb | Growing size, harder to maintain | Acceptable for GitHub Pages, no build needed |
+| Single HTML file — ~147kb | Growing size, harder to maintain | Acceptable for GitHub Pages, no build needed |
