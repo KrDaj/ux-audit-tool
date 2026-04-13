@@ -324,7 +324,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.75</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.80</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -640,7 +640,7 @@ font-weight: 500;"></textarea>
       ² <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
       ³ <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
-    <div style="font-size:10px;color:var(--text3)">v0.75</div>
+    <div style="font-size:10px;color:var(--text3)">v0.80</div>
   </div>
 </footer>
 
@@ -1417,7 +1417,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds){
 
   el('modelsUsed').innerHTML=activeModelIds.map(id=>{
     const m=MODEL_META[id];
-    return`<span class="model-badge" style="background:${m.color}22;color:${m.color}" title="Score weight: ${m.weight}">${m.name} ×${m.weight}</span>`;
+    return`<span class="model-badge" style="background:${m.color}22;color:${m.color}">${m.name}</span>`;
   }).join('');
 
   el('overallRow').innerHTML=
@@ -1684,8 +1684,18 @@ async function startAudit(){
         id==='openai'?callGPTVision(keys[id],b64,mime,url,_cssCtx,_sys):
         id==='gemini'?callGeminiVision(keys[id],b64,mime,url,_cssCtx,_sys):null;
       if(!call)return null;
-      return call.then(data=>{if(data)visionResults.push({id,data});})
-                 .catch(e=>console.warn(id,'vision failed:',e.message));
+      return call.then(data=>{
+        if(!data) return console.warn(id,'returned null');
+        // Validate scores array — must be exactly 10 numbers
+        if(!Array.isArray(data.scores)||data.scores.length!==10){
+          console.warn(id,'invalid scores — got:',data.scores);
+          // Try to recover: fill missing scores with 7
+          data.scores=Array.from({length:10},(_,i)=>
+            (Array.isArray(data.scores)&&typeof data.scores[i]==='number')?data.scores[i]:7
+          );
+        }
+        visionResults.push({id,data});
+      }).catch(e=>console.warn(id,'vision failed:',e.message));
     }).filter(Boolean);
     await Promise.all(visionCalls);
 
@@ -1704,15 +1714,18 @@ async function startAudit(){
     }
     currentAnnotations=deduplicateAnnotations(mergedAnnotations);
 
-    // Collect all scores
+    // Collect all scores — validate each before adding
     const allScores=[primary.scores];
     const allModelIds=[visionResults[0].id];
 
-    // If multiple vision models, average their scores too
     if(visionResults.length>1){
       visionResults.slice(1).forEach(r=>{
-        allScores.push(r.data.scores);
-        allModelIds.push(r.id);
+        if(Array.isArray(r.data.scores)&&r.data.scores.length===10){
+          allScores.push(r.data.scores);
+          allModelIds.push(r.id);
+        } else {
+          console.warn(r.id,'scores invalid, skipping from average');
+        }
       });
     }
 
@@ -1990,36 +2003,45 @@ function renderWCAG(results){
   // ── Colour matrix — all unique colours as swatches ──
   function buildMatrix(pairs){
     if(!pairs.length) return '';
-    // Collect all unique colours
     const colMap=new Map();
     pairs.forEach(p=>{
       const bg=p.bgHex||rgbToHex(p.bg.r,p.bg.g,p.bg.b);
       const fg=p.fgHex||rgbToHex(p.fg.r,p.fg.g,p.fg.b);
-      if(!colMap.has(bg)) colMap.set(bg,{hex:bg,label:'BG'});
-      if(!colMap.has(fg)) colMap.set(fg,{hex:fg,label:'FG'});
+      if(!colMap.has(bg)) colMap.set(bg,{hex:bg});
+      if(!colMap.has(fg)) colMap.set(fg,{hex:fg});
     });
     const cols=Array.from(colMap.values()).slice(0,8);
+    const n=cols.length;
+    // Grid: n+1 columns (first col = row labels), n+1 rows (first row = col labels)
+    // Use CSS grid — full width, equal columns
+    const colTemplate=`80px repeat(${n}, 1fr)`;
 
-    // Build grid: each row = bg colour, each column = fg colour
-    let matrixHTML=`<div style="margin-bottom:1.5rem">
+    let html=`<div style="margin-bottom:1.5rem">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:10px">Colour Combination Matrix</div>
-      <div style="overflow-x:auto">
-      <table style="border-collapse:collapse;font-size:11px">
-        <thead><tr>
-          <th style="padding:4px 8px;color:var(--text3);font-weight:500;text-align:left">BG → FG</th>`;
-    cols.forEach(c=>{
-      matrixHTML+=`<th style="padding:4px 6px;text-align:center"><div style="width:24px;height:24px;background:${c.hex};border:1px solid var(--border);margin:0 auto 3px" title="${c.hex}"></div><div style="color:var(--text3);font-family:monospace;font-size:9px">${c.hex}</div></th>`;
-    });
-    matrixHTML+='</tr></thead><tbody>';
+      <div style="display:grid;grid-template-columns:${colTemplate};gap:3px;width:100%">`;
 
+    // Header row — empty corner + colour swatches
+    html+=`<div style="display:flex;align-items:flex-end;padding-bottom:4px;font-size:9px;color:var(--text3)">BG ↓ / FG →</div>`;
+    cols.forEach(c=>{
+      html+=`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:4px">
+        <div style="width:100%;height:20px;background:${c.hex};border:1px solid var(--border)" title="${c.hex}"></div>
+        <div style="font-family:monospace;font-size:8px;color:var(--text3);word-break:break-all;text-align:center">${c.hex}</div>
+      </div>`;
+    });
+
+    // Data rows
     cols.forEach(bgCol=>{
-      matrixHTML+=`<tr><td style="padding:4px 8px"><div style="display:flex;align-items:center;gap:6px"><div style="width:16px;height:16px;background:${bgCol.hex};border:1px solid var(--border);flex-shrink:0"></div><span style="font-family:monospace;font-size:9px;color:var(--text3)">${bgCol.hex}</span></div></td>`;
+      // Row label
+      html+=`<div style="display:flex;align-items:center;gap:6px;padding-right:8px">
+        <div style="width:14px;height:14px;background:${bgCol.hex};border:1px solid var(--border);flex-shrink:0"></div>
+        <span style="font-family:monospace;font-size:8px;color:var(--text3);word-break:break-all">${bgCol.hex}</span>
+      </div>`;
+
       cols.forEach(fgCol=>{
         if(bgCol.hex===fgCol.hex){
-          matrixHTML+=`<td style="padding:4px 6px;text-align:center"><div style="width:44px;height:32px;background:var(--bg2);margin:0 auto;border:1px solid var(--border)"></div></td>`;
+          html+=`<div style="background:var(--bg2);border:1px solid var(--border);height:52px"></div>`;
           return;
         }
-        // Find ratio for this pair
         const match=all.find(p=>{
           const b=p.bgHex||rgbToHex(p.bg.r,p.bg.g,p.bg.b);
           const f=p.fgHex||rgbToHex(p.fg.r,p.fg.g,p.fg.b);
@@ -2027,21 +2049,29 @@ function renderWCAG(results){
         });
         if(match){
           const r=match.ratio;
-          const pass=r>=4.5,aaa=r>=7;
-          const bg=aaa?'#E1F5EE':pass?'#FAEEDA':'#FCEBEB';
-          const col=aaa?'#1D9E75':pass?'#EF9F27':'#E24B4A';
-          matrixHTML+=`<td style="padding:4px 6px;text-align:center">
-            <div style="width:44px;height:32px;background:${bgCol.hex};border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:11px;font-weight:700;color:${fgCol.hex}">Aa</div>
-            <div style="font-size:9px;font-weight:700;color:${col};background:${bg};padding:1px 3px;margin-top:2px;text-align:center">${r.toFixed(1)}:1</div>
-          </td>`;
+          const aaa=r>=7,pass=r>=4.5;
+          const badgeCol=aaa?'#1D9E75':pass?'#EF9F27':'#E24B4A';
+          const badgeBg=aaa?'#E1F5EE':pass?'#FAEEDA':'#FCEBEB';
+          html+=`<div style="background:${bgCol.hex};border:1px solid var(--border);height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+            <span style="font-size:13px;font-weight:700;color:${fgCol.hex}">Aa</span>
+            <span style="font-size:8px;font-weight:700;color:${badgeCol};background:${badgeBg};padding:1px 4px">${r.toFixed(1)}:1</span>
+          </div>`;
         } else {
-          matrixHTML+=`<td style="padding:4px 6px;text-align:center"><div style="width:44px;height:32px;background:${bgCol.hex};border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:11px;font-weight:700;color:${fgCol.hex}">Aa</div></td>`;
+          html+=`<div style="background:${bgCol.hex};border:1px dashed var(--border);height:52px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:13px;font-weight:700;color:${fgCol.hex};opacity:0.4">Aa</span>
+          </div>`;
         }
       });
-      matrixHTML+='</tr>';
     });
-    matrixHTML+='</tbody></table></div></div>';
-    return matrixHTML;
+
+    html+=`</div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:10px">
+        <span style="color:#1D9E75">● AAA (7:1+)</span>
+        <span style="color:#EF9F27">● AA only (4.5–7:1)</span>
+        <span style="color:#E24B4A">● Fail (&lt;4.5:1)</span>
+      </div>
+    </div>`;
+    return html;
   }
 
   function pairCard(p,status){

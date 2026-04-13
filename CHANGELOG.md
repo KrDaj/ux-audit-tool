@@ -5,6 +5,18 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.80 — April 2026
+
+### Improved
+- **Colour matrix** — replaced `<table>` with full-width CSS grid; cells scale proportionally across full card width; 52px height per cell; legend added below (AAA / AA only / Fail)
+- **Score validation** — vision model scores now validated before averaging; invalid or missing arrays filled with default 7; prevents Gemini from silently dropping out of combined score
+- **Nielsen score badges** — removed `×1.0` / `×0.6` weight display; weighting runs in background only
+
+### Fixed
+- Gemini not appearing in Nielsen score — scores array validation now catches malformed responses and recovers gracefully
+
+---
+
 ## v0.75 — April 2026
 
 ### Fixed
