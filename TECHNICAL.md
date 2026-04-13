@@ -1,13 +1,14 @@
 # Technical Documentation — UX Audit Tool
 
 Internal reference for architecture decisions, prompt design, and implementation details.  
-Not a changelog — for version history see `CHANGELOG.md`.
+Not a changelog — for version history see `CHANGELOG.md`.  
+Last updated: v0.70
 
 ---
 
 ## Architecture Overview
 
-Single-file browser application (`index.html`, ~138kb). No backend, no build step, no dependencies.  
+Single-file browser application (`index.html`, ~146kb). No backend, no build step, no dependencies.  
 Deployed via GitHub Pages at `https://krdaj.github.io/ux-audit-tool`.
 
 All API calls are made directly from the browser to AI provider endpoints. Data never passes through an intermediate server.
@@ -25,12 +26,14 @@ const GEMINI_MODEL  = 'gemini-2.5-flash'            // Vision + scoring (free ti
 
 ### Model Roles
 
-| Model | Vision | Evaluator | Best Practice | Fix Generator |
-|-------|--------|-----------|---------------|---------------|
-| Claude Sonnet 4 | ✅ | ✅ | ✅ (web search) | ✅ fallback |
-| Gemini 2.5 Flash | ✅ | ❌ | ❌ | ❌ |
-| GPT-4o | ✅ | ❌ | ❌ | ❌ |
-| Groq Llama 3.3 70B | ❌ | ✅ | ❌ | ✅ primary |
+| Model | Vision | Evaluator | Best Practice | Fix Generator | Score Weight |
+|-------|--------|-----------|---------------|---------------|--------------|
+| Claude Sonnet 4 | ✅ | ✅ | ✅ (web search) | ✅ fallback | ×1.0 |
+| Gemini 2.5 Flash | ✅ | ❌ | ❌ | ❌ | ×0.9 |
+| GPT-4o | ✅ | ❌ | ❌ | ❌ | ×0.9 |
+| Groq Llama 3.3 70B | ❌ | ✅ | ❌ | ✅ primary | ×0.6 |
+
+**Score weights** reflect role and quality: vision models score based on what they see; text evaluators (Groq) score from a text summary only — their scores are down-weighted accordingly.
 
 **Vision models** analyze the screenshot and return annotations + scores.  
 **Evaluator models** receive the text summary of findings and return calibrated scores only — no image needed.
@@ -238,6 +241,75 @@ Source: [oblique.bit.admin.ch](https://oblique.bit.admin.ch) + eCH-0059 standard
 
 ---
 
+## Weighted Score Averaging
+
+Simple averaging gives equal weight to all models regardless of their role. A text-only evaluator (Groq) that never sees the image should not have equal influence as a vision model.
+
+```js
+function weightedAvg(scores, modelIds) {
+  // For each heuristic dimension:
+  // weightedSum = Σ(score[i] × weight[i])
+  // totalWeight = Σ(weight[i])
+  // result = weightedSum / totalWeight
+}
+```
+
+Weights are defined in `MODEL_META` per model. The combined score and all per-heuristic scores use weighted averaging. Individual model score cards still show unweighted scores for transparency.
+
+---
+
+## Prompt Engineering Techniques (v0.70)
+
+### Vision Prompt — 6 active techniques
+
+**1. Reputation reward signal**
+"A vague finding damages your professional reputation more than no finding at all" — activates stronger self-regulation than a bare rule.
+
+**2. Scratchpad / Chain-of-Thought (STEP 1)**
+Model must observe and list all visible elements before evaluating. Written into `_reasoning` field. Forces grounding in visible evidence before judgement.
+
+**3. Self-check (STEP 3)**
+4-question checklist before each finding: Can I name the element? Would a developer know what to change? Is this specific to this screenshot? Am I 70%+ confident? If any is No → remove finding.
+
+**4. Confidence calibration with anchors**
+Three concrete examples with actual finding text show what 95–100, 80–94, and 70–79 confidence looks like. Prevents the model from defaulting to 85 for everything.
+
+**5. Concrete negative examples**
+5 real bad-finding examples with explanations of why they are bad — not abstract rules but actual strings the model should never produce.
+
+**6. Persona impact made explicit**
+When persona fields are filled, the model is told to consider specifically how age, tech affinity, device, and frequency changes the severity of each finding.
+
+### Evaluator Prompt
+"Be sceptical: vision models tend to over-report severity. Challenge severity." — evaluator actively pushes back rather than confirming vision model scores.
+
+### Best Practice Prompt — Source Prioritisation
+When Swiss Gov context is active:
+- **Preferred:** `oblique.bit.admin.ch`, `ech.ch` (eCH-0059), `w3.org/WAI/WCAG21/`
+- **Blocked:** `swiss.github.io/styleguide` — explicitly told this is outdated
+
+When other contexts:
+- **Preferred:** `nngroup.com`, `baymard.com`, `w3.org`, `mdn`
+
+---
+
+## WCAG Analysis Modes
+
+**Precise mode (CSS input)**
+User pastes CSS from Figma Dev Mode or browser DevTools. Exact hex values extracted via regex. WCAG 2.1 relative luminance formula applied to exact values. Results accurate to 2 decimal places. Shown with green "✓ Precise mode" banner.
+
+**Estimated mode (screenshot only)**
+Pixel colours sampled from the screenshot canvas. Less accurate — JPEG compression and anti-aliasing affect sampled values. Shown with amber "⚠ Estimated mode" banner with prompt to paste CSS.
+
+**Colour combination matrix**
+All unique colours found are displayed as a grid — each cell shows the "Aa" preview with ratio and colour-coded pass/fail. Max 8 colours shown (64 combinations). Built purely from extracted colours — no DOM access required.
+
+**How to get CSS from Figma**
+Select a frame → Inspect panel → Copy as CSS. Paste into the CSS input field. The tool extracts all hex colour values automatically.
+
+
+---
+
 ## Known Limitations
 
 | Limitation | Impact | Workaround |
@@ -248,4 +320,4 @@ Source: [oblique.bit.admin.ch](https://oblique.bit.admin.ch) + eCH-0059 standard
 | No audit history | Can't compare scores over time | PDF export per audit |
 | Gemini Free Tier: 10 req/min, 500/day | Rate limiting on heavy use | Upgrade to paid or use Claude only |
 | Gemini Free Tier: possible data training | Privacy concern for sensitive screens | Use Claude only for confidential UIs |
-| Single HTML file — 138kb | Growing size, harder to maintain | Acceptable for GitHub Pages, no build needed |
+| Single HTML file — ~146kb | Growing size, harder to maintain | Acceptable for GitHub Pages, no build needed |
