@@ -324,7 +324,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.70</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.75</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -640,7 +640,7 @@ font-weight: 500;"></textarea>
       ² <a href="https://baymard.com/about" target="_blank" rel="noopener">baymard.com/about</a> &nbsp;
       ³ <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener">w3.org/TR/WCAG21</a>
     </div>
-    <div style="font-size:10px;color:var(--text3)">v0.70</div>
+    <div style="font-size:10px;color:var(--text3)">v0.75</div>
   </div>
 </footer>
 
@@ -698,15 +698,30 @@ let activeAnnIdx=-1;
 const uploadArea=document.getElementById('uploadArea');
 const fileInput=document.getElementById('fileInput');
 
-// Guard: only attach once even if script re-runs
-if(!uploadArea._listenersAttached){
-  uploadArea.addEventListener('click',()=>fileInput.click());
-  uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag')});
-  uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag'));
-  uploadArea.addEventListener('drop',e=>{e.preventDefault();uploadArea.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
-  fileInput.addEventListener('change',e=>handleFile(e.target.files[0]));
-  uploadArea._listenersAttached=true;
-}
+uploadArea.addEventListener('click',e=>{
+  // Don't trigger file picker if clicking the clear button
+  if(e.target.closest('.preview-clear'))return;
+  fileInput.click();
+});
+uploadArea.addEventListener('dragover',e=>{
+  e.preventDefault();
+  e.stopPropagation();
+  uploadArea.classList.add('drag');
+});
+uploadArea.addEventListener('dragleave',e=>{
+  e.preventDefault();
+  uploadArea.classList.remove('drag');
+});
+uploadArea.addEventListener('drop',e=>{
+  e.preventDefault();
+  e.stopPropagation();
+  uploadArea.classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file) handleFile(file);
+});
+fileInput.addEventListener('change',e=>{
+  if(e.target.files[0]) handleFile(e.target.files[0]);
+});
 
 function handleFile(file){
   if(!file||!file.type.startsWith('image/'))return;
@@ -1045,7 +1060,7 @@ CRITICAL RULES:
 - description = what is wrong + user impact (2 sentences max)
 - recommendation = exactly what to change, starting with: Add / Replace / Remove / Show / Label / Move / Increase / Decrease
 - Consistency: same screenshot twice → same findings
-${persona?'- Persona impact: explicitly consider how this specific user's age, tech affinity, device and usage frequency changes the severity of each finding':''}
+${persona?'- Persona impact: explicitly consider how this specific user\'s age, tech affinity, device and usage frequency changes the severity of each finding':''}
 ${industry?'- Industry violations: each violation of the standards above is a mandatory finding, even if minor':''}
 
 ${severity}

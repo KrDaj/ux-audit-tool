@@ -5,6 +5,14 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.75 — April 2026
+
+### Fixed
+- **Drag & drop broken** — unescaped apostrophe in `user's` inside a single-quote JS string caused `SyntaxError: Unexpected identifier 's'` — entire script failed to load
+- **Upload listeners** — removed `_listenersAttached` guard that prevented re-attachment after browser cache; added `e.stopPropagation()` to dragover/drop handlers and guard against triggering file picker when clicking the clear button
+
+---
+
 ## v0.70 — April 2026
 
 ### Added
