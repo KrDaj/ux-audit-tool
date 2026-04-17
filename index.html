@@ -220,6 +220,17 @@
     .bp-btn:disabled{opacity:0.4;cursor:not-allowed}
     .bp-panel{margin-top:10px;background:var(--bg);padding:12px;display:none;border-left:3px solid var(--green)}
     .bp-panel.open{display:block}
+    .challenge-btn{margin-top:6px;margin-left:6px;height:26px;padding:0 10px;font-size:11px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font);transition:all 0.12s;text-transform:uppercase;letter-spacing:0.04em}
+    .challenge-btn:hover{border-color:var(--amber);color:var(--amber)}
+    .challenge-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .challenge-panel{margin-top:8px;display:none;border-left:3px solid var(--amber);padding:10px 12px;background:var(--amber-bg)}
+    .challenge-panel.open{display:block}
+    .comment-btn{margin-top:6px;margin-left:6px;height:26px;padding:0 10px;font-size:11px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font);transition:all 0.12s;text-transform:uppercase;letter-spacing:0.04em}
+    .comment-btn:hover{border-color:#4285F4;color:#4285F4}
+    .comment-panel{margin-top:8px;display:none;border-left:3px solid #4285F4;padding:10px 12px;background:#F0F4FF}
+    .comment-panel.open{display:block}
+    .comment-saved{margin-top:6px;padding:6px 10px;background:#fff;border:1px solid #c5d3f5;border-radius:3px;font-size:12px;color:var(--text2);line-height:1.5;word-break:break-word;overflow-wrap:break-word}
+    .challenge-result{margin-top:8px;font-size:12px;line-height:1.55;color:var(--text)}
     .bp-loading{font-size:12px;color:var(--text3);font-style:italic}
     .bp-content{font-size:12px;color:var(--text2);line-height:1.6}
     .bp-content strong{color:var(--text);font-weight:600}
@@ -328,7 +339,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.85</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.95</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -356,19 +367,19 @@
   <!-- How it works -->
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:2rem;overflow:hidden">
     <div style="background:var(--surface);padding:1.25rem 1.5rem">
-      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">01 — Upload</div>
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Add your screenshot</div>
-      <div style="font-size:12px;color:var(--text3);line-height:1.55">Drag & drop a PNG, JPG or WebP. Paste CSS from Figma for precise WCAG analysis.</div>
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">01 — Input</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Screenshot or HTML</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.55">Upload a screenshot for UX/UI audit. Paste HTML source for AX accessibility audit. Combine both for a full report.</div>
     </div>
     <div style="background:var(--surface);padding:1.25rem 1.5rem">
       <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">02 — Analyse</div>
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">AI evaluates the interface</div>
-      <div style="font-size:12px;color:var(--text3);line-height:1.55">Vision AI annotates issues directly on the screenshot, scored against Nielsen's 10 heuristics.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">AI + rule-based evaluation</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.55">Vision AI scores against Nielsen's 10 heuristics. HTML is parsed against WCAG 2.1 / eCH-0059 rules — no AI needed.</div>
     </div>
     <div style="background:var(--surface);padding:1.25rem 1.5rem">
       <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">03 — Export</div>
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Get actionable results</div>
-      <div style="font-size:12px;color:var(--text3);line-height:1.55">Download a PDF workbook, generate code fixes per finding, or look up best practices.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Full audit report</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.55">Download a PDF with heuristic findings, WCAG contrast, AX issues and best practices — ready for Jira or Confluence.</div>
     </div>
   </div>
 
@@ -377,43 +388,82 @@
   <div class="input-card">
     <div class="input-card-header">
       <div class="input-card-num">1</div>
-      <div class="input-card-title">URL & Screenshot</div>
-      <div class="input-card-desc">Screenshot recommended for visual annotations</div>
+      <div class="input-card-title">Audit Input</div>
+      <div class="input-card-desc">Add screenshot for UX/UI · Add HTML for AX · Combine for full report</div>
     </div>
     <div class="input-card-body">
-      <div class="url-row">
-        <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)"/>
-      </div>
 
-      <label class="upload-label">Screenshot — drag & drop or click</label>
-      <div class="upload-area" id="uploadArea">
-        <input type="file" id="fileInput" accept="image/*"/>
-        <div class="upload-icon">&#8679;</div>
-        <div class="upload-text"><span>Choose file</span> or drag here &nbsp;·&nbsp; PNG, JPG, WebP, SVG</div>
-        <div id="previewWrap"></div>
-      </div>
-
-      <div class="css-input-wrap">
-        <div class="css-toggle" onclick="toggleCSSInput()">
-          <span class="css-toggle-label">Paste CSS from Figma Dev Mode</span>
-          <span class="css-toggle-badge" title="CSS input gives exact hex values → WCAG ratios calculated to 2 decimal places. Without CSS, colours are sampled from pixels — less accurate.">⬆ Precise WCAG</span>
-          <span id="cssArrow" style="font-size:11px;color:var(--text3);margin-left:auto">▼ expand</span>
+      <!-- ── UX/UI Audit ── -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          UX/UI Audit
+          <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">— Nielsen heuristics · WCAG contrast</span>
         </div>
-        <div id="cssInputArea" style="display:none">
-          <div style="font-size:12px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);padding:10px 12px;margin-bottom:8px;line-height:1.6">
-            <strong style="color:var(--text)">Why paste CSS?</strong> — CSS gives exact hex values (e.g. <code style="font-family:monospace;font-size:11px;background:var(--bg3);padding:1px 4px">#DC0018</code>) → WCAG contrast ratios calculated to 2 decimal places. Without CSS, colours are estimated from screenshot pixels — less precise, especially for similar shades.<br>
-            <span style="color:var(--text2)">In Figma Dev Mode: select a frame → Copy → Copy as CSS. In browser: DevTools → Elements → Styles → copy relevant rules.</span>
+        <div class="url-row" style="margin-bottom:10px">
+          <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)"/>
+        </div>
+        <label class="upload-label">Screenshot — drag & drop or click</label>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept="image/*"/>
+          <div class="upload-icon">&#8679;</div>
+          <div class="upload-text"><span>Choose file</span> or drag here &nbsp;·&nbsp; PNG, JPG, WebP, SVG</div>
+          <div id="previewWrap"></div>
+        </div>
+        <div class="css-input-wrap" style="margin-top:8px">
+          <div class="css-toggle" onclick="toggleCSSInput()">
+            <span class="css-toggle-label">Paste CSS from Figma Dev Mode</span>
+            <span class="css-toggle-badge" title="CSS input gives exact hex values → WCAG ratios calculated to 2 decimal places. Without CSS, colours are sampled from pixels — less accurate.">⬆ Precise WCAG</span>
+            <span id="cssArrow" style="font-size:11px;color:var(--text3);margin-left:auto">▼ expand</span>
           </div>
-          <textarea class="css-textarea" id="cssInput" placeholder="Paste CSS here — from Figma Dev Mode, browser DevTools, or any CSS file.
+          <div id="cssInputArea" style="display:none">
+            <div style="font-size:12px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);padding:10px 12px;margin-bottom:8px;line-height:1.6">
+              <strong style="color:var(--text)">Why paste CSS?</strong> — CSS gives exact hex values (e.g. <code style="font-family:monospace;font-size:11px;background:var(--bg3);padding:1px 4px">#DC0018</code>) → WCAG contrast ratios calculated to 2 decimal places. Without CSS, colours are estimated from screenshot pixels — less precise, especially for similar shades.<br>
+              <span style="color:var(--text2)">In Figma Dev Mode: select a frame → Copy → Copy as CSS. In browser: DevTools → Elements → Styles → copy relevant rules.</span>
+            </div>
+            <textarea class="css-textarea" id="cssInput" placeholder="Paste CSS here — from Figma Dev Mode, browser DevTools, or any CSS file.
 
 Example:
 background: #F5F5F3;
 color: #1A1A18;
 font-size: 14px;
 font-weight: 500;"></textarea>
-          <div class="css-stats" id="cssStats"></div>
+            <div class="css-stats" id="cssStats"></div>
+          </div>
         </div>
       </div>
+
+      <!-- ── AX Audit ── -->
+      <div style="border-top:2px solid var(--border);padding-top:14px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#4285F4;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          AX Audit
+          <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">— WCAG 2.1 · eCH-0059 · optional</span>
+        </div>
+        <div style="font-size:11px;margin-bottom:12px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border)">
+          <div style="display:flex;gap:0;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="width:140px;flex-shrink:0;font-weight:600;color:var(--text2)">HTML only</span>
+            <span style="color:var(--text3);line-height:1.5">Rule-based — alt texts, labels, headings, ARIA, landmarks</span>
+          </div>
+          <div style="display:flex;gap:0;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="width:140px;flex-shrink:0;font-weight:600;color:var(--text2)">+ Screenshot</span>
+            <span style="color:var(--text3);line-height:1.5">Vision AI — focus indicators, visual hierarchy, alt text quality</span>
+          </div>
+          <div style="display:flex;gap:0;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="width:140px;flex-shrink:0;font-weight:600;color:var(--text2)">+ CSS</span>
+            <span style="color:var(--text3);line-height:1.5">Precise WCAG contrast ratios from exact hex values</span>
+          </div>
+          <div style="display:flex;gap:0;padding:3px 0">
+            <span style="width:140px;flex-shrink:0;font-weight:700;color:#4285F4">All three</span>
+            <span style="font-weight:600;color:var(--text2)">Full AX audit</span>
+          </div>
+        </div>
+        <label class="upload-label" style="margin-bottom:4px">
+          HTML source
+          <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:6px">Chrome: Ctrl+U · DevTools: Elements → right-click → Copy outerHTML</span>
+        </label>
+        <textarea id="htmlInput" placeholder="Paste full HTML source here..." style="width:100%;height:110px;padding:8px 10px;font-size:12px;font-family:monospace;border:1px solid var(--border2);background:var(--bg);color:var(--text);resize:vertical;line-height:1.5" oninput="updateHTMLStats()"></textarea>
+        <div id="htmlStats" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+      </div>
+
     </div>
   </div>
 
@@ -671,13 +721,28 @@ font-weight: 500;"></textarea>
     </div>
     <div class="results-header">
       <div class="section-label" style="flex:1;margin-bottom:0">Results</div>
-      <button onclick="exportPDF()" class="btn-export">Export PDF &darr;</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;color:var(--text3);white-space:nowrap">Min. confidence</label>
+        <select id="confidenceFilter" style="height:36px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-family:var(--font);outline:none;cursor:pointer" title="Only export findings at or above this confidence threshold">
+          <option value="0">All findings</option>
+          <option value="70">≥ 70%</option>
+          <option value="80" selected>≥ 80%</option>
+          <option value="90">≥ 90%</option>
+        </select>
+        <select id="reportType" style="height:36px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-family:var(--font);outline:none;cursor:pointer" title="Choose what to include in the PDF">
+          <option value="full">Full Report</option>
+          <option value="uxui">UX/UI Report</option>
+          <option value="ax">AX Report</option>
+        </select>
+        <button onclick="exportPDF()" class="btn-export">Export PDF &darr;</button>
+      </div>
     </div>
 
     <div class="tabs">
       <button class="tab active" id="tabVisual" onclick="switchTab('visual')">Annotated screenshot</button>
       <button class="tab" onclick="switchTab('scores')">Nielsen scores</button>
       <button class="tab" onclick="switchTab('wcag')">WCAG contrast</button>
+      <button class="tab" id="tabAX" onclick="switchTab('ax')" style="display:none">AX Audit</button>
     </div>
 
     <div class="tab-panel active" id="tab-visual">
@@ -709,6 +774,12 @@ font-weight: 500;"></textarea>
     <div class="tab-panel" id="tab-wcag">
       <div class="card">
         <div id="wcagResults"></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-ax">
+      <div class="card">
+        <div id="axResults"></div>
       </div>
     </div>
   </div>
@@ -783,8 +854,8 @@ let currentAnnotations=[];
 let activeAnnIdx=-1;
 
 // --- Upload handling ---
-const uploadArea=document.getElementById('uploadArea');
-const fileInput=document.getElementById('fileInput');
+const uploadArea=el('uploadArea');
+const fileInput=el('fileInput');
 
 uploadArea.addEventListener('click',e=>{
   // Don't trigger file picker if clicking the clear button
@@ -891,7 +962,7 @@ let _tickerInterval=null;
 let _progressVal=0;
 
 function startProgressTicker(ids){
-  const industry=document.getElementById('industrySelect')?.value||'';
+  const industry=el('industrySelect')?.value||'';
   const messages=buildTickerMessages(ids,industry);
   let msgIdx=0;
   _progressVal=0;
@@ -997,7 +1068,7 @@ async function fetchWithTimeout(url,opts,ms=30000){
 // --- Vision system prompt ---
 // --- Audit Context Helpers ---
 function buildIndustryContext(){
-  const v=document.getElementById('industrySelect')?.value||'';
+  const v=el('industrySelect')?.value||'';
   const map={
     'ch-gov':`This is a Swiss federal or cantonal government application that must comply with the BIT Oblique Design System (oblique.bit.admin.ch) and Swiss Confederation standards.
 
@@ -1054,10 +1125,10 @@ Flag any violation of these standards as a finding.`,
 }
 
 function buildPersonaContext(){
-  const age=document.getElementById('personaAge')?.value.trim()||'';
-  const freq=document.getElementById('personaFrequency')?.value||'';
-  const tech=document.getElementById('personaTech')?.value||'';
-  const device=document.getElementById('personaDevice')?.value||'';
+  const age=el('personaAge')?.value.trim()||'';
+  const freq=el('personaFrequency')?.value||'';
+  const tech=el('personaTech')?.value||'';
+  const device=el('personaDevice')?.value||'';
   const parts=[];
   if(age)parts.push(`Age: ${age}`);
   if(freq)parts.push(`Usage frequency: ${freq}`);
@@ -1068,7 +1139,7 @@ function buildPersonaContext(){
 }
 
 function buildCountryContext(){
-  const c=document.getElementById('countrySelect')?.value||'';
+  const c=el('countrySelect')?.value||'';
   if(!c)return'';
   const map={
     ch:`Regional context: Switzerland.
@@ -1130,10 +1201,10 @@ function buildCountryContext(){
 }
 
 function buildPageContext(){
-  const product=document.getElementById('contextProduct')?.value.trim()||'';
-  const flow=document.getElementById('contextFlow')?.value.trim()||'';
-  const known=document.getElementById('contextKnown')?.value.trim()||'';
-  const exclude=document.getElementById('contextExclude')?.value.trim()||'';
+  const product=el('contextProduct')?.value.trim()||'';
+  const flow=el('contextFlow')?.value.trim()||'';
+  const known=el('contextKnown')?.value.trim()||'';
+  const exclude=el('contextExclude')?.value.trim()||'';
   const parts=[];
   if(product)parts.push(`Product/purpose: ${product}`);
   if(flow)parts.push(`Step in flow: ${flow}`);
@@ -1144,7 +1215,7 @@ function buildPageContext(){
 }
 
 function buildSeverityInstructions(){
-  const scale=document.getElementById('severityScale')?.value||'nielsen';
+  const scale=el('severityScale')?.value||'nielsen';
   if(scale==='nielsen'){
     return`Use Nielsen's formal severity scale for priority:
 - 0 = Not a usability problem
@@ -1158,14 +1229,14 @@ Express priority as: "0"|"1"|"2"|"3"|"4"`;
 }
 
 function getSeverityLabel(priority){
-  const scale=document.getElementById('severityScale')?.value||'nielsen';
+  const scale=el('severityScale')?.value||'nielsen';
   if(scale!=='nielsen')return priority;
   const map={'0':'Severity 0','1':'Severity 1','2':'Severity 2','3':'Severity 3','4':'Severity 4'};
   return map[priority]||priority;
 }
 
 function getSeverityClass(priority){
-  const scale=document.getElementById('severityScale')?.value||'nielsen';
+  const scale=el('severityScale')?.value||'nielsen';
   if(scale!=='nielsen'){
     return priority==='High'?'sev-3':priority==='Low'?'sev-1':'sev-2';
   }
@@ -1178,7 +1249,7 @@ function visionSystem(){
   const pageCtx=buildPageContext();
   const country=buildCountryContext();
   const severity=buildSeverityInstructions();
-  const useNielsen=document.getElementById('severityScale')?.value!=='simple';
+  const useNielsen=el('severityScale')?.value!=='simple';
 
   return`You are a senior UX/UI auditor with 15 years of experience conducting heuristic evaluations for government agencies and enterprise software. Your findings are trusted because every one is specific, verifiable, and actionable. A vague finding damages your professional reputation more than no finding at all.
 
@@ -1351,8 +1422,7 @@ async function callGeminiVision(key,base64,mime,url,cssCtx='',sys=null){
 }
 
 async function callClaudeEval(key,findingsSummary){
-  // Split evaluatorSystem into cached static part + dynamic findings
-  const staticPart='You are a senior UX/UI auditor providing scoring based on provided findings.\n\nCRITICAL RULES:\n- Base your scores ONLY on the findings listed. Do not invent additional issues.\n- Score 1–4 = serious problem. Score 5–6 = minor issue. Score 7–9 = acceptable. Score 10 = exemplary.\n- If a heuristic is not mentioned in the findings, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n],"notes":"brief assessment"}\nThe 10 scores map to Nielsen\'s heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.';
+  const staticPart='You are a senior UX/UI auditor providing scoring based on provided findings.\n\nCRITICAL RULES:\n- Base your scores ONLY on the findings listed. Do not invent additional issues.\n- Score 1\u20134 = serious problem. Score 5\u20136 = minor issue. Score 7\u20139 = acceptable. Score 10 = exemplary.\n- If a heuristic is not mentioned in the findings, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n],"notes":"brief assessment"}\nThe 10 scores map to Nielsen\'s heuristics: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.';
   const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:claudeHeaders(key,{'anthropic-beta':'prompt-caching-2024-07-31'}),
     body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:400,temperature:0,
@@ -1362,89 +1432,43 @@ async function callClaudeEval(key,findingsSummary){
   return parseJSON((await r.json()).content[0].text);
 }
 
-
-async function callApertusEval(key,findingsSummary){
-  const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
-
-  const body=JSON.stringify({
-    model:APERTUS_MODEL,
-    messages:[{role:'user',content:prompt}],
-    max_tokens:200,
-    temperature:0
-  });
-  const headers={'Content-Type':'application/json','Authorization':`Bearer ${key}`};
-
-  let r;
+// ── CORS-safe fetch — tries direct, falls back to corsproxy.io ──
+async function fetchCORS(url, opts){
   try{
-    r=await fetch(HF_BASE,{method:'POST',headers,body});
-  }catch(e){
-    // CORS fallback via proxy
-    r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(HF_BASE),{method:'POST',headers,body});
-  }
-  if(!r.ok){
-    const e=await r.json().catch(()=>({}));
-    const msg=e.error?.message||e.message||JSON.stringify(e)||'Apertus error';
-    const friendly=
-      r.status===402?'Free quota exceeded — top up at huggingface.co/settings/billing':
-      r.status===401?'Invalid HF token':
-      r.status===429?'Rate limit — try again later':
-      msg;
-    throw new Error(friendly);
-  }
-  return parseJSON((await r.json()).choices[0].message.content);
-}
-
-async function callGitHubEval(key,findingsSummary){
-  const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
-
-  const body=JSON.stringify({model:GITHUB_MODEL,messages:[{role:'user',content:prompt}],max_tokens:200,temperature:0});
-  const headers={'Content-Type':'application/json','Authorization':`Bearer ${key}`};
-  let r;
-  try{
-    r=await fetch(GITHUB_BASE,{method:'POST',headers,body});
-  }catch(e){
-    r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(GITHUB_BASE),{method:'POST',headers,body});
-  }
-  if(!r.ok){
-    const e=await r.json().catch(()=>({}));
-    const msg=e.error?.message||e.message||JSON.stringify(e)||'GitHub Models error';
-    const friendly=
-      r.status===403?'Model not available — try a different model or check token permissions':
-      r.status===429?'Rate limit — try again later':
-      r.status===401?'Invalid GitHub token':
-      msg;
-    throw new Error(friendly);
-  }
-  return parseJSON((await r.json()).choices[0].message.content);
-}
-
-async function callGroqEval(key,findingsSummary){
-  const prompt='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1–4=serious, 5–6=minor, 7–9=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n'+findingsSummary;
-
-  const body=JSON.stringify({model:GROQ_MODEL,max_tokens:200,temperature:0,
-    messages:[{role:'user',content:prompt}]});
-  const headers={'Content-Type':'application/json','Authorization':`Bearer ${key}`};
-
-  // Try direct first, fall back to CORS proxy if blocked (GitHub Pages)
-  async function tryFetch(url){
-    const r=await fetch(url,{method:'POST',headers,body});
-    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Groq error');}
+    const r=await fetch(url, opts);
     return r;
-  }
-
-  let r;
-  try{
-    r=await tryFetch('https://api.groq.com/openai/v1/chat/completions');
   }catch(e){
-    if(e.message==='Failed to fetch'||e.message.includes('CORS')||e.message.includes('NetworkError')){
-      // Direct blocked (GitHub Pages CORS) — retry via proxy
-      r=await tryFetch('https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions');
-    } else {
-      throw e;
-    }
+    return fetch('https://corsproxy.io/?url='+encodeURIComponent(url), opts);
+  }
+}
+
+// Generic OpenAI-compatible evaluator — used by Groq, Apertus, GitHub Models
+const EVAL_PROMPT_TEXT='You are a UX auditor. Score the following findings against Nielsen\'s 10 heuristics.\n\nRULES:\n- Score ONLY based on the findings listed. Do not invent issues.\n- Score 1\u20134=serious, 5\u20136=minor, 7\u20139=acceptable, 10=exemplary.\n- If a heuristic is not mentioned, score it 7.\n\nRespond ONLY with valid JSON: {"scores":[n,n,n,n,n,n,n,n,n,n]}\n10 scores in order: Visibility of system status, Match with real world, User control & freedom, Consistency & standards, Error prevention, Recognition over recall, Flexibility & efficiency, Aesthetic & minimal design, Help users recover from errors, Help & documentation.\n\nFindings:\n';
+
+const EVAL_ERRORS={
+  402:'Free quota exceeded — top up at huggingface.co/settings/billing',
+  401:'Invalid API token',
+  403:'Model not available — check token permissions',
+  429:'Rate limit — try again later',
+};
+
+async function callOpenAIEval(key, endpoint, model, findingsSummary){
+  const body={model,messages:[{role:'user',content:EVAL_PROMPT_TEXT+findingsSummary}],max_tokens:200,temperature:0};
+  const r=await fetchCORS(endpoint,{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify(body)});
+  if(!r.ok){
+    const e=await r.json().catch(()=>({}));
+    const msg=EVAL_ERRORS[r.status]||e.error?.message||e.message||'Eval error ('+r.status+')';
+    throw new Error(msg);
   }
   return parseJSON((await r.json()).choices[0].message.content);
 }
+
+function callGroqEval(key,findings){ return callOpenAIEval(key,'https://api.groq.com/openai/v1/chat/completions',GROQ_MODEL,findings); }
+function callApertusEval(key,findings){ return callOpenAIEval(key,HF_BASE,APERTUS_MODEL,findings); }
+function callGitHubEval(key,findings){ return callOpenAIEval(key,GITHUB_BASE,GITHUB_MODEL,findings); }
+
 
 
 
@@ -1649,6 +1673,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
           </div>
         </div>
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
+        ${ann._confirmed?`<span style="font-size:10px;font-weight:600;padding:1px 6px;background:rgba(220,0,24,0.1);color:var(--red);border-radius:3px;margin-left:4px">✓ Confirmed</span>`:ann._challenged&&!ann._removed?`<span style="font-size:10px;font-weight:600;padding:1px 6px;background:var(--amber-bg);color:var(--amber);border-radius:3px;margin-left:4px">Challenged</span>`:''}
         ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?` <span style="opacity:0.6">(${ann.zone})</span>`:''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
         ${ann.recommendation?`<div style="margin-top:6px;padding:7px 10px;background:var(--green-bg);border-left:2px solid var(--green);font-size:12px;color:var(--text2);line-height:1.5"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:3px">Recommendation</span>${ann.recommendation}</div>`:''}
@@ -1656,6 +1681,22 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
         <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
           <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
           <button class="fix-btn" onclick="event.stopPropagation();loadFix(${i},this)" data-loaded="false">Generate fix →</button>
+          <button class="challenge-btn" onclick="event.stopPropagation();toggleChallenge(${i})" title="Challenge this finding with your own context">⚑ Challenge</button>
+          <button class="comment-btn" onclick="event.stopPropagation();toggleComment(${i})" title="Add a comment to this finding">✎ Comment</button>
+        </div>
+        ${ann._comment?`<div class="comment-saved"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4285F4;display:block;margin-bottom:4px">✎ Comment</span>${ann._comment}${ann._commentUrl?`<br><a href="${ann._commentUrl}" target="_blank" rel="noopener" style="font-size:11px;color:#4285F4;word-break:break-all">↗ ${ann._commentUrl}</a>`:''}</div>`:''}
+        <div class="comment-panel" id="comment-${i}">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4285F4;margin-bottom:6px">Add comment</div>
+          <textarea id="comment-text-${i}" placeholder="e.g. Known issue — tracked in Jira PROJ-123. Workaround documented in Confluence." style="width:100%;height:64px;padding:6px 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);resize:vertical;margin-bottom:6px;line-height:1.5" onclick="event.stopPropagation()"></textarea>
+          <input type="url" id="comment-url-${i}" placeholder="Confluence / Jira URL (optional)" style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:8px" onclick="event.stopPropagation()"/>
+          <button onclick="event.stopPropagation();saveComment(${i})" style="height:28px;padding:0 12px;font-size:11px;font-weight:600;border:none;background:#4285F4;color:#fff;cursor:pointer;font-family:var(--font);letter-spacing:0.04em">Save comment</button>
+        </div>
+        <div class="challenge-panel" id="challenge-${i}">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber);margin-bottom:6px">Challenge this finding</div>
+          <input type="text" id="challenge-arg-${i}" placeholder="Your argument — e.g. 'Font is correct, Frutiger is loaded'" style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:6px" onclick="event.stopPropagation()"/>
+          <input type="url" id="challenge-url-${i}" placeholder="Reference URL (optional) — e.g. oblique.bit.admin.ch/..." style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:8px" onclick="event.stopPropagation()"/>
+          <button onclick="event.stopPropagation();challengeFinding(${i},this)" style="height:28px;padding:0 12px;font-size:11px;font-weight:600;border:none;background:var(--amber);color:#fff;cursor:pointer;font-family:var(--font);letter-spacing:0.04em">Re-evaluate →</button>
+          <div class="challenge-result" id="challenge-result-${i}"></div>
         </div>
         <div class="bp-panel" id="bp-${i}"></div>
         <div class="fix-panel" id="fix-${i}"></div>
@@ -1731,6 +1772,12 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
   resultsEl.style.display='block';
   requestAnimationFrame(()=>requestAnimationFrame(()=>resultsEl.classList.add('visible')));
   resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Update sticky bar — hide label, change button to "New Audit"
+  const stickyLabel=el('stickyLabel');
+  const stickyRunBtn=el('stickyRunBtn');
+  if(stickyLabel) stickyLabel.style.display='none';
+  if(stickyRunBtn) stickyRunBtn.textContent='New Audit →';
 }
 
 window.selectAnnotation=function(idx){
@@ -1772,7 +1819,7 @@ window.startEditAnnotation=function(idx){
       <div style="display:flex;gap:6px">
         <button class="ann-action-btn" style="background:var(--red);color:#fff;border-color:var(--red)"
           onclick="event.stopPropagation();saveEditAnnotation(${idx})">Save</button>
-        <button class="ann-action-btn" onclick="event.stopPropagation();document.getElementById('ann-edit-${idx}').style.display='none'">Cancel</button>
+        <button class="ann-action-btn" onclick="event.stopPropagation();el('ann-edit-${idx}').style.display='none'">Cancel</button>
         <button class="ann-action-btn" style="margin-left:auto"
           onclick="event.stopPropagation();startDragPin(${idx})" title="Click then click on image to reposition">
           📍 Move pin
@@ -1882,6 +1929,7 @@ renderResults._refreshSidebar=function(annotations){
           </div>
         </div>
         <div class="ann-title" id="ann-title-${i}">${ann.title}</div>
+        ${ann._confirmed?`<span style="font-size:10px;font-weight:600;padding:1px 6px;background:rgba(220,0,24,0.1);color:var(--red);border-radius:3px;margin-left:4px">✓ Confirmed</span>`:ann._challenged&&!ann._removed?`<span style="font-size:10px;font-weight:600;padding:1px 6px;background:var(--amber-bg);color:var(--amber);border-radius:3px;margin-left:4px">Challenged</span>`:''}
         ${ann.element?`<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-style:italic">📍 ${ann.element}${ann.zone?` <span style="opacity:0.6">(${ann.zone})</span>`:''}</div>`:''}
         <div class="ann-desc" id="ann-desc-${i}">${ann.description}</div>
         ${ann.recommendation?`<div style="margin-top:6px;padding:7px 10px;background:var(--green-bg);border-left:2px solid var(--green);font-size:12px;color:var(--text2);line-height:1.5"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:3px">Recommendation</span>${ann.recommendation}</div>`:''}
@@ -1889,6 +1937,22 @@ renderResults._refreshSidebar=function(annotations){
         <div style="display:flex;gap:0;flex-wrap:wrap;margin-top:6px">
           <button class="bp-btn" onclick="event.stopPropagation();loadBestPractice(${i},this)" data-loaded="false">Best practice →</button>
           <button class="fix-btn" onclick="event.stopPropagation();loadFix(${i},this)" data-loaded="false">Generate fix →</button>
+          <button class="challenge-btn" onclick="event.stopPropagation();toggleChallenge(${i})" title="Challenge this finding with your own context">⚑ Challenge</button>
+          <button class="comment-btn" onclick="event.stopPropagation();toggleComment(${i})" title="Add a comment to this finding">✎ Comment</button>
+        </div>
+        ${ann._comment?`<div class="comment-saved"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4285F4;display:block;margin-bottom:4px">✎ Comment</span>${ann._comment}${ann._commentUrl?`<br><a href="${ann._commentUrl}" target="_blank" rel="noopener" style="font-size:11px;color:#4285F4;word-break:break-all">↗ ${ann._commentUrl}</a>`:''}</div>`:''}
+        <div class="comment-panel" id="comment-${i}">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4285F4;margin-bottom:6px">Add comment</div>
+          <textarea id="comment-text-${i}" placeholder="e.g. Known issue — tracked in Jira PROJ-123. Workaround documented in Confluence." style="width:100%;height:64px;padding:6px 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);resize:vertical;margin-bottom:6px;line-height:1.5" onclick="event.stopPropagation()"></textarea>
+          <input type="url" id="comment-url-${i}" placeholder="Confluence / Jira URL (optional)" style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:8px" onclick="event.stopPropagation()"/>
+          <button onclick="event.stopPropagation();saveComment(${i})" style="height:28px;padding:0 12px;font-size:11px;font-weight:600;border:none;background:#4285F4;color:#fff;cursor:pointer;font-family:var(--font);letter-spacing:0.04em">Save comment</button>
+        </div>
+        <div class="challenge-panel" id="challenge-${i}">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber);margin-bottom:6px">Challenge this finding</div>
+          <input type="text" id="challenge-arg-${i}" placeholder="Your argument — e.g. 'Font is correct, Frutiger is loaded'" style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:6px" onclick="event.stopPropagation()"/>
+          <input type="url" id="challenge-url-${i}" placeholder="Reference URL (optional) — e.g. oblique.bit.admin.ch/..." style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:8px" onclick="event.stopPropagation()"/>
+          <button onclick="event.stopPropagation();challengeFinding(${i},this)" style="height:28px;padding:0 12px;font-size:11px;font-weight:600;border:none;background:var(--amber);color:#fff;cursor:pointer;font-family:var(--font);letter-spacing:0.04em">Re-evaluate →</button>
+          <div class="challenge-result" id="challenge-result-${i}"></div>
         </div>
         <div class="bp-panel" id="bp-${i}"></div>
         <div class="fix-panel" id="fix-${i}"></div>
@@ -1903,12 +1967,12 @@ renderResults._refreshSidebar=function(annotations){
 async function startAudit(){
   const url=el('urlInput').value.trim();
   const keys={
-    openai:document.getElementById('key-openai').value.trim(),
-    gemini:document.getElementById('key-gemini').value.trim(),
-    claude:document.getElementById('key-claude').value.trim(),
-    groq:document.getElementById('key-groq').value.trim(),
-    apertus:document.getElementById('key-apertus').value.trim(),
-    github:document.getElementById('key-github').value.trim()
+    openai:el('key-openai').value.trim(),
+    gemini:el('key-gemini').value.trim(),
+    claude:el('key-claude').value.trim(),
+    groq:el('key-groq').value.trim(),
+    apertus:el('key-apertus').value.trim(),
+    github:el('key-github').value.trim()
   };
   const errEl=el('errorMsg');
   errEl.textContent='';
@@ -1928,6 +1992,11 @@ async function startAudit(){
   btn.textContent='Analyzing…';
   el('results').style.display='none';
   el('results').classList.remove('visible');
+  // Reset sticky bar
+  const stickyLabel=el('stickyLabel');
+  const stickyRunBtn=el('stickyRunBtn');
+  if(stickyLabel) stickyLabel.style.display='';
+  if(stickyRunBtn) stickyRunBtn.textContent='Run Audit →';
   el('progressSection').style.display='block';
   setSteps(activeIds);
 
@@ -2093,6 +2162,9 @@ async function startAudit(){
     setTimeout(()=>{
       el('progressSection').style.display='none';
       renderResults(imgSrc,currentAnnotations,allScores,allModelIds,visionErrors);
+      // Auto-run AX audit if HTML was provided
+      const htmlStr=el('htmlInput')?.value.trim();
+      if(htmlStr) runAXAudit();
     },700);
 
   }catch(e){
@@ -2143,10 +2215,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   // ── Sticky Run button — show after scrolling past the main run button ──
-  const sticky=document.getElementById('stickyRun');
-  const runBtn=document.getElementById('runBtn');
-  const stickyFw=document.getElementById('frameworkSelectSticky');
-  const mainFw=document.getElementById('frameworkSelect');
+  const sticky=el('stickyRun');
+  const runBtn=el('runBtn');
+  const stickyFw=el('frameworkSelectSticky');
+  const mainFw=el('frameworkSelect');
 
   // Sync framework options to sticky select
   if(stickyFw&&mainFw){
@@ -2569,7 +2641,7 @@ function initRegionCanvas(){
 
 async function auditRegion(){
   if(!regionRect||!imageBase64)return;
-  const claudeKey=document.getElementById('key-claude').value.trim();
+  const claudeKey=el('key-claude').value.trim();
   if(!claudeKey){alert('Claude API key needed.');return;}
 
   // crop image to selected region
@@ -2663,8 +2735,8 @@ async function loadFix(idx,btn){
   const ann=currentAnnotations[idx];
   if(!ann)return;
 
-  const groqKey=document.getElementById('key-groq').value.trim();
-  const claudeKey=document.getElementById('key-claude').value.trim();
+  const groqKey=el('key-groq').value.trim();
+  const claudeKey=el('key-claude').value.trim();
 
   if(!groqKey&&!claudeKey){
     panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Add a Groq or Claude key to generate fixes.</p>';
@@ -2676,7 +2748,7 @@ async function loadFix(idx,btn){
   panel.classList.add('open');
 
   const cssCtx=el('cssInput').value.trim();
-  const framework=document.getElementById('frameworkSelect')?.value||'';
+  const framework=el('frameworkSelect')?.value||'';
   const frameworkMap={
     'angular':'Angular (TypeScript component + SCSS)',
     'react':'React (JSX + CSS Modules)',
@@ -2799,6 +2871,150 @@ Respond ONLY with valid JSON, no markdown fences:
 
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // --- Best Practice Lookup ---
+function toggleComment(idx){
+  const panel=document.getElementById('comment-'+idx);
+  if(!panel)return;
+  const open=panel.classList.toggle('open');
+  panel.style.display=open?'block':'none';
+  // Pre-fill if comment already exists
+  if(open&&currentAnnotations[idx]?._comment){
+    const ta=document.getElementById('comment-text-'+idx);
+    const ur=document.getElementById('comment-url-'+idx);
+    if(ta&&!ta.value) ta.value=currentAnnotations[idx]._comment;
+    if(ur&&!ur.value&&currentAnnotations[idx]._commentUrl) ur.value=currentAnnotations[idx]._commentUrl;
+  }
+}
+
+function saveComment(idx){
+  const text=document.getElementById('comment-text-'+idx)?.value.trim();
+  const url=document.getElementById('comment-url-'+idx)?.value.trim();
+  if(!text) return;
+  const ann=currentAnnotations[idx];
+  if(!ann) return;
+  ann._comment=text;
+  ann._commentUrl=url||null;
+  // Close panel and refresh sidebar
+  const panel=document.getElementById('comment-'+idx);
+  if(panel){panel.classList.remove('open');panel.style.display='none';}
+  renderResults._refreshSidebar(currentAnnotations);
+}
+
+function toggleChallenge(idx){
+  const panel=document.getElementById('challenge-'+idx);
+  if(!panel)return;
+  panel.classList.toggle('open');
+  panel.style.display=panel.classList.contains('open')?'block':'none';
+}
+
+async function challengeFinding(idx,btn){
+  const claudeKey=el('key-claude').value.trim();
+  if(!claudeKey){
+    document.getElementById('challenge-result-'+idx).textContent='Claude key required for re-evaluation.';
+    return;
+  }
+  const arg=document.getElementById('challenge-arg-'+idx).value.trim();
+  if(!arg){
+    document.getElementById('challenge-result-'+idx).textContent='Please enter your argument first.';
+    return;
+  }
+
+  const ann=currentAnnotations[idx];
+  if(!ann)return;
+
+  btn.disabled=true;
+  btn.textContent='Evaluating...';
+  const resultEl=document.getElementById('challenge-result-'+idx);
+  resultEl.textContent='';
+
+  // Fetch URL content if provided (token-optimised: max 1500 chars)
+  const urlInput=document.getElementById('challenge-url-'+idx).value.trim();
+  let urlContent='';
+  if(urlInput){
+    resultEl.textContent='Fetching reference URL...';
+    try{
+      const proxy='https://corsproxy.io/?url='+encodeURIComponent(urlInput);
+      const r=await fetch(proxy);
+      if(r.ok){
+        const text=await r.text();
+        // Strip HTML, take first 1500 chars of visible text
+        urlContent=text.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,1500);
+      }
+    }catch(e){ urlContent=''; }
+    resultEl.textContent='';
+  }
+
+  // Token-optimised prompt — minimal context, direct question
+  const prompt=`A UX audit finding was flagged. The user challenges its validity.
+
+FINDING:
+Dimension: ${ann.dimension}
+Title: ${ann.title}
+Description: ${ann.description}
+Severity: ${ann.priority}
+Confidence: ${ann.confidence||'?'}%
+
+USER'S ARGUMENT:
+${arg}
+${urlContent?`\nREFERENCE CONTENT (from ${urlInput}):\n${urlContent}`:''}
+
+Based on this argument${urlContent?' and the reference content':''}, re-evaluate this finding. Respond ONLY as JSON:
+{
+  "verdict": "remove"|"downgrade"|"keep"|"confirmed",
+  "new_severity": null or "0"|"1"|"2"|"3"|"High"|"Medium"|"Low",
+  "reasoning": "2-3 sentences max",
+  "updated_description": null or "updated finding text if changed"
+}
+
+Verdict meanings:
+- remove: user is right, finding is invalid
+- downgrade: finding is valid but less severe than reported
+- keep: finding stands despite argument
+- confirmed: user's reference confirms the finding is correct`;
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:claudeHeaders(claudeKey,{'anthropic-beta':'prompt-caching-2024-07-31'}),
+      body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:300,temperature:0,
+        system:[{type:'text',text:'You are a senior UX auditor. Re-evaluate findings objectively based on user-provided context. Respond ONLY with valid JSON.',cache_control:{type:'ephemeral'}}],
+        messages:[{role:'user',content:prompt}]
+      })});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error');}
+    const d=await r.json();
+    const text=d.content?.find(b=>b.type==='text')?.text||'';
+    const res=parseJSON(text);
+    if(!res?.verdict) throw new Error('Invalid response');
+
+    // Apply verdict
+    const verdictLabel={remove:'✓ Finding removed',downgrade:'↓ Severity downgraded',keep:'Finding kept',confirmed:'Finding confirmed'};
+    const verdictColor={remove:'var(--green)',downgrade:'var(--amber)',keep:'var(--text3)',confirmed:'var(--red)'};
+
+    if(res.verdict==='remove'){
+      currentAnnotations[idx]._challenged=true;
+      currentAnnotations[idx]._removed=true;
+      resultEl.innerHTML=`<span style="color:var(--green);font-weight:600">✓ Finding removed</span><br><span style="color:var(--text2)">${res.reasoning}</span>`;
+      // Grey out the finding card
+      const card=document.querySelector(`.ann-item[data-idx="${idx}"]`);
+      if(card) card.style.opacity='0.4';
+    } else if(res.verdict==='downgrade'&&res.new_severity){
+      ann.priority=res.new_severity;
+      if(res.updated_description) ann.description=res.updated_description;
+      resultEl.innerHTML=`<span style="color:var(--amber);font-weight:600">↓ Downgraded to ${res.new_severity}</span><br><span style="color:var(--text2)">${res.reasoning}</span>`;
+      renderResults._refreshSidebar(currentAnnotations);
+    } else if(res.verdict==='confirmed'){
+      ann._confirmed=true;
+      resultEl.innerHTML=`<span style="color:var(--red);font-weight:600">Finding confirmed by reference</span><br><span style="color:var(--text2)">${res.reasoning}</span>`;
+    } else {
+      resultEl.innerHTML=`<span style="color:var(--text3);font-weight:600">${verdictLabel[res.verdict]||res.verdict}</span><br><span style="color:var(--text2)">${res.reasoning}</span>`;
+    }
+
+  }catch(e){
+    resultEl.textContent='Error: '+e.message;
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Re-evaluate →';
+  }
+}
+
 async function loadBestPractice(idx, btn){
   if(btn.dataset.loaded==='true') {
     const panel=document.getElementById('bp-'+idx);
@@ -2810,8 +3026,8 @@ async function loadBestPractice(idx, btn){
   if(!ann) return;
 
   // need claude key
-  const claudeKey=document.getElementById('key-claude').value.trim();
-  const groqKey=document.getElementById('key-groq').value.trim()||document.getElementById('key-apertus').value.trim();
+  const claudeKey=el('key-claude').value.trim();
+  const groqKey=el('key-groq').value.trim()||el('key-apertus').value.trim();
   if(!claudeKey && !groqKey){
     alert('Add a Claude or Groq key to load best practices.');
     return;
@@ -2824,9 +3040,9 @@ async function loadBestPractice(idx, btn){
   panel.classList.add('open');
   panel.innerHTML='<div class="bp-loading">Searching for best practices and real-world examples...</div>';
 
-  const industry=document.getElementById('industrySelect')?.value||'';
+  const industry=el('industrySelect')?.value||'';
   const isSwissGov=industry==='ch-gov';
-  const country=document.getElementById('countrySelect')?.value||'';
+  const country=el('countrySelect')?.value||'';
   const countryCtx=buildCountryContext();
 
   const prompt=`You are a UX expert. A UX audit found this issue:
@@ -2963,6 +3179,333 @@ Be specific. Cite real companies and real URLs. No generic advice.`;
 
 // --- PDF Export ---
 // Strip HTML tags and citation markup from Best Practice text for PDF export
+// ── AX Audit ──────────────────────────────────────────────
+function updateHTMLStats(){
+  const html=el('htmlInput')?.value||'';
+  if(!html){el('htmlStats').textContent='';return;}
+  const tags=(html.match(/<[a-z]/gi)||[]).length;
+  el('htmlStats').textContent=`${tags.toLocaleString()} HTML elements detected`;
+}
+
+// Rule-based HTML parser — no AI needed for structural checks
+function parseHTMLForAX(htmlStr){
+  const issues=[];
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(htmlStr,'text/html');
+
+  // ── 1. Images without alt ──
+  doc.querySelectorAll('img').forEach(img=>{
+    if(!img.hasAttribute('alt')){
+      issues.push({rule:'1.1.1',level:'A',category:'Images',title:'Image missing alt attribute',detail:`<img src="${(img.getAttribute('src')||'').slice(0,60)}">`,impact:'Critical'});
+    } else if(img.getAttribute('alt')===''){
+      // Empty alt is ok for decorative — flag only if img has no role="presentation"
+      if(img.getAttribute('role')!=='presentation'&&img.getAttribute('aria-hidden')!=='true'){
+        issues.push({rule:'1.1.1',level:'A',category:'Images',title:'Possibly decorative image — verify alt="" is intentional',detail:`<img src="${(img.getAttribute('src')||'').slice(0,60)}" alt="">`,impact:'Minor'});
+      }
+    } else if(/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(img.getAttribute('alt')||'')){
+      issues.push({rule:'1.1.1',level:'A',category:'Images',title:'Alt text appears to be a filename',detail:`alt="${img.getAttribute('alt')}"`,impact:'Serious'});
+    }
+  });
+
+  // ── 2. Heading hierarchy ──
+  const headings=[...doc.querySelectorAll('h1,h2,h3,h4,h5,h6')];
+  let prevLevel=0;
+  headings.forEach(h=>{
+    const level=parseInt(h.tagName[1]);
+    if(prevLevel>0&&level>prevLevel+1){
+      issues.push({rule:'1.3.1',level:'A',category:'Structure',title:`Heading level skipped: H${prevLevel} → H${level}`,detail:`"${h.textContent.trim().slice(0,60)}"`,impact:'Serious'});
+    }
+    prevLevel=level;
+  });
+  if(headings.length>0&&headings[0].tagName!=='H1'){
+    issues.push({rule:'1.3.1',level:'A',category:'Structure',title:'Page does not start with H1',detail:`First heading is <${headings[0].tagName.toLowerCase()}>`,impact:'Moderate'});
+  }
+  const h1s=doc.querySelectorAll('h1');
+  if(h1s.length>1){
+    issues.push({rule:'1.3.1',level:'A',category:'Structure',title:`Multiple H1 elements found (${h1s.length})`,detail:'Page should have exactly one H1',impact:'Moderate'});
+  }
+
+  // ── 3. Inputs without labels ──
+  doc.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),select,textarea').forEach(input=>{
+    const id=input.getAttribute('id');
+    const ariaLabel=input.getAttribute('aria-label');
+    const ariaLabelledBy=input.getAttribute('aria-labelledby');
+    const hasLabel=id&&doc.querySelector(`label[for="${id}"]`);
+    if(!hasLabel&&!ariaLabel&&!ariaLabelledBy){
+      const type=input.getAttribute('type')||input.tagName.toLowerCase();
+      issues.push({rule:'1.3.1',level:'A',category:'Forms',title:`Form control without label`,detail:`<${input.tagName.toLowerCase()} type="${type}" ${id?`id="${id}"`:''}>`,impact:'Critical'});
+    }
+  });
+
+  // ── 4. Buttons without accessible text ──
+  doc.querySelectorAll('button,[role="button"]').forEach(btn=>{
+    const text=(btn.textContent||'').trim();
+    const ariaLabel=btn.getAttribute('aria-label');
+    const ariaLabelledBy=btn.getAttribute('aria-labelledby');
+    const title=btn.getAttribute('title');
+    if(!text&&!ariaLabel&&!ariaLabelledBy&&!title){
+      issues.push({rule:'4.1.2',level:'A',category:'Interactive',title:'Button has no accessible name',detail:btn.outerHTML.slice(0,80),impact:'Critical'});
+    }
+  });
+
+  // ── 5. Links without text ──
+  doc.querySelectorAll('a[href]').forEach(a=>{
+    const text=(a.textContent||'').trim();
+    const ariaLabel=a.getAttribute('aria-label');
+    const ariaLabelledBy=a.getAttribute('aria-labelledby');
+    const title=a.getAttribute('title');
+    const hasImg=a.querySelector('img[alt]');
+    if(!text&&!ariaLabel&&!ariaLabelledBy&&!title&&!hasImg){
+      issues.push({rule:'2.4.4',level:'A',category:'Links',title:'Link has no accessible name',detail:`href="${(a.getAttribute('href')||'').slice(0,60)}"`,impact:'Critical'});
+    }
+    if(text==='here'||text==='click here'||text==='read more'||text==='more'){
+      issues.push({rule:'2.4.6',level:'AA',category:'Links',title:`Non-descriptive link text: "${text}"`,detail:`href="${(a.getAttribute('href')||'').slice(0,60)}"`,impact:'Moderate'});
+    }
+  });
+
+  // ── 6. Language attribute ──
+  const htmlEl=doc.querySelector('html');
+  if(!htmlEl?.getAttribute('lang')){
+    issues.push({rule:'3.1.1',level:'A',category:'Language',title:'Page language not declared',detail:'<html> element missing lang attribute',impact:'Serious'});
+  }
+
+  // ── 7. tabindex misuse ──
+  doc.querySelectorAll('[tabindex]').forEach(el=>{
+    const ti=parseInt(el.getAttribute('tabindex'));
+    if(ti>0){
+      issues.push({rule:'2.4.3',level:'A',category:'Navigation',title:`Positive tabindex="${ti}" disrupts natural tab order`,detail:el.outerHTML.slice(0,80),impact:'Moderate'});
+    }
+  });
+
+  // ── 8. ARIA roles on wrong elements ──
+  doc.querySelectorAll('[role]').forEach(el=>{
+    const role=el.getAttribute('role');
+    const tag=el.tagName.toLowerCase();
+    const badCombos={'button':['a','div','span'],'link':['button','div'],'heading':['div','span']};
+    if(role==='button'&&tag==='a'&&!el.getAttribute('href')){
+      issues.push({rule:'4.1.2',level:'A',category:'ARIA',title:`role="button" on <a> without href — use <button> instead`,detail:el.outerHTML.slice(0,80),impact:'Moderate'});
+    }
+  });
+
+  // ── 9. Missing landmark regions ──
+  const hasMain=doc.querySelector('main,[role="main"]');
+  const hasNav=doc.querySelector('nav,[role="navigation"]');
+  if(!hasMain) issues.push({rule:'1.3.6',level:'AAA',category:'Structure',title:'No <main> landmark region found',detail:'Add <main> to wrap primary content',impact:'Moderate'});
+  if(!hasNav&&doc.querySelectorAll('a[href]').length>3) issues.push({rule:'1.3.6',level:'AAA',category:'Structure',title:'No <nav> landmark region found',detail:'Wrap navigation links in <nav>',impact:'Minor'});
+
+  // ── 10. Form error handling ──
+  doc.querySelectorAll('[required],[aria-required="true"]').forEach(input=>{
+    if(!input.getAttribute('aria-describedby')&&!input.closest('form')?.querySelector('[role="alert"],[aria-live]')){
+      // Only flag once per form
+    }
+  });
+
+  return issues;
+}
+
+function renderAXResults(issues,htmlStr,withVision=false){
+  const container=el('axResults');
+  if(!container)return;
+  window._lastAXResults={issues,htmlStr,withVision};
+
+  // Show AX tab (don't auto-switch — caller decides active tab)
+  const axTab=el('tabAX');
+  if(axTab) axTab.style.display='';
+
+  // Mode banner
+  const hasCss=!!el('cssInput')?.value.trim();
+  const modeItems=[];
+  modeItems.push('✓ HTML structure');
+  if(withVision) modeItems.push('✓ Visual AI');
+  if(hasCss) modeItems.push('✓ CSS contrast');
+  const modeBanner=`<div style="padding:6px 10px;background:var(--green-bg);border-left:3px solid var(--green);font-size:11px;font-weight:600;color:var(--green);margin-bottom:12px">${modeItems.join(' · ')}</div>`;
+
+  // Group by impact
+  const critical=issues.filter(i=>i.impact==='Critical');
+  const serious=issues.filter(i=>i.impact==='Serious');
+  const moderate=issues.filter(i=>i.impact==='Moderate');
+  const minor=issues.filter(i=>i.impact==='Minor');
+
+  const impactColor={Critical:'#DC0018',Serious:'#E05D00',Moderate:'#8A5800',Minor:'#1A7A4A'};
+  const impactBg={Critical:'#FDEAEA',Serious:'#FEF0E6',Moderate:'#FFF4E0',Minor:'#EAF3DE'};
+  const levelColor={A:'#DC0018',AA:'#E05D00',AAA:'#8A5800'};
+
+  if(issues.length===0){
+    container.innerHTML=modeBanner+`<div style="display:flex;align-items:center;gap:12px;padding:20px;background:var(--green-bg);border:1px solid rgba(26,122,74,0.2)">
+      <span style="font-size:24px">✓</span>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--green)">No automated AX issues detected</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">Manual testing with a screenreader is still recommended for full WCAG 2.1 compliance.</div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Summary bar
+  const summaryHtml=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      ${[{l:'Critical',c:critical},{l:'Serious',c:serious},{l:'Moderate',c:moderate},{l:'Minor',c:minor}].map(({l,c})=>`
+        <div style="padding:10px;background:${impactBg[l]};border-left:3px solid ${impactColor[l]}">
+          <div style="font-size:20px;font-weight:700;color:${impactColor[l]}">${c.length}</div>
+          <div style="font-size:11px;color:var(--text3)">${l}</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px">
+      ${issues.length} issue${issues.length!==1?'s':''} found · Rule-based analysis of ${(htmlStr.match(/<[a-z]/gi)||[]).length.toLocaleString()} HTML elements · Manual screenreader testing recommended
+    </div>`;
+
+  // Assign global numbers and stable IDs to issues
+  let axNum=0;
+  issues.forEach(issue=>{
+    issue._num=++axNum;
+    issue._id='ax-'+issue.rule.replace(/\./g,'-')+'-'+issue._num;
+  });
+
+  // Issues list grouped by category
+  const categories=[...new Set(issues.map(i=>i.category))];
+  const issuesHtml=categories.map(cat=>{
+    const catIssues=issues.filter(i=>i.category===cat);
+    return`<div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px">${cat} · ${catIssues.length} issue${catIssues.length!==1?'s':''}</div>
+      ${catIssues.map(issue=>`
+        <div style="margin-bottom:6px">
+          <div style="padding:10px 12px;border-left:3px solid ${impactColor[issue.impact]};background:${impactBg[issue.impact]}">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;background:var(--text);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${issue._num}</span>
+              <span style="font-size:10px;font-weight:700;padding:1px 6px;background:${impactColor[issue.impact]};color:#fff;border-radius:2px">${issue.impact}</span>
+              <span style="font-size:10px;font-weight:600;padding:1px 6px;border:1px solid ${levelColor[issue.level]||'#888'};color:${levelColor[issue.level]||'#888'};border-radius:2px">WCAG ${issue.rule} (${issue.level})</span>
+              <span style="font-size:12px;font-weight:600;color:var(--text)">${issue.title}</span>
+            </div>
+            <code style="font-size:11px;color:var(--text3);font-family:monospace;word-break:break-all">${escapeHtml(issue.detail)}</code>
+            ${issue._comment?`<div class="comment-saved" style="margin-top:8px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4285F4;display:block;margin-bottom:4px">Comment</span>${issue._comment}${issue._commentUrl?`<br><a href="${issue._commentUrl}" target="_blank" rel="noopener" style="font-size:11px;color:#4285F4;word-break:break-all">-> ${issue._commentUrl}</a>`:''}</div>`:''}
+          </div>
+          <div style="display:flex;margin-top:2px">
+            <button class="comment-btn" onclick="toggleAXComment('${issue._id}')" style="margin-top:0;margin-left:0;height:24px;font-size:10px">Comment</button>
+          </div>
+          <div class="comment-panel" id="axcomment-${issue._id}" style="display:none;margin-top:4px">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4285F4;margin-bottom:6px">Add comment to finding #${issue._num}</div>
+            <textarea id="axcomment-text-${issue._id}" placeholder="e.g. Known issue — tracked in Jira PROJ-123" style="width:100%;height:56px;padding:6px 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);resize:vertical;margin-bottom:6px;line-height:1.5">${issue._comment||''}</textarea>
+            <input type="url" id="axcomment-url-${issue._id}" placeholder="Confluence / Jira URL (optional)" style="width:100%;height:30px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font);margin-bottom:8px" value="${issue._commentUrl||''}" />
+            <button onclick="saveAXComment('${issue._id}')" style="height:28px;padding:0 12px;font-size:11px;font-weight:600;border:none;background:#4285F4;color:#fff;cursor:pointer;font-family:var(--font)">Save comment</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  container.innerHTML=summaryHtml+issuesHtml+`
+    <div style="font-size:11px;color:var(--text3);padding:10px 0;border-top:1px solid var(--border)">
+      Based on WCAG 2.1 · eCH-0059 · Automated checks cover structural criteria (Level A). Manual testing required for cognitive, contextual and interaction-based criteria.
+    </div>`;
+  container.insertAdjacentHTML('afterbegin',modeBanner);
+}
+
+async function runAXAudit(){
+  const htmlStr=el('htmlInput')?.value.trim();
+  if(!htmlStr){
+    alert('Please paste HTML source code first.');
+    return;
+  }
+
+  const resultsEl=el('results');
+  if(resultsEl) resultsEl.style.display='block';
+
+  el('axResults').innerHTML=`<div style="padding:20px;color:var(--text3);font-size:13px">Analysing HTML structure…</div>`;
+  const axTab=el('tabAX');
+  if(axTab) axTab.style.display='';
+
+  // Step 1 — rule-based parse (instant)
+  const issues=parseHTMLForAX(htmlStr);
+
+  // Step 2 — Vision AI AX check if screenshot + Claude/Gemini key present
+  const hasImage=imageBase64&&imageMime;
+  const claudeKey=el('key-claude')?.value.trim();
+  const geminiKey=el('key-gemini')?.value.trim();
+  const visionKey=claudeKey||geminiKey;
+
+  if(hasImage&&visionKey){
+    el('axResults').innerHTML=`<div style="padding:20px;color:var(--text3);font-size:13px">Rule-based check complete. Running visual AX analysis…</div>`;
+
+    const axVisionPrompt=`You are an accessibility expert conducting a WCAG 2.1 audit. Analyze this screenshot for visual accessibility issues that cannot be detected from HTML alone.
+
+Check specifically:
+1. Focus indicators — are they visible when elements are focused? (look for outlines, highlights)
+2. Colour contrast — do text and background colours appear sufficiently different?
+3. Text size — is any text too small to read (below ~12px equivalent)?
+4. Touch targets — are interactive elements large enough (min 44×44px)?
+5. Alt text quality — for visible images, does the alt text likely describe what you see?
+6. Visual hierarchy — is the heading/content structure visually clear?
+7. Error states — are error messages visible and clearly associated with inputs?
+8. Animations — any motion that could cause issues for users with vestibular disorders?
+
+For each issue found, provide:
+- What you see
+- Which WCAG criterion it likely violates
+- Severity: Critical / Serious / Moderate / Minor
+
+Respond ONLY as JSON:
+{"ax_visual_issues":[{"title":"string","detail":"what you observed","wcag":"e.g. 1.4.3","level":"A|AA|AAA","impact":"Critical|Serious|Moderate|Minor"}]}
+
+If no visual AX issues found, return: {"ax_visual_issues":[]}`;
+
+    try{
+      let visualIssues=[];
+      if(claudeKey){
+        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+          headers:claudeHeaders(claudeKey,{'anthropic-beta':'prompt-caching-2024-07-31'}),
+          body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:800,temperature:0,
+            system:[{type:'text',text:'You are a WCAG 2.1 accessibility auditor. Respond ONLY with valid JSON.',cache_control:{type:'ephemeral'}}],
+            messages:[{role:'user',content:[
+              {type:'image',source:{type:'base64',media_type:imageMime,data:imageBase64}},
+              {type:'text',text:axVisionPrompt}
+            ]}]})});
+        if(r.ok){
+          const d=await r.json();
+          const text=d.content?.find(b=>b.type==='text')?.text||'';
+          const parsed=parseJSON(text);
+          visualIssues=parsed?.ax_visual_issues||[];
+        }
+      } else if(geminiKey){
+        const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,{method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({contents:[{parts:[{text:axVisionPrompt},{inline_data:{mime_type:imageMime,data:imageBase64}}]}],
+            generationConfig:{temperature:0,maxOutputTokens:800}})});
+        if(r.ok){
+          const d=await r.json();
+          const parts=d.candidates?.[0]?.content?.parts;
+          const text=parts?.filter(p=>p.text&&!p.thought).pop()?.text||'';
+          const parsed=parseJSON(text);
+          visualIssues=parsed?.ax_visual_issues||[];
+        }
+      }
+      // Merge visual issues into issues array
+      visualIssues.forEach(v=>{
+        issues.push({rule:v.wcag||'Visual',level:v.level||'AA',category:'Visual (AI)',title:v.title,detail:v.detail,impact:v.impact||'Moderate'});
+      });
+    }catch(e){console.warn('AX vision check failed:',e.message);}
+  }
+
+  renderAXResults(issues,htmlStr,hasImage&&visionKey);
+}
+
+// ── End AX Audit ───────────────────────────────────────────
+
+function toggleAXComment(id){
+  const panel=el('axcomment-'+id);
+  if(!panel)return;
+  panel.style.display=panel.style.display==='none'?'block':'none';
+}
+
+function saveAXComment(id){
+  const text=el('axcomment-text-'+id)?.value.trim();
+  const url=el('axcomment-url-'+id)?.value.trim();
+  const issue=window._lastAXResults?.issues?.find(i=>i._id===id);
+  if(!issue)return;
+  issue._comment=text||'';
+  issue._commentUrl=url||'';
+  // Re-render to reflect saved state
+  renderAXResults(window._lastAXResults.issues,window._lastAXResults.htmlStr,window._lastAXResults.withVision);
+}
+
 function stripBP(s){
   if(!s)return'';
   return String(s)
@@ -2976,6 +3519,10 @@ async function exportPDF(){
   const btn=event.target;
   btn.textContent='Generating...';
   btn.disabled=true;
+
+  const reportType=el('reportType')?.value||'full';
+  const inclUXUI=reportType==='full'||reportType==='uxui';
+  const inclAX=reportType==='full'||reportType==='ax';
 
   if(!window.jspdf){
     await new Promise((res,rej)=>{
@@ -2991,6 +3538,15 @@ async function exportPDF(){
   const PW=210,PH=297;
   const ML=20,MR=20;
   const CW=PW-ML-MR;
+  // PDF style helper — avoids repeating 3 set* calls
+  const pdfSet=(size,weight,color)=>{
+    doc.setFontSize(size);
+    doc.setFont('helvetica',weight);
+    if(Array.isArray(color)) doc.setTextColor(...color);
+    else if(color) doc.setTextColor(color);
+  };
+
+
   let y=0;
   let pageCount=0;
 
@@ -3056,7 +3612,8 @@ async function exportPDF(){
     doc.line(ML,18,PW-MR,18);
     // running header
     doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
-    doc.text('Heuristic Evaluation Workbook',ML,14);
+    const hdrLabel={full:'Heuristic & Accessibility Evaluation',uxui:'Heuristic Evaluation Workbook',ax:'Accessibility Audit Report'};
+    doc.text(hdrLabel[reportType]||hdrLabel.full,ML,14);
     y=26;
     pageFooter();
   }
@@ -3075,22 +3632,28 @@ async function exportPDF(){
   // Large title — NNG uses massive bold type
   y=90;
   doc.setFontSize(11);doc.setFont('helvetica','normal');doc.setTextColor(26,26,24);
-  doc.text('UX / UI Audit Workbook',ML,y);
+  const workbookLabel={full:'UX / UI & Accessibility Audit',uxui:'UX / UI Audit Workbook',ax:'Accessibility Audit Workbook'};
+  doc.text(workbookLabel[reportType]||'UX / UI Audit Workbook',ML,y);
   y+=10;
 
   doc.setFontSize(32);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
-  doc.text('Heuristic',ML,y);y+=12;
-  doc.text('Evaluation',ML,y);y+=12;
-  doc.text('Report',ML,y);y+=18;
+  const reportTitles={full:'Heuristic &',uxui:'Heuristic',ax:'Accessibility'};
+  const reportTitles2={full:'Accessibility',uxui:'Evaluation',ax:'Audit'};
+  const reportTitles3={full:'Evaluation Report',uxui:'Report',ax:'Report'};
+  doc.text(reportTitles[reportType]||'Heuristic',ML,y);y+=12;
+  doc.text(reportTitles2[reportType]||'Accessibility',ML,y);y+=12;
+  doc.text(reportTitles3[reportType]||'Evaluation Report',ML,y);y+=18;
 
   // Subtitle — NNG uses large light text
   doc.setFontSize(14);doc.setFont('helvetica','normal');doc.setTextColor(26,26,24);
-  const sub1=doc.splitTextToSize('Automated analysis based on Jakob\'s 10 Usability Heuristics.',CW);
+  const sub1Text={full:'Automated analysis based on Jakob\'s 10 Usability Heuristics and WCAG 2.1 / eCH-0059.',uxui:'Automated analysis based on Jakob\'s 10 Usability Heuristics.',ax:'Automated accessibility analysis based on WCAG 2.1 and eCH-0059.'};
+  const sub1=doc.splitTextToSize(sub1Text[reportType]||sub1Text.full,CW);
   doc.text(sub1,ML,y);y+=sub1.length*7+6;
 
   // Bold instruction line
   doc.setFontSize(9.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
-  const sub2=doc.splitTextToSize('For each heuristic, this report identifies specific issues found in the interface and provides actionable recommendations.',CW);
+  const sub2Text={full:'This report covers heuristic evaluation, WCAG contrast and structural accessibility findings with actionable recommendations.',uxui:'For each heuristic, this report identifies specific issues found in the interface and provides actionable recommendations.',ax:'This report identifies structural accessibility issues against WCAG 2.1 Level A/AA criteria and eCH-0059.'};
+  const sub2=doc.splitTextToSize(sub2Text[reportType]||sub2Text.full,CW);
   doc.text(sub2,ML,y);y+=sub2.length*5.5+16;
 
   // Meta info box
@@ -3109,7 +3672,27 @@ async function exportPDF(){
   doc.setFont('helvetica','normal');
   doc.text('Framework:',ML,y);
   doc.setFont('helvetica','bold');
-  doc.text('Nielsen\'s 10 Usability Heuristics · WCAG 2.1',ML+30,y);y+=4;
+  const fwText=reportType==='ax'?'WCAG 2.1 · eCH-0059':reportType==='uxui'?'Nielsen\'s 10 Usability Heuristics · WCAG 2.1':'Nielsen\'s 10 Usability Heuristics · WCAG 2.1 · eCH-0059';
+  doc.text(fwText,ML+30,y);y+=5;
+  doc.setFont('helvetica','normal');
+
+  // Confidence filter
+  const minConfVal=parseInt(el('confidenceFilter')?.value||'0');
+  doc.text('Min. confidence:',ML,y);
+  doc.setFont('helvetica','bold');
+  doc.text(minConfVal>0?'>= '+minConfVal+'% (lower findings excluded)':'All findings included',ML+30,y);
+  doc.setFont('helvetica','normal');y+=5;
+
+  // Finding status summary
+  const totalAnns=currentAnnotations.length;
+  const confirmedCount=currentAnnotations.filter(a=>a._confirmed).length;
+  const challengedCount=currentAnnotations.filter(a=>a._challenged&&!a._removed&&!a._confirmed).length;
+  const removedCount=currentAnnotations.filter(a=>a._removed).length;
+  const exportedCount=currentAnnotations.filter(a=>!a._removed&&(minConfVal===0||(a.confidence==null||a.confidence>=minConfVal))).length;
+  doc.text('Findings:',ML,y);
+  doc.setFont('helvetica','bold');
+  doc.text(`${exportedCount} exported · ${confirmedCount} confirmed · ${challengedCount} challenged · ${removedCount} removed`,ML+30,y);y+=4;
+
   doc.setDrawColor(200,198,194);
   doc.line(ML,y,PW-MR,y);
 
@@ -3118,8 +3701,9 @@ async function exportPDF(){
   doc.text('https://www.nngroup.com/articles/ten-usability-heuristics/',ML,PH-8);
 
   // ══════════════════════════════
-  // PAGE 2 — Annotated Screenshot
+  // PAGE 2 — Annotated Screenshot (UX/UI only)
   // ══════════════════════════════
+  if(inclUXUI){
   newPage();
   doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
   doc.text('Annotated Screenshot',ML,y);y+=8;
@@ -3139,9 +3723,12 @@ async function exportPDF(){
   doc.addImage(merged,'JPEG',ML,y,CW,dH);
   y+=dH+8;
 
+  } // end inclUXUI (screenshot)
+
   // ══════════════════════════════
-  // PAGE 3 — Scores summary table
+  // PAGE 3 — Scores summary (UX/UI only)
   // ══════════════════════════════
+  if(inclUXUI){
   newPage();
   doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
   doc.text('Score Summary',ML,y);y+=5;
@@ -3240,7 +3827,7 @@ async function exportPDF(){
   y+=8;
 
   // ── Severity legend ──
-  const useNielsenScale=document.getElementById('severityScale')?.value!=='simple';
+  const useNielsenScale=el('severityScale')?.value!=='simple';
 
   doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
   doc.text('Legend',ML,y);
@@ -3309,9 +3896,12 @@ async function exportPDF(){
   });
   y+=14;
 
+  } // end inclUXUI (scores)
+
   // ══════════════════════════════
-  // PAGE — WCAG Contrast Analysis
+  // PAGE — WCAG Contrast Analysis (AX + Full)
   // ══════════════════════════════
+  if(inclAX){
   const wcagData=window._lastWCAGResults;
   if(wcagData&&(wcagData.failing.length>0||wcagData.borderline.length>0||wcagData.passing.length>0)){
     newPage();
@@ -3421,10 +4011,140 @@ async function exportPDF(){
     doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
     doc.text('WCAG 2.1 Web Content Accessibility Guidelines — https://www.w3.org/TR/WCAG21/',ML,y);
   }
+  } // end inclAX (WCAG)
 
   // ══════════════════════════════
-  // PAGES 4+ — One section per heuristic (NNG style)
+  // PAGE — AX Audit Findings (AX + Full)
   // ══════════════════════════════
+  if(inclAX&&window._lastAXResults?.issues?.length>0){
+    const axIssues=window._lastAXResults.issues;
+    newPage();
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(66,133,244);
+    doc.text('AX Accessibility Audit',ML,y);y+=5;
+    doc.setDrawColor(66,133,244);doc.setLineWidth(0.5);
+    doc.line(ML,y,PW-MR,y);y+=8;
+
+    // Mode banner
+    const axWithVision=window._lastAXResults.withVision;
+    const axWithCSS=!!el('cssInput')?.value.trim();
+    const axMode=(axWithVision&&axWithCSS)?'HTML + Screenshot + CSS — Full AX Audit':axWithVision?'HTML + Screenshot — Structural + Visual':axWithCSS?'HTML + CSS — Structural + Contrast':'HTML — Structural checks only';
+    doc.setFillColor(235,245,255);
+    doc.rect(ML,y,CW,8,'F');
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(66,133,244);
+    doc.text(axMode,ML+3,y+5.5);y+=13;
+
+    // Summary counts
+    const impactOrder=['Critical','Serious','Moderate','Minor'];
+    const impactColors={Critical:[168,0,15],Serious:[168,90,0],Moderate:[138,88,0],Minor:[26,122,74]};
+    const impactBgs={Critical:[253,234,234],Serious:[255,237,210],Moderate:[255,244,224],Minor:[235,245,239]};
+    const sumW=CW/4;
+    impactOrder.forEach((imp,i)=>{
+      const cnt=axIssues.filter(x=>x.impact===imp).length;
+      const x=ML+i*sumW;
+      doc.setFillColor(...impactBgs[imp]);
+      doc.rect(x,y,sumW-3,16,'F');
+      doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(...impactColors[imp]);
+      doc.text(String(cnt),x+(sumW-3)/2,y+10,{align:'center'});
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,98,94);
+      doc.text(imp,x+(sumW-3)/2,y+15,{align:'center'});
+    });
+    y+=22;
+
+    // Issues by category
+    const cats=[...new Set(axIssues.map(i=>i.category))];
+    cats.forEach(cat=>{
+      const catIssues=axIssues.filter(i=>i.category===cat);
+      checkY(16);
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(60,58,54);
+      doc.text(cat.toUpperCase()+' · '+catIssues.length+' issue'+(catIssues.length!==1?'s':''),ML,y);y+=3;
+      doc.setDrawColor(200,198,214);doc.setLineWidth(0.2);
+      doc.line(ML,y,PW-MR,y);y+=5;
+
+      catIssues.forEach(issue=>{
+        const ic=impactColors[issue.impact]||[100,98,94];
+        const ib=impactBgs[issue.impact]||[245,245,243];
+
+        const BADGE_W=30;
+        const TEXT_X=ML+BADGE_W+4;
+        const TEXT_W=CW-BADGE_W-6;
+        const PAD_T=4;
+
+        // Pre-calculate with correct font metrics
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');
+        const wcagL=doc.splitTextToSize('WCAG '+issue.rule+' ('+issue.level+')',TEXT_W);
+        doc.setFontSize(8.5);doc.setFont('helvetica','bold');
+        const titleL=doc.splitTextToSize((issue._num?'#'+issue._num+' ':'')+issue.title,TEXT_W);
+        doc.setFontSize(7.5);doc.setFont('helvetica','normal');
+        const detailL=doc.splitTextToSize(issue.detail||'',TEXT_W);
+
+        // Comment lines
+        doc.setFontSize(7);doc.setFont('helvetica','normal');
+        const commentL=issue._comment?doc.splitTextToSize(issue._comment,CW-8):[];
+        const commentH=commentL.length>0?(6+4+commentL.length*4.2+(issue._commentUrl?5:0)+4):0;
+
+        const LINE_H=4.5;
+        const contentH=PAD_T+wcagL.length*LINE_H+2+titleL.length*LINE_H*1.2+2+detailL.length*LINE_H+PAD_T;
+        const blockH=Math.max(contentH,20);
+
+        checkY(blockH+commentH+4);
+
+        // Background
+        doc.setFillColor(...ib);
+        doc.rect(ML,y,CW,blockH,'F');
+
+        // Impact badge
+        doc.setFillColor(...ic);
+        doc.rect(ML,y,BADGE_W,blockH,'F');
+        doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+        doc.text(issue.impact.toUpperCase(),ML+BADGE_W/2,y+blockH/2+2,{align:'center',maxWidth:BADGE_W-4});
+
+        let ty=y+PAD_T;
+
+        // WCAG rule
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...ic);
+        doc.text(wcagL,TEXT_X,ty);ty+=wcagL.length*LINE_H+2;
+
+        // Title (with number)
+        doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(26,26,24);
+        doc.text(titleL,TEXT_X,ty);ty+=titleL.length*LINE_H*1.2+2;
+
+        // Detail
+        doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(80,78,74);
+        doc.text(detailL,TEXT_X,ty);
+
+        y+=blockH;
+
+        // Comment block
+        if(commentL.length>0){
+          doc.setFillColor(240,244,255);
+          doc.rect(ML,y,CW,commentH,'F');
+          doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(66,133,244);
+          doc.text('Comment',ML+3,y+5);
+          doc.setFont('helvetica','normal');doc.setTextColor(40,40,80);
+          doc.text(commentL,ML+3,y+10);
+          if(issue._commentUrl){
+            doc.setFontSize(6.5);doc.setTextColor(66,133,244);
+            const urlText=issue._commentUrl.length>80?issue._commentUrl.slice(0,77)+'...':issue._commentUrl;
+            doc.text('-> '+urlText,ML+3,y+commentH-2);
+            doc.link(ML+3,y+commentH-5,Math.min(doc.getTextWidth('-> '+urlText),CW-6),4,{url:issue._commentUrl});
+          }
+          y+=commentH;
+        }
+
+        y+=3;
+      });
+      y+=4;
+    });
+
+    // Footer note
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
+    doc.text('Based on WCAG 2.1 · eCH-0059 · Structural criteria (Level A). Manual testing required for cognitive, contextual and interaction-based criteria.',ML,y);
+  }
+
+  // ══════════════════════════════
+  // PAGES 4+ — Heuristics (UX/UI only)
+  // ══════════════════════════════
+  if(inclUXUI){
 
   // Map annotations to heuristics by matching dimension to heuristic title words
   const HEURISTIC_KEYS=[
@@ -3493,8 +4213,13 @@ async function exportPDF(){
     doc.line(ML,y,PW-MR,y);
     y+=6;
 
-    // Find matching annotations
-    const anns=currentAnnotations.filter(a=>matchHeuristic(a.dimension,hi));
+    // Find matching annotations — apply confidence filter
+    const minConf=parseInt(el('confidenceFilter')?.value||'0');
+    const anns=currentAnnotations.filter(a=>
+      matchHeuristic(a.dimension,hi) &&
+      !a._removed &&
+      (minConf===0 || (a.confidence==null || a.confidence>=minConf))
+    );
 
     if(anns.length===0){
       // Green "no issues" state
@@ -3507,6 +4232,10 @@ async function exportPDF(){
       anns.forEach((ann,ai)=>{
         const p=ann.priority||'Medium';
 
+        // Finding status
+        const status=ann._removed?'Removed':ann._confirmed?'Confirmed':ann._challenged?'Challenged':null;
+        const statusCol=ann._removed?[26,122,74]:ann._confirmed?[168,0,15]:ann._challenged?[138,88,0]:[150,148,144];
+
         // Badge label — respect severity scale
         const isNielsen=['0','1','2','3','4'].includes(String(p));
         const badgeLabel=isNielsen?'SEV '+p:p.toUpperCase();
@@ -3517,27 +4246,30 @@ async function exportPDF(){
           ?([[26,122,74],[138,88,0],[168,90,0],[168,0,15],[255,255,255]][parseInt(p)]||[138,88,0])
           :priCol(p);
 
-        // Pre-calculate text blocks
+        // Pre-calculate text blocks — set font first so splitTextToSize uses correct metrics
+        doc.setFontSize(8.5);doc.setFont('helvetica','bold');
         const titleL=doc.splitTextToSize(ann.title||'',W_ISSUES);
+        doc.setFontSize(8);doc.setFont('helvetica','normal');
         const issL=doc.splitTextToSize(ann.description||'',W_ISSUES);
 
-        // Recommendation — use stored recommendation if available, else smart reframe
+        // Recommendation — use stored recommendation, else reframe description
         const desc=(ann.description||'').trim().replace(/\.$/,'');
-        const firstWord=desc.split(' ')[0];
-        // Reframe problem statement as action: "The X is Y" → "Ensure X is not Y"
-        const recText=desc.match(/^(The |A |An )/i)
-          ? 'Ensure that '+desc.charAt(0).toLowerCase()+desc.slice(1)+'.'
-          : 'Fix: '+desc.charAt(0).toLowerCase()+desc.slice(1)+'.';
+        const recText=ann.recommendation||
+          (desc.match(/^(The |A |An )/i)
+            ? 'Ensure that '+desc.charAt(0).toLowerCase()+desc.slice(1)+'.'
+            : 'Fix: '+desc.charAt(0).toLowerCase()+desc.slice(1)+'.');
+        doc.setFontSize(8);doc.setFont('helvetica','normal');
         const recL=doc.splitTextToSize(recText,W_RECS);
 
-        const LINE_H=4.8;
+        const LINE_H=4.6;
         const BADGE_H=7;
-        const BADGE_PAD=3; // space after badge
-        const titleH=titleL.length*LINE_H;
+        const BADGE_PAD=4;
+        const titleH=titleL.length*LINE_H*1.15;
         const issH=issL.length*LINE_H;
         const recH=recL.length*LINE_H;
-        const leftH=BADGE_H+BADGE_PAD+titleH+1+issH;
-        const blockH=Math.max(leftH,recH)+6; // tight padding
+        const leftH=BADGE_H+BADGE_PAD+titleH+3+issH;
+        const rightH=BADGE_H+BADGE_PAD+recH;
+        const blockH=Math.max(leftH,rightH)+6;
 
         checkY(blockH+4);
         const blockY=y;
@@ -3558,6 +4290,18 @@ async function exportPDF(){
         doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...badgeFg);
         doc.text(badgeLabel,ML+10,blockY+4.2,{align:'center'});
 
+        // Status badge — only for challenged/confirmed findings
+        if(status){
+          doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...statusCol);
+          doc.text(status,COL2-8,blockY+4.2,{align:'right'});
+        }
+
+        // Confidence
+        if(ann.confidence!=null){
+          doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(150,148,144);
+          doc.text(ann.confidence+'%',ML+23,blockY+4.2);
+        }
+
         const textY=blockY+BADGE_H+BADGE_PAD;
 
         // Issue title
@@ -3565,12 +4309,35 @@ async function exportPDF(){
         doc.text(titleL,ML,textY);
 
         // Issue description
-        doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
+        doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
         doc.text(issL,ML,textY+titleH+1);
 
-        // Recommendation — top-aligned to text start (not badge)
-        doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
-        doc.text(recL,COL2,blockY+BADGE_H+BADGE_PAD);
+        // Recommendation
+        doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(60,58,54);
+        doc.text(recL,COL2,textY);
+
+        // Comment block — below both columns if present
+        if(ann._comment){
+          const commentY=blockY+blockH;
+          doc.setFontSize(7);doc.setFont('helvetica','normal');
+          const commentTextLines=doc.splitTextToSize(ann._comment,CW-8);
+          const commentH=6+5+commentTextLines.length*4.2+(ann._commentUrl?5:0);
+          checkY(commentH+2);
+          doc.setFillColor(240,244,255);
+          doc.rect(ML,commentY,CW,commentH,'F');
+          doc.setFont('helvetica','bold');doc.setTextColor(66,133,244);
+          doc.text('Comment',ML+3,commentY+4.5);
+          doc.setFont('helvetica','normal');doc.setTextColor(40,40,80);
+          doc.text(commentTextLines,ML+3,commentY+9);
+          if(ann._commentUrl){
+            doc.setFontSize(6.5);doc.setTextColor(66,133,244);
+            const urlText=ann._commentUrl.length>80?ann._commentUrl.slice(0,77)+'...':ann._commentUrl;
+            doc.setTextColor(66,133,244);
+            doc.text('-> '+urlText,ML+3,commentY+commentH-1.5);
+            doc.link(ML+3,commentY+commentH-4.5,CW-6,5,{url:ann._commentUrl});
+          }
+          y+=commentH+2;
+        }
 
         y+=blockH+2;
       });
@@ -3619,7 +4386,12 @@ async function exportPDF(){
         doc.text(whyL,ML,y);y+=whyL.length*4.5;
         if(bp.source){
           doc.setFontSize(7);doc.setTextColor(150,148,144);
-          doc.text('Source: '+stripBP(bp.source)+(bp.source_url?' — '+bp.source_url:''),ML,y);
+          const sourceLabel='Source: '+stripBP(bp.source);
+          doc.text(sourceLabel+(bp.source_url?' — '+bp.source_url:''),ML,y);
+          if(bp.source_url){
+            const srcW=doc.getTextWidth(sourceLabel+' — '+bp.source_url);
+            doc.link(ML,y-3.5,Math.min(srcW,CW),5,{url:bp.source_url});
+          }
           y+=5;
         }
         y+=2;
@@ -3651,7 +4423,10 @@ async function exportPDF(){
           doc.text(exL,ML+3,y);y+=exL.length*4.2;
           if(ex.url){
             doc.setFontSize(6.5);doc.setTextColor(150,148,144);
-            doc.text(ex.url,ML+3,y);y+=4;
+            doc.setTextColor(66,133,244);
+            doc.text(ex.url,ML+3,y);
+            doc.link(ML+3,y-3.5,Math.min(doc.getTextWidth(ex.url),CW-6),5,{url:ex.url});
+            y+=4;
           }
           y+=2;
         });
@@ -3666,6 +4441,7 @@ async function exportPDF(){
       }
     });
   }
+  } // end inclUXUI (best practices)
 
   // Update page count in all footers
   const total=doc.internal.getNumberOfPages();
@@ -3677,7 +4453,8 @@ async function exportPDF(){
     doc.text(p+' / '+total,PW-MR,PH-8,{align:'right'});
   }
 
-  const fn='ux-audit-'+(url.replace(/https?:\/\//,'').replace(/[^a-z0-9]/gi,'-').slice(0,40)||'report')+'.pdf';
+  const typeSuffix=reportType==='ax'?'-ax':reportType==='uxui'?'-uxui':'';
+  const fn='ux-audit-'+(url.replace(/https?:\/\//,'').replace(/[^a-z0-9]/gi,'-').slice(0,40)||'report')+typeSuffix+'.pdf';
   doc.save(fn);
   btn.textContent='Export PDF ↓';
   btn.disabled=false;
@@ -3685,17 +4462,17 @@ async function exportPDF(){
 
 </script>
 <div class="sticky-run" id="stickyRun">
-  <div class="sticky-run-label">Ready to audit? <strong>Configure above and run.</strong></div>
+  <div class="sticky-run-label" id="stickyLabel">Ready to audit? <strong>Configure above and run.</strong></div>
   <div style="display:flex;gap:8px;align-items:center">
-    <select id="frameworkSelectSticky" style="height:36px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-family:var(--font);outline:none;border-radius:var(--r)" onchange="document.getElementById('frameworkSelect').value=this.value"></select>
-    <button class="btn-run" style="height:36px;font-size:13px" onclick="startAudit()">Run Audit →</button>
+    <select id="frameworkSelectSticky" style="height:36px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-family:var(--font);outline:none;border-radius:var(--r)" onchange="el('frameworkSelect').value=this.value"></select>
+    <button class="btn-run" id="stickyRunBtn" style="height:36px;font-size:13px" onclick="startAudit()">Run Audit →</button>
   </div>
 </div>
 <div id="info-tooltip"></div>
 <script>
 // Global smart tooltip for .info-tip elements
 (function(){
-  const tip=document.getElementById('info-tooltip');
+  const tip=el('info-tooltip');
   document.addEventListener('mouseover',e=>{
     const el=e.target.closest('.info-tip');
     if(!el||!el.dataset.tip)return;

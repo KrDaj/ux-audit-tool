@@ -5,6 +5,90 @@ Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
 
 ---
 
+## v0.95 — April 2026
+
+### Added
+- **AX Comment function** — Comment button + panel per AX issue (freetext + optional Jira/Confluence URL); same UX as UX/UI finding comments
+- **AX issue numbering** — global sequential numbers (`#1`, `#2`, …) across all categories; shown as circle badge in UI and as prefix in PDF title
+- **AX comments in PDF** — comment block rendered below each AX finding block; Jira/Confluence URL is clickable via `doc.link()`
+- **Clickable URLs in PDF** — Comment URLs, Best Practice source URLs and example URLs are now clickable hyperlinks in exported PDFs
+- **PDF report type dropdown** — Full Report / UX/UI Report / AX Report; each adapts cover title, subtitle, framework text and filename suffix
+- **AX findings PDF page** — included in AX Report and Full Report; impact summary kacheln + issues grouped by category with WCAG rule badges and dynamic block height
+
+### Fixed
+- **CORS error on Groq / Apertus / GitHub Models** — `fetchCORS()` helper was accidentally removed during eval function refactor; re-added
+- **PDF finding block formatting** — font explicitly set before every `splitTextToSize` call to avoid monospace rendering and incorrect line breaks
+- **PDF recommendation column overflow** — `blockH` now accounts for right column height (`rightH = BADGE_H + BADGE_PAD + recH`)
+- **PDF AX badge truncation** — `BADGE_W=30mm` with `maxWidth` on badge text; "MODERATE" / "CRITICAL" fit on one line
+- **PDF comment word wrap** — `splitTextToSize(comment, CW-8)` with correct font set first; `✎` removed (unsupported by Helvetica)
+- **PDF min. confidence** — `>=` instead of `≥` (jsPDF Helvetica does not support unicode `\u2265`)
+- **PDF cover texts** — workbook label, subtitle, instruction line and running header all adapt to report type
+- **AX report missing AX page** — Scores/Nielsen page was rendering for all report types; now conditional on `inclUXUI`
+- **Sticky bar after audit** — label hidden, button changes to "New Audit →" after results load; resets on new audit start
+- **Comment text overflow in sidebar** — `word-break:break-word` + `overflow-wrap:break-word` on `.comment-saved`
+- **Orphaned stripBP body** — duplicate fragment removed after eval function refactor
+
+### Improved
+- **Card 1 layout** — UX/UI Audit and AX Audit as two clearly labelled sections with separator; no collapsible for AX
+- **AX info table** — fixed 140px left column, border-bottom rows, consistent 11px font
+- **How it works strip** — updated to reflect dual input modes (Screenshot or HTML)
+- **AX results tab** — mode banner shows which checks ran (HTML / +Screenshot / +CSS)
+- **Code quality** — `callOpenAIEval()` generic function replaces 4 near-identical eval functions; `fetchCORS()` helper centralises CORS fallback; `el()` consistent across all 59 remaining raw getElementById calls; `stripBP()` global function
+
+---
+
+## v0.90 — April 2026
+
+### Added
+- **AX Audit** — HTML source input in Card 1; rule-based WCAG 2.1 / eCH-0059 checks (alt texts, heading hierarchy, input labels, buttons, links, lang attribute, tabindex, ARIA, landmarks); no API call needed
+- **AX + Vision AI** — if screenshot present, Claude/Gemini runs a visual AX pass (focus indicators, contrast, touch targets, alt text quality) alongside rule-based checks
+- **AX Tab in results** — appears automatically when HTML is provided; mode banner shows which checks ran (HTML / + Screenshot / + CSS / All three)
+- **PDF report types** — dropdown: Full Report / UX/UI Report / AX Report; each has adapted cover title, subtitle, framework text and filename suffix
+- **AX Findings PDF page** — impact summary (Critical/Serious/Moderate/Minor), issues grouped by category with WCAG rule badges and dynamic block height
+- **Country / Region dropdown** — CH, DE, AT, EU, UK, US, Other; injects regional prompt instructions into vision analysis and best practice search
+- **Page Context fields** — Product, Step in flow, Known issues, Do not audit (collapsible in Audit Context)
+- **Persona collapsible** — Age, Frequency, Tech affinity, Device now in collapsible section
+- **Comment function** — per finding: freetext + optional Confluence/Jira URL; shown in sidebar and PDF
+- **Challenge function** — per finding: argument + optional reference URL; Claude fetches URL, re-evaluates (remove / downgrade / keep / confirmed)
+- **Finding status** — Confirmed / Challenged badges in sidebar and PDF; cover shows exported/confirmed/challenged/removed counts
+- **Confidence filter** — dropdown (All / ≥70% / ≥80% / ≥90%) before export; shown on PDF cover
+- **Model warning banners** — failed models shown inline in Nielsen Scores tab (quota exceeded, overloaded, access denied)
+- **Info tooltips (i)** — JS-positioned hover tooltips on all Audit Context labels; viewport-aware positioning
+- **WCAG page in PDF** — colour pair matrix with mode banner and summary counts
+- **Best Practices dedicated PDF page** — Why it matters, Quick Fix, Who does it well with URLs
+- **Pin collision detection** — overlapping annotation pins automatically spread apart
+
+### Improved
+- **Card 1 layout** — two clear sections: UX/UI Audit (Screenshot/URL/CSS) + AX Audit (HTML) with info table
+- **How it works strip** — updated to reflect dual input modes and AX audit
+- **AX info table** — fixed-width left column, border-bottom rows, clean alignment
+- **PDF AX blocks** — dynamic height, full impact label (no truncation), proper text hierarchy
+- **PDF cover** — adapts title, subtitle, framework text per report type; confidence shown as ">= 80%"
+- **PDF recommendation column** — uses `ann.recommendation` when available instead of reframing description
+- **Vision retry** — each model retries once after 3s; Claude as last-resort fallback
+- **Country context** — injected into best practice search; sources region-aware
+- **AX footer text** — "Structural criteria (Level A). Manual testing required for cognitive, contextual and interaction-based criteria."
+
+### Code Quality
+- **Generic eval function** — `callOpenAIEval(key, endpoint, model, findings)` replaces 4 near-identical functions; Groq/Apertus/GitHub are one-liners
+- **`fetchCORS()` helper** — central CORS proxy fallback; `EVAL_ERRORS` map for 401/402/403/429
+- **`pdfSet()` helper** — PDF style shorthand inside exportPDF
+- **`el()` consistent** — 59x `document.getElementById()` replaced with `el()` shorthand
+- **`stripBP()` global** — moved from inside exportPDF to global scope
+- **`_reasoning` field removed** — was causing silent JSON truncation in vision calls
+
+### Fixed
+- **PDF export ReferenceError** — `stripBP` was `const` inside exportPDF; moved to global `function`
+- **AX tab auto-switching** — after audit, annotated screenshot opens (not AX tab)
+- **Scores hidden in AX report** — Scores/Nielsen page now conditional on `inclUXUI`
+- **Canvas pin offset** — `cloneNode` replaced with `removeEventListener` + named handler
+- **`${ann.zone}` literal** — template literal fix in sidebar
+- **Gemini score missing** — score validation now pads to 10; string scores coerced via `parseFloat`
+- **`callGroqEval` missing header** — body was in global scope after Apertus insertion
+- **PDF Best Practice formatting** — `<cite>` tags stripped via `stripBP` before rendering
+
+---
+
 ## v0.85 — April 2026
 
 ### Added
