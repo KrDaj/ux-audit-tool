@@ -2,11 +2,14 @@
 
 Internal reference for architecture decisions, prompt design, and implementation details.  
 Not a changelog — for version history see `CHANGELOG.md`.  
-Last updated: v0.95
+Last updated: v0.71
 
 ---
 
-## Architecture Overview
+## Version Scheme
+`vX.XX` — increments by 0.01 per push. Current: v0.71. Started at v0.70 (April 2026).
+
+
 
 Single-file browser application (`index.html`, ~215kb). No backend, no build step, no dependencies.  
 Deployed via GitHub Pages at `https://krdaj.github.io/ux-audit-tool`.

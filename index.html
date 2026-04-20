@@ -339,7 +339,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.95</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.71</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
   </div>
 </nav>
@@ -701,6 +701,11 @@ font-weight: 500;"></textarea>
           <option value="vue">Vue 3</option>
           <option value="svelte">Svelte</option>
         </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;white-space:nowrap" title="Quality mode: Claude generates findings, Groq critiques, Claude revises. ~2× API calls, higher accuracy.">
+          <input type="checkbox" id="qualityMode" style="width:14px;height:14px;cursor:pointer;accent-color:var(--red)">
+          Quality mode
+          <span style="font-size:10px;color:var(--text3)">(slower · Claude↔Groq iteration)</span>
+        </label>
         <p class="info-note">&#128274; Keys saved locally in your browser — never sent to any server other than the AI provider.</p>
         <span class="kbd" title="Run audit">⌘ Enter</span>
       </div>
@@ -1662,11 +1667,12 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
     const conf=ann.confidence!=null?ann.confidence:null;
     const confCls=conf==null?'':conf>=80?'conf-high':conf>=60?'conf-mid':'conf-low';
     const confHtml=conf!=null?`<span class="conf-badge ${confCls}">${conf}% confidence</span>`:'';
+    const qualHtml=ann._qualityRevised?`<span style="font-size:9px;font-weight:700;padding:1px 5px;background:#EAF3DE;color:#1A7A4A;border-radius:3px;letter-spacing:0.04em" title="Revised by Quality Mode">✓ Revised</span>`:ann._qualityOk?`<span style="font-size:9px;font-weight:700;padding:1px 5px;background:#EAF3DE;color:#1A7A4A;border-radius:3px;letter-spacing:0.04em" title="Approved by Quality Mode">✓ QM</span>`:'';
     return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})">
       <div class="ann-num" style="background:${col}">${i+1}</div>
       <div class="ann-content" style="flex:1;min-width:0">
         <div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap">
-          <div class="ann-dim" style="flex:1">${ann.dimension||''}<span class="${pcls}">${plbl}</span>${confHtml}</div>
+          <div class="ann-dim" style="flex:1">${ann.dimension||''}<span class="${pcls}">${plbl}</span>${confHtml}${qualHtml}</div>
           <div class="ann-item-actions" onclick="event.stopPropagation()">
             <button class="ann-action-btn" onclick="startEditAnnotation(${i})" title="Edit finding">✎ Edit</button>
             <button class="ann-action-btn danger" onclick="deleteAnnotation(${i})" title="Delete finding">✕</button>
@@ -1918,11 +1924,12 @@ renderResults._refreshSidebar=function(annotations){
     const conf=ann.confidence!=null?ann.confidence:null;
     const confCls=conf==null?'':conf>=80?'conf-high':conf>=60?'conf-mid':'conf-low';
     const confHtml=conf!=null?`<span class="conf-badge ${confCls}">${conf}% confidence</span>`:'';
+    const qualHtml=ann._qualityRevised?`<span style="font-size:9px;font-weight:700;padding:1px 5px;background:#EAF3DE;color:#1A7A4A;border-radius:3px;letter-spacing:0.04em" title="Revised by Quality Mode">✓ Revised</span>`:ann._qualityOk?`<span style="font-size:9px;font-weight:700;padding:1px 5px;background:#EAF3DE;color:#1A7A4A;border-radius:3px;letter-spacing:0.04em" title="Approved by Quality Mode">✓ QM</span>`:'';
     return`<div class="ann-item" data-idx="${i}" onclick="selectAnnotation(${i})">
       <div class="ann-num" style="background:${col}">${i+1}</div>
       <div class="ann-content" style="flex:1;min-width:0">
         <div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap">
-          <div class="ann-dim" style="flex:1">${ann.dimension||''}<span class="${pcls}">${plbl}</span>${confHtml}</div>
+          <div class="ann-dim" style="flex:1">${ann.dimension||''}<span class="${pcls}">${plbl}</span>${confHtml}${qualHtml}</div>
           <div class="ann-item-actions" onclick="event.stopPropagation()">
             <button class="ann-action-btn" onclick="startEditAnnotation(${i})" title="Edit finding">✎ Edit</button>
             <button class="ann-action-btn danger" onclick="deleteAnnotation(${i})" title="Delete finding">✕</button>
@@ -2098,7 +2105,141 @@ async function startAudit(){
     }
     currentAnnotations=deduplicateAnnotations(mergedAnnotations);
 
-    // Collect all scores — validate each before adding
+    // ── Quality Mode: Specialized multi-evaluator iteration ──
+    const qualityMode=el('qualityMode')?.checked;
+    const claudeKeyQM=el('key-claude')?.value.trim();
+    const groqKeyQM=el('key-groq')?.value.trim();
+    const apertusKeyQM=el('key-apertus')?.value.trim();
+    const githubKeyQM=el('key-github')?.value.trim();
+
+    if(qualityMode&&claudeKeyQM&&currentAnnotations.length>0){
+      try{
+        const findingsSummary=currentAnnotations.map((a,i)=>
+          `#${i+1} [${a.dimension}] ${a.title}: ${a.description} → ${a.recommendation||''}`
+        ).join('\n');
+
+        // Helper — call any OpenAI-compatible evaluator
+        const evalQM=async(key,endpoint,model,prompt)=>{
+          const r=await fetchCORS(endpoint,{method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+            body:JSON.stringify({model,max_tokens:500,temperature:0,
+              messages:[{role:'user',content:prompt}]})});
+          if(!r.ok) return null;
+          return parseJSON((await r.json()).choices[0].message.content);
+        };
+
+        // ── Specialist prompts ──
+        const specificityPrompt=`You are reviewing UX audit findings for specificity.
+For each finding check: Is the exact UI element named? Is the screen location mentioned?
+Findings:\n${findingsSummary}\n
+Respond ONLY as JSON: {"results":[{"id":1,"verdict":"ok|revise","issue":"what is vague — only if revise"}]}`;
+
+        const relevancePrompt=`You are reviewing UX audit findings for relevance and hallucination.
+For each finding check: Is this a real visible problem? Is it duplicated elsewhere in the list?
+Findings:\n${findingsSummary}\n
+Respond ONLY as JSON: {"results":[{"id":1,"verdict":"ok|remove","issue":"why remove — only if remove"}]}`;
+
+        const fixabilityPrompt=`You are reviewing UX audit findings for actionability.
+For each finding check: Is the recommendation concrete and implementable by a developer?
+Findings:\n${findingsSummary}\n
+Respond ONLY as JSON: {"results":[{"id":1,"verdict":"ok|revise","issue":"what is unclear — only if revise"}]}`;
+
+        // Run available specialists in parallel
+        const specialists=[];
+        setTicker('Quality mode: specialist review running…');
+
+        if(groqKeyQM) specialists.push(
+          evalQM(groqKeyQM,'https://api.groq.com/openai/v1/chat/completions',GROQ_MODEL,specificityPrompt)
+            .then(d=>({role:'specificity',results:d?.results||[]}))
+        );
+        if(apertusKeyQM) specialists.push(
+          evalQM(apertusKeyQM,HF_BASE,APERTUS_MODEL,relevancePrompt)
+            .then(d=>({role:'relevance',results:d?.results||[]}))
+        );
+        if(githubKeyQM) specialists.push(
+          evalQM(githubKeyQM,GITHUB_BASE,GITHUB_MODEL,fixabilityPrompt)
+            .then(d=>({role:'fixability',results:d?.results||[]}))
+        );
+        // If only Claude available, use Groq-less fallback with Claude as sole reviewer
+        if(specialists.length===0){
+          const fallbackPrompt=`You are a senior UX reviewer. Check each finding for: specificity, relevance, actionability.
+Findings:\n${findingsSummary}\n
+Respond ONLY as JSON: {"results":[{"id":1,"verdict":"ok|revise|remove","issue":"reason — only if not ok"}]}`;
+          const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+            headers:claudeHeaders(claudeKeyQM),
+            body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:600,temperature:0,
+              messages:[{role:'user',content:fallbackPrompt}]})});
+          if(r.ok){
+            const d=parseJSON((await r.json()).content.find(b=>b.type==='text')?.text||'{}');
+            specialists.push(Promise.resolve({role:'review',results:d?.results||[]}));
+          }
+        }
+
+        const specialistResults=await Promise.all(specialists);
+
+        // Aggregate feedback per finding
+        const feedbackMap={};
+        const toRemoveIds=new Set();
+        specialistResults.forEach(({role,results})=>{
+          (results||[]).forEach(r=>{
+            if(!feedbackMap[r.id]) feedbackMap[r.id]=[];
+            if(r.verdict==='remove') toRemoveIds.add(r.id);
+            else if(r.verdict==='revise'&&r.issue) feedbackMap[r.id].push(`[${role}] ${r.issue}`);
+          });
+        });
+
+        // Remove flagged findings
+        if(toRemoveIds.size>0){
+          currentAnnotations=currentAnnotations.filter((_,i)=>!toRemoveIds.has(i+1));
+        }
+
+        // Collect revision tasks
+        const toRevise=Object.entries(feedbackMap)
+          .filter(([id,fb])=>fb.length>0&&!toRemoveIds.has(Number(id)))
+          .map(([id,fb])=>({id:Number(id),feedback:fb}));
+
+        // Claude synthesizes all feedback and revises
+        if(toRevise.length>0){
+          setTicker('Quality mode: Claude synthesising specialist feedback…');
+          const revisePrompt=`You are a senior UX auditor. Revise the following findings based on specialist feedback. Make each finding more specific, concrete and actionable.
+
+Findings to revise:
+${toRevise.map(({id,feedback})=>{
+  const a=currentAnnotations.find((_,i)=>i+1===id);
+  return a?`#${id} "${a.title}"\nFeedback:\n${feedback.join('\n')}`:null;
+}).filter(Boolean).join('\n\n')}
+
+Respond ONLY as JSON:
+{"revisions":[{"id":1,"title":"revised title","description":"revised description","recommendation":"revised recommendation"}]}`;
+
+          const revR=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+            headers:claudeHeaders(claudeKeyQM),
+            body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:900,temperature:0,
+              messages:[{role:'user',content:revisePrompt}]})});
+
+          if(revR.ok){
+            const revData=parseJSON((await revR.json()).content.find(b=>b.type==='text')?.text||'{}');
+            (revData?.revisions||[]).forEach(rev=>{
+              const ann=currentAnnotations[rev.id-1];
+              if(ann){
+                ann.title=rev.title||ann.title;
+                ann.description=rev.description||ann.description;
+                ann.recommendation=rev.recommendation||ann.recommendation;
+                ann._qualityRevised=true;
+                ann._qualityFeedback=feedbackMap[rev.id]?.join(' · ')||'';
+              }
+            });
+          }
+        }
+
+        // Badge survivors
+        const rolesUsed=specialistResults.map(s=>s.role).join('+');
+        currentAnnotations.forEach(a=>{
+          if(!a._qualityRevised){a._qualityOk=true;a._qualityRoles=rolesUsed;}
+        });
+
+      }catch(e){ console.warn('Quality mode failed:',e.message); }
+    }
     const allScores=[];
     const allModelIds=[];
 
@@ -2737,15 +2878,17 @@ async function loadFix(idx,btn){
 
   const groqKey=el('key-groq').value.trim();
   const claudeKey=el('key-claude').value.trim();
+  const apertusKey=el('key-apertus')?.value.trim();
 
-  if(!groqKey&&!claudeKey){
-    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Add a Groq or Claude key to generate fixes.</p>';
+  if(!groqKey&&!claudeKey&&!apertusKey){
+    panel.innerHTML='<p style="font-size:12px;color:var(--text2)">Add a Groq, Apertus or Claude key to generate fixes.</p>';
     panel.classList.add('open');return;
   }
 
   btn.textContent='Generating...';
   btn.disabled=true;
   panel.classList.add('open');
+  let usedModelLabel='Claude';
 
   const cssCtx=el('cssInput').value.trim();
   const framework=el('frameworkSelect')?.value||'';
@@ -2814,29 +2957,95 @@ Respond ONLY with valid JSON, no markdown fences:
 
   try{
     let raw;
-    const usedModel = isApertus ? 'Apertus' : groqKey ? 'Groq' : 'Claude';
+    const qualityModeFix=el('qualityMode')?.checked;
+    const openaiKey=groqKey||apertusKey;
+    const fixEndpoint=groqKey?'https://api.groq.com/openai/v1/chat/completions':HF_BASE;
+    const fixModel=groqKey?GROQ_MODEL:APERTUS_MODEL;
 
-    if(groqKey){
-      // Groq or Apertus — free, fast, good enough for code fixes
-      const _fixModel=isApertus?APERTUS_MODEL:GROQ_MODEL;
-      const _fixUrl=isApertus?HF_BASE:'https://api.groq.com/openai/v1/chat/completions';
-      const _fixUrlProxy=isApertus?'https://corsproxy.io/?url='+encodeURIComponent(HF_BASE):'https://corsproxy.io/?url=https://api.groq.com/openai/v1/chat/completions';
-      const _groqBody=JSON.stringify({model:_fixModel,max_tokens:900,temperature:0,
-        messages:[{role:'user',content:prompt}]});
-      const _groqHeaders={'Content-Type':'application/json','Authorization':`Bearer ${groqKey}`};
-      let _gr;
-      try{ _gr=await fetch(_fixUrl,{method:'POST',headers:_groqHeaders,body:_groqBody}); }
-      catch(e){ _gr=await fetch(_fixUrlProxy,{method:'POST',headers:_groqHeaders,body:_groqBody}); }
-      if(!_gr.ok){const e=await _gr.json();throw new Error(e.error?.message||'Fix generator error');}
-      raw=(await _gr.json()).choices[0].message.content;
+    if(qualityModeFix&&claudeKey&&groqKey){
+      // ── Quality Mode: Claude generates → Groq critiques → Claude revises ──
+      btn.textContent='Generating (step 1/3)…';
+
+      // Step 1: Claude generates initial fix
+      const r1=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        headers:claudeHeaders(claudeKey),
+        body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:900,temperature:0,
+          messages:[{role:'user',content:prompt}]})});
+      if(!r1.ok){const e=await r1.json();throw new Error(e.error?.message||'Claude error');}
+      const draft=parseJSON((await r1.json()).content.find(b=>b.type==='text')?.text||'{}');
+
+      // Step 2: Groq critiques the fix
+      btn.textContent='Reviewing (step 2/3)…';
+      const critiquePrompt=`You are a senior ${fwLabel} developer reviewing a code fix generated by an AI.
+
+Problem: ${ann.description}
+
+Proposed fix:
+BEFORE: ${draft.before?.code||''}
+AFTER: ${draft.after?.code||''}
+Explanation: ${draft.explanation||''}
+
+Review for: correctness, missing imports, type errors, edge cases, framework best practices.
+Be concise and specific. If the fix is correct, say so.
+
+Respond ONLY as JSON:
+{"verdict":"approved|needs_revision","issues":["issue 1","issue 2"],"suggestion":"optional improved after code if needed"}`;
+
+      const r2=await fetchCORS(fixEndpoint,{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},
+        body:JSON.stringify({model:fixModel,max_tokens:600,temperature:0,
+          messages:[{role:'user',content:critiquePrompt}]})});
+
+      let critique={verdict:'approved',issues:[],suggestion:''};
+      if(r2.ok) critique=parseJSON((await r2.json()).choices[0].message.content)||critique;
+
+      if(critique.verdict==='needs_revision'&&critique.issues?.length>0){
+        // Step 3: Claude revises based on Groq feedback
+        btn.textContent='Revising (step 3/3)…';
+        const revisePrompt=`${prompt}
+
+A code reviewer flagged these issues with your initial fix:
+${critique.issues.join('\n')}
+${critique.suggestion?'Suggested improvement:\n'+critique.suggestion:''}
+
+Please provide a corrected version addressing all issues. Respond with the same JSON format.`;
+
+        const r3=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+          headers:claudeHeaders(claudeKey),
+          body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:900,temperature:0,
+            messages:[{role:'user',content:revisePrompt}]})});
+        if(r3.ok){
+          raw=(await r3.json()).content.find(b=>b.type==='text')?.text||'{}';
+          const finalFix=parseJSON(raw);
+          finalFix._reviewNote=`Groq flagged ${critique.issues.length} issue${critique.issues.length!==1?'s':''} → Claude revised`;
+          finalFix._verdict='revised';
+          raw=JSON.stringify(finalFix);
+        } else {
+          raw=JSON.stringify({...draft,_reviewNote:'Groq review failed — showing Claude draft',_verdict:'draft'});
+        }
+      } else {
+        raw=JSON.stringify({...draft,_reviewNote:'Groq approved',_verdict:'approved'});
+      }
+      usedModelLabel='Claude + Groq review';
+
+    } else if(openaiKey){
+      // Standard: Groq/Apertus only
+      const r=await fetchCORS(fixEndpoint,{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
+        body:JSON.stringify({model:fixModel,max_tokens:900,temperature:0,
+          messages:[{role:'user',content:prompt}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Fix generator error');}
+      raw=(await r.json()).choices[0].message.content;
+      usedModelLabel=groqKey?'Groq':'Apertus';
     } else {
-      // Claude fallback
+      // Claude only
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
         headers:claudeHeaders(claudeKey),
         body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:900,temperature:0,
           messages:[{role:'user',content:prompt}]})});
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Claude error');}
       raw=(await r.json()).content.find(b=>b.type==='text')?.text||'{}';
+      usedModelLabel='Claude';
     }
 
     const parsed=parseJSON(raw);
@@ -2844,7 +3053,7 @@ Respond ONLY with valid JSON, no markdown fences:
     const impactBg=parsed.impact==='High'?'#FAECE7':parsed.impact==='Low'?'#EAF3DE':'#FAEEDA';
 
     panel.innerHTML=`
-      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Generated by ${usedModel} · ${fwLabel}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Generated by ${usedModelLabel} · ${fwLabel}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">${parsed.problem_summary||''}</div>
       <div class="fix-before-after">
         <div class="fix-box">
@@ -2857,6 +3066,7 @@ Respond ONLY with valid JSON, no markdown fences:
         </div>
       </div>
       ${parsed.explanation?`<div style="margin-top:10px;font-size:11px;color:var(--text2);line-height:1.5">${parsed.explanation}</div>`:''}
+      ${parsed._reviewNote?`<div style="margin-top:6px;font-size:10px;padding:3px 8px;background:${parsed._verdict==='approved'?'#EAF3DE':parsed._verdict==='revised'?'#EAF3DE':'#FFF4E0'};color:${parsed._verdict==='approved'?'#1A7A4A':parsed._verdict==='revised'?'#1A7A4A':'#8A5800'};border-radius:3px;display:inline-block">${parsed._verdict==='approved'?'✓':'↻'} ${parsed._reviewNote}</div>`:''}
       ${parsed.impact?`<div style="margin-top:8px"><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${impactBg};color:${impactColor}">Impact: ${parsed.impact}</span></div>`:''}`;
 
     btn.dataset.loaded='true';

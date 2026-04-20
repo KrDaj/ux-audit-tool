@@ -1,7 +1,43 @@
 # Changelog
 
 All notable changes to the UX / UI Audit Tool are documented here.  
-Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`
+Format: `vMAJOR.MINOR` — minor increments by 0.01 per push.
+
+---
+
+## v0.71 — April 2026
+
+### Improved
+- **Quality Mode — multi-evaluator specialisation** — Groq, Apertus and GitHub Models now run as parallel specialists (Specificity / Relevance / Fixability); Claude synthesises all feedback in one revision call
+- **Fallback** — if only Claude key available, Claude handles all three specialist roles
+- **Sidebar badge** — shows which specialist roles participated (e.g. `✓ QM (specificity+relevance)`)
+
+### Fixed
+- **Generate Fix model selection** — `isApertus` was undefined causing silent fallback to Groq; replaced with explicit `usedModelLabel` and correct key priority (Groq → Apertus → Claude)
+- **Generate Fix CORS** — now uses `fetchCORS()` helper consistently
+
+---
+
+## v0.70 — April 2026
+
+### Added
+- **Quality Mode toggle** — checkbox next to Run Audit; disabled by default; requires Claude + at least one evaluator key
+- **Vision iteration** — Claude generates findings → Groq/Apertus/GitHub review → Claude revises; vague/duplicate/hallucinated findings removed automatically
+- **Code fix iteration** — Claude generates fix (step 1/3) → Groq critiques for correctness (step 2/3) → Claude revises if needed (step 3/3)
+- **Review badge in fix panel** — `✓ Groq approved` or `↻ Groq flagged N issues → Claude revised`
+- **Quality badge on findings** — `✓ QM` (approved by reviewers) or `✓ Revised` (updated after review)
+- **Version scheme** — switched from `v0.XX` (0.05 increments) to `vX.XX` (0.01 per push) starting at v0.70
+
+### Fixed
+- **CORS error Groq/Apertus/GitHub** — `fetchCORS()` was missing after eval function refactor; re-added
+- **AX comment word wrap** — `word-break:break-word` on `.comment-saved`
+- **PDF finding blocks** — font set before every `splitTextToSize`; `blockH` accounts for right column height
+- **PDF AX badge** — `BADGE_W=30mm` with `maxWidth`; "MODERATE"/"CRITICAL" on one line
+- **PDF min. confidence** — `>=` instead of `≥`
+- **PDF cover** — all texts adapt to report type
+- **Sticky bar** — hides label and changes to "New Audit →" after audit completes
+- **Orphaned `stripBP` body** — removed duplicate fragment
+- **AX report** — Scores page now conditional on `inclUXUI`
 
 ---
 
