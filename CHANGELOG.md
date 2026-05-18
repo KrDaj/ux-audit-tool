@@ -5,6 +5,14 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.77 - May 2026
+
+### Fixed
+- **Bedrock agentic loop** - Pattern Research agentic loop also uses direct `fetch()` instead of `fetchCORS`
+- **Invalid scores warning** - suppressed for non-uxui modes (benchmark/feedback don't return Nielsen scores)
+
+---
+
 ## v0.76 - May 2026
 
 ### Fixed

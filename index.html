@@ -353,7 +353,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.76</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.77</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -2415,7 +2415,7 @@ async function startAudit(){
       return callWithRetry(id,callFn).then(data=>{
         if(!data) return console.warn(id,'returned null');
         if(!Array.isArray(data.scores)||data.scores.length!==10){
-          console.warn(id,'invalid scores - got:',data.scores);
+          if(auditMode==='uxui') console.warn(id,'invalid scores - got:',data.scores);
           data.scores=Array.from({length:10},(_,i)=>
             (Array.isArray(data.scores)&&typeof data.scores[i]==='number')?data.scores[i]:7
           );
@@ -4539,7 +4539,7 @@ Respond ONLY as JSON:
     // Agentic loop - continue until stop_reason is 'end_turn' or we get JSON
     while(attempts<5){
       attempts++;
-      const r=await fetchCORS(endpoint,{method:'POST',headers,body:JSON.stringify({...bodyObj,messages})});
+      const r=await (isBedrock?fetch:fetchCORS)(endpoint,{method:'POST',headers,body:JSON.stringify({...bodyObj,messages})});
       if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||e.message||'API error '+r.status);}
       const d=await r.json();
 
