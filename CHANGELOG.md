@@ -5,6 +5,14 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.85 - May 2026
+
+### Improved
+- **Country-aware reference brands** - when Switzerland or Swiss Gov is selected, defaults to `admin.ch, SBB, PostFinance, Migros, Digitec` instead of GOV.UK/Amazon. User can still override.
+- **Specific page URLs** - Pattern Research prompt now explicitly instructs Claude to link to the SPECIFIC page showing the pattern (product page, checkout, login etc.) - not the homepage
+
+---
+
 ## v0.84 - May 2026
 
 ### Fixed

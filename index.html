@@ -354,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.84</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.85</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -593,14 +593,14 @@ font-size: 14px;"></textarea>
 - "I did not know where to click next" (P2, P4)
 - Task 2 avg completion time: 2:34 (target: 0:45)' style="width:100%;height:110px;padding:8px 10px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);resize:vertical;line-height:1.6;font-family:var(--font)"></textarea>
         <div style="font-size:10px;color:var(--text3);margin-top:4px">Reference products to compare against (optional)</div>
-        <input type="text" id="benchmarkBrands" placeholder="e.g. Amazon, Galaxus, Migros, GOV.UK" style="width:100%;height:32px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);margin-top:4px;font-family:var(--font)"/>
+        <input type="text" id="benchmarkBrands" placeholder="e.g. admin.ch, SBB, Migros (auto-set based on country)" style="width:100%;height:32px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);margin-top:4px;font-family:var(--font)"/>
       </div>
 
       <!-- ── Benchmark brands (benchmark mode only) ── -->
       <div id="benchmarkSection" style="display:none;margin-top:12px;border-top:2px solid var(--border);padding-top:14px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);margin-bottom:6px">Reference Products</div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Claude will identify the UI patterns in your screenshot and search how these products solve the same problems. Leave blank to let Claude choose relevant references.</div>
-        <input type="text" id="benchmarkBrandsMain" placeholder="e.g. Amazon, Galaxus, Migros, Digitec, GOV.UK, SBB" style="width:100%;height:32px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font)"/>
+        <input type="text" id="benchmarkBrandsMain" placeholder="e.g. admin.ch, SBB, Migros, Digitec (auto-set based on country/industry)" style="width:100%;height:32px;padding:0 8px;font-size:12px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:var(--font)"/>
       </div>
 
       <!-- ── AX Audit (uxui mode only) ── -->
@@ -1530,7 +1530,11 @@ function visionSystem(){
   let modePrefix='';
   if(auditMode==='benchmark'){
     // Return short focused prompt for pattern research - avoids token limit
-    const brands=el('benchmarkBrandsMain')?.value.trim()||'Amazon, Galaxus, GOV.UK';
+    const _brandsInput=el('benchmarkBrandsMain')?.value.trim();
+  const _country=el('countrySelect')?.value||'ch';
+  const _industry=el('industrySelect')?.value||'generic';
+  const _chGov=_country==='ch'||_industry==='ch-gov'||_industry==='gov';
+  const brands=_brandsInput||(_chGov?'admin.ch, SBB, PostFinance, Migros, Digitec':'Amazon, Galaxus, Migros, Digitec, SBB');
     return`You are a UX/UI pattern researcher. Analyze this screenshot and identify the key UI patterns visible (navigation, forms, cards, CTAs, layout etc.).
 
 For each pattern found, briefly describe what you see. Focus on visual design and interaction patterns only - not code.
@@ -4526,7 +4530,14 @@ async function renderBenchmarkResults(annotations){
   container.innerHTML='<div style="padding:20px;color:var(--text3);font-size:13px">Loading UX pattern research…</div>';
   // Don't auto-switch - user stays on annotated screenshot to see pins
 
-  const brands=el('benchmarkBrandsMain')?.value.trim()||'Amazon, Galaxus, GOV.UK, Migros';
+  const userBrands=el('benchmarkBrandsMain')?.value.trim();
+  const country=el('countrySelect')?.value||'ch';
+  const industry=el('industrySelect')?.value||'generic';
+  const chGov=country==='ch'||(industry==='ch-gov'||industry==='gov');
+  const defaultBrands=chGov
+    ?'admin.ch, SBB, PostFinance, Migros, Digitec'
+    :'Amazon, Galaxus, Migros, Digitec, SBB';
+  const brands=userBrands||defaultBrands;
   const findingsSummary=annotations.filter(a=>!a._removed).slice(0,6).map((a,i)=>
     `#${i+1} ${a.title}: ${a.description}`).join('\n');
 
@@ -4543,14 +4554,14 @@ Findings: ${findingsSummary}
 
 Respond ONLY as JSON:
 {"patterns":[{"id":1,"finding":"title","pattern_category":"name","references":[{"brand":"Brand","approach":"their approach","url":null}],"research":[],"recommendation":"actionable fix"}]}`
-    : `You are a UX/UI pattern researcher. For each finding below, search for real examples and research.${contextHint}
+    : `You are a UX/UI pattern researcher. For each finding below, search for specific pages on ${brands} that demonstrate how they solve this design challenge.
 
-Reference products: ${brands}
+IMPORTANT: Do NOT link to homepages (amazon.com, migros.ch etc.). Find the SPECIFIC page that shows the pattern - e.g. a product page, login form, search results, checkout step, dashboard etc.${contextHint}
 
 For each finding provide:
 1. Pattern category name
-2. How each reference brand solves it (with direct URL to their page if possible)
-3. 2-3 links to real UX research: Nielsen Norman Group, Baymard Institute, GOV.UK design system, academic papers, or industry reports that are relevant to this specific pattern and context
+2. How each reference product solves it - with a direct URL to the SPECIFIC page showing this pattern (not the homepage)
+3. 2-3 links to real UX research from Nielsen Norman Group, Baymard Institute, or similar - relevant to this specific pattern
 4. A concrete recommendation
 
 Findings:
@@ -4561,10 +4572,9 @@ Respond ONLY as JSON:
   "id":1,
   "finding":"finding title",
   "pattern_category":"pattern name",
-  "references":[{"brand":"Brand","approach":"specific approach","url":"https://... or null"}],
+  "references":[{"brand":"Brand","approach":"specific approach on this page","url":"https://specific-page-url-not-homepage"}],
   "research":[
-    {"title":"Research title","source":"NNGroup/Baymard/GOV.UK/etc","url":"https://...","insight":"one sentence relevance"},
-    {"title":"Research title 2","source":"Source","url":"https://...","insight":"one sentence"}
+    {"title":"Research title","source":"NNGroup/Baymard/etc","url":"https://...","insight":"one sentence"}
   ],
   "recommendation":"concrete actionable recommendation"
 }]}`;
@@ -4692,7 +4702,7 @@ async function renderFeedbackResults(annotations){
   const groqKey=el('key-groq')?.value.trim();
   if(!claudeKey&&!groqKey){ container.innerHTML='<div style="padding:20px;color:var(--text3)">Add a Claude or Groq key to generate feedback analysis.</div>'; return; }
 
-  const brands=el('benchmarkBrands')?.value.trim()||'Amazon, Galaxus, GOV.UK';
+  const _fb=el('benchmarkBrands')?.value.trim(); const _c=el('countrySelect')?.value||'ch'; const brands=_fb||(_c==='ch'?'admin.ch, SBB, PostFinance, Migros':'Amazon, Galaxus, Migros');
   const findingsSummary=annotations.filter(a=>!a._removed).map((a,i)=>`#${i+1} ${a.title}: ${a.description}`).join('\n');
 
   const prompt=`You are a UX researcher. Match usability test feedback to UI findings and explain the root cause.
