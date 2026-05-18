@@ -1,20 +1,28 @@
-# Technical Documentation — UX Audit Tool
+# Technical Documentation - Auditly
 
-Internal reference for architecture decisions, prompt design, and implementation details.  
-Not a changelog — for version history see `CHANGELOG.md`.  
-Last updated: v0.71
+Internal reference for architecture decisions, prompt design, and implementation details.
+Not a changelog - for version history see `CHANGELOG.md`.
+Last updated: v0.73
 
 ---
 
 ## Version Scheme
-`vX.XX` — increments by 0.01 per push. Current: v0.71. Started at v0.70 (April 2026).
+`vX.XX` - increments by 0.01 per push. Current: v0.73.
 
-
-
-Single-file browser application (`index.html`, ~215kb). No backend, no build step, no dependencies.  
+Single-file browser application (`index.html`, ~323kb). No backend, no build step, no dependencies.
 Deployed via GitHub Pages at `https://krdaj.github.io/ux-audit-tool`.
 
 All API calls made directly from browser to AI provider endpoints. Data never passes through an intermediate server.
+
+---
+
+## Audit Modes
+
+| Internal | Label | Vision | Evaluators | WCAG | AX | Action Tabs |
+|----------|-------|--------|------------|------|----|-------------|
+| `uxui` | UX / UI / AX Audit | All models parallel | Yes | Yes | Yes (if HTML) | Yes |
+| `benchmark` | Pattern Research | 1 model only, 600px/0.5 JPEG | No | No | No | No |
+| `feedback` | Test Analysis | 1 model only, 600px/0.5 JPEG | No | No | No | No |
 
 ---
 
@@ -27,59 +35,109 @@ const GPT_MODEL     = 'gpt-4o'
 const GEMINI_MODEL  = 'gemini-2.5-flash'
 const APERTUS_MODEL = 'swiss-ai/Apertus-8B-Instruct-2509'
 const GITHUB_MODEL  = 'meta/Llama-3.3-70B-Instruct'
+const BEDROCK_MODEL = 'anthropic.claude-sonnet-4-6'
 const HF_BASE       = 'https://router.huggingface.co/v1/chat/completions'
 const GITHUB_BASE   = 'https://models.github.ai/inference/chat/completions'
+const BEDROCK_BASE  = 'https://k1wa0n6ns6.execute-api.us-east-1.amazonaws.com/invoke' // API Gateway proxy
 ```
 
 ### Model Roles
 
 | Model | Vision | Evaluator | Best Practice | Fix | Weight |
 |-------|--------|-----------|---------------|-----|--------|
-| Claude Sonnet 4 | ✅ | ❌ | ✅ web search | ✅ fallback | ×1.0 |
-| Gemini 2.5 Flash | ✅ | ❌ | ❌ | ❌ | ×0.9 |
-| GPT-4o | ✅ | ❌ | ❌ | ❌ | ×0.9 |
-| GitHub Models (Llama 3.3 70B) | ❌ | ✅ | ❌ | ❌ | ×0.75 |
-| Apertus 8B (Swiss AI) | ❌ | ✅ | ❌ | ❌ | ×0.65 |
-| Groq Llama 3.3 70B | ❌ | ✅ | ❌ | ✅ primary | ×0.6 |
+| Claude Sonnet 4 | Yes | No | Yes (web search) | Yes fallback | x1.0 |
+| AWS Bedrock (Sonnet 4.6) | Yes | Yes | Yes fallback | Yes fallback | x1.0 |
+| Gemini 2.5 Flash | Yes | No | No | No | x0.9 |
+| GPT-4o | Yes | No | No | No | x0.9 |
+| GitHub Models (Llama 3.3 70B) | No | Yes | No | No | x0.75 |
+| Apertus 8B (Swiss AI) | No | Yes | No | No | x0.65 |
+| Groq Llama 3.3 70B | No | Yes | No | Yes primary | x0.6 |
+
+### KEY_IDS
+`['key-claude','key-groq','key-gemini','key-openai','key-apertus','key-github','key-bedrock']`
+
+### Bedrock Auth
+No auth header needed - Lambda IAM role handles AWS auth internally.
+The `key-bedrock` field value is used only as an on/off switch (any non-empty value activates Bedrock).
+
+**Architecture:**
+```
+Browser -> API Gateway (k1wa0n6ns6.execute-api.us-east-1.amazonaws.com/invoke)
+        -> Lambda (bedrock-proxy-handler, us-east-1)
+        -> Bedrock Runtime (anthropic.claude-sonnet-4-6)
+```
+
+Lambda has `AmazonBedrockFullAccess` IAM policy. CORS configured: `*` origin, `POST/OPTIONS`, `content-type`.
+No web_search tool (not supported on Bedrock). All `claudeKey` reads fall back to `key-bedrock`.
 
 ---
 
 ## Pipeline Execution
 
-### UX/UI Audit
+### UX/UI/AX Audit
 ```
-Upload → Compress → [Vision calls parallel + retry] → Deduplicate → [Evaluator calls parallel] → Weighted avg → Render
+Upload -> Compress (1280px/0.85) -> [Vision calls parallel + retry]
+  -> Deduplicate -> Option D scoring:
+     applyConfidenceWeighting() -> applyWCAGCorrective() -> applyAXCorrective()
+  -> [Evaluator calls parallel] -> Weighted avg -> Render
+  -> WCAG check (CSS or image sampling)
+  -> AX audit (DOMParser, no API)
 ```
 
-### AX Audit (runs alongside if HTML provided)
+### Pattern Research (benchmark)
 ```
-HTML Input → DOMParser (instant, no API) → Rule checks → [Optional: Vision AI AX pass] → Render AX tab
+Upload -> Compress (600px/0.5 JPEG) -> 1 vision model only (short prompt ~200 tokens)
+  -> 8s delay -> renderBenchmarkResults() (Claude + web_search OR Bedrock)
+  -> UX Patterns tab
 ```
 
-AX runs automatically after main audit if HTML textarea is filled. No separate trigger needed.
+### Test Analysis (feedback)
+```
+Upload -> Compress (600px/0.5 JPEG) -> 1 vision model only
+  -> renderFeedbackResults() -> Feedback Analysis tab
+```
 
 ---
 
-## AX Audit — Rule Engine
+## Option D Scoring
+
+Three correctives chained after `weightedAvg()`:
+
+```js
+const rawCombined = weightedAvg(allScores, activeModelIds);
+const corrected1  = applyConfidenceWeighting(rawCombined, annotations);
+const corrected2  = applyWCAGCorrective(corrected1);
+const combinedScores = applyAXCorrective(corrected2);
+```
+
+| Corrective | Effect |
+|-----------|--------|
+| `applyConfidenceWeighting` | High SEV + high confidence findings pull heuristic score down |
+| `applyWCAGCorrective` | WCAG fails lower H1 (Visibility) and H8 (Aesthetic) |
+| `applyAXCorrective` | AX Critical issues lower H1 and H5 (Error Prevention) |
+
+---
+
+## AX Audit - Rule Engine
 
 `parseHTMLForAX(htmlStr)` runs entirely in-browser via `DOMParser`. No API call, no tokens.
 
-| Check | WCAG | Level | Method |
-|-------|------|-------|--------|
-| Images without alt | 1.1.1 | A | `querySelectorAll('img')` |
-| Alt text = filename | 1.1.1 | A | regex on alt value |
-| Heading hierarchy skipped | 1.3.1 | A | ordered traversal |
-| Multiple H1 | 1.3.1 | A | count |
-| Input without label | 1.3.1 | A | cross-reference id/for |
-| Button without name | 4.1.2 | A | text + aria-label check |
-| Link without name | 2.4.4 | A | text + aria + img[alt] |
-| Non-descriptive link text | 2.4.6 | AA | string match |
-| Missing lang attribute | 3.1.1 | A | html[lang] |
-| Positive tabindex | 2.4.3 | A | tabindex > 0 |
-| ARIA role misuse | 4.1.2 | A | role/tag combos |
-| Missing landmarks | 1.3.6 | AAA | main/nav presence |
+| Check | WCAG | Level |
+|-------|------|-------|
+| Images without alt | 1.1.1 | A |
+| Alt text = filename | 1.1.1 | A |
+| Heading hierarchy skipped | 1.3.1 | A |
+| Multiple H1 | 1.3.1 | A |
+| Input without label | 1.3.1 | A |
+| Button without name | 4.1.2 | A |
+| Link without name | 2.4.4 | A |
+| Non-descriptive link text | 2.4.6 | AA |
+| Missing lang attribute | 3.1.1 | A |
+| Positive tabindex | 2.4.3 | A |
+| ARIA role misuse | 4.1.2 | A |
+| Missing landmarks | 1.3.6 | AAA |
 
-**Visual AX pass** (if screenshot + Claude/Gemini key): separate vision call with AX-specific prompt checking focus indicators, touch targets, visual contrast, alt text quality. Results merged into same issues array with category "Visual (AI)".
+**Visual AX pass** (if screenshot + Claude/Bedrock/Gemini key): separate vision call checking focus indicators, touch targets, contrast, alt text quality. Results merged into issues array with category "Visual (AI)".
 
 ---
 
@@ -94,89 +152,68 @@ async function fetchCORS(url, opts) {
 
 | Provider | GitHub Pages | Strategy |
 |----------|-------------|----------|
-| Anthropic | ✅ | `anthropic-dangerous-direct-browser-access: true` |
-| Gemini | ✅ | Native CORS |
-| Groq | ❌ | `fetchCORS()` fallback |
-| Apertus (HF) | ❌ | `fetchCORS()` fallback |
-| GitHub Models | ❌ | `fetchCORS()` fallback |
-| OpenAI | ❌ | No fallback (local only) |
-
-**GitHub Models:** Classic token (`ghp_...`) required. Fine-grained tokens rejected.
-
----
-
-## Eval Function Architecture
-
-Single generic function replaces 4 near-identical implementations:
-
-```js
-async function callOpenAIEval(key, endpoint, model, findingsSummary) {
-  const r = await fetchCORS(endpoint, { method:'POST',
-    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+key },
-    body: JSON.stringify({ model, messages:[...], max_tokens:200, temperature:0 })
-  });
-  if(!r.ok) throw new Error(EVAL_ERRORS[r.status] || 'Eval error');
-  return parseJSON((await r.json()).choices[0].message.content);
-}
-
-// One-liners:
-const callGroqEval   = (k,f) => callOpenAIEval(k, GROQ_BASE,   GROQ_MODEL,   f);
-const callApertusEval = (k,f) => callOpenAIEval(k, HF_BASE,     APERTUS_MODEL, f);
-const callGitHubEval  = (k,f) => callOpenAIEval(k, GITHUB_BASE, GITHUB_MODEL,  f);
-```
-
-`EVAL_ERRORS` map handles 401/402/403/429 with user-friendly messages.
+| Anthropic | Yes | `anthropic-dangerous-direct-browser-access: true` |
+| AWS Bedrock | Yes | Direct fetch via API Gateway (CORS enabled) |
+| Gemini | Yes | Native CORS |
+| Groq | No | `fetchCORS()` fallback |
+| Apertus (HF) | No | `fetchCORS()` fallback |
+| GitHub Models | No | `fetchCORS()` fallback |
+| OpenAI | No | No fallback (local only) |
 
 ---
 
 ## Prompt Architecture
 
-### Context Injection Order (visionSystem)
+### visionSystem() - Mode-aware
+
 ```
-[Role framing]
-[PAGE CONTEXT — product, flow, known issues, do not audit]
-[REGIONAL CONTEXT — country standards]
-[INDUSTRY CONTEXT — oblique/ecommerce/saas etc.]
-[USER PERSONA — age, frequency, tech affinity, device]
-[Quality checklist + scoring rules + JSON schema]
+benchmark mode -> return early with short ~200 token prompt (pattern-focused)
+feedback mode  -> inject feedback text + persona
+uxui mode      -> full prompt:
+  [Role + reputation reward]
+  [PAGE CONTEXT: product, flow, known issues, do not audit]
+  [REGIONAL CONTEXT: country standards, currency, date format, law]
+  [INDUSTRY CONTEXT: oblique/ecommerce/saas etc.]
+  [USER PERSONA: age, frequency, tech affinity, device]
+  [Quality checklist + avoid-list + scoring rules + JSON schema]
 ```
 
-### Country Context (buildCountryContext)
-Per-country instructions covering: currency format, date format, accessibility law, privacy law, preferred sources, patterns to flag.
-
-| Country | Key |
-|---------|-----|
-| CH | CHF, DD.MM.YYYY, BehiG, nDSG, DE/FR/IT |
-| DE | EUR comma, BITV 2.0, DSGVO |
-| AT | EUR, WZG, DSGVO |
-| EU | EAA, GDPR, multilingual |
-| UK | GBP, DD/MM/YYYY, GDS |
-| US | USD, MM/DD/YYYY, ADA/508 |
-
-### Vision Prompt Techniques
-1. Reputation reward signal
-2. Mental STEP 1/2/3 scratchpad
-3. 4-question self-check per finding
-4. Confidence anchors (95–100 / 80–94 / 70–79)
-5. 5 concrete bad-finding examples
-6. Persona impact explicit
+### Country Context
+| Country | Currency | Date | A11y Law | Privacy |
+|---------|----------|------|----------|---------|
+| CH | CHF | DD.MM.YYYY | BehiG | nDSG |
+| DE | EUR comma | DD.MM.YYYY | BITV 2.0 | DSGVO |
+| AT | EUR | DD.MM.YYYY | WZG | DSGVO |
+| EU | EUR | varies | EAA | GDPR |
+| UK | GBP | DD/MM/YYYY | GDS | UK GDPR |
+| US | USD | MM/DD/YYYY | ADA/508 | varies |
 
 ---
 
 ## Finding Lifecycle
 
 ```
-AI generates finding
-  → shown in sidebar with Pending status (no badge)
-  → user can: Edit / Delete / Move Pin / Comment / Challenge
-    → Comment: freetext + URL → stored as ann._comment / ann._commentUrl
-    → Challenge: argument + URL → Claude re-evaluates → verdict:
-        remove    → ann._removed=true → greyed out
-        downgrade → ann.priority updated
-        confirmed → ann._confirmed=true
-        keep      → no change
-  → PDF export: filters by confidence + _removed; shows status badges
+AI generates finding (_model tagged with source model ID)
+  -> shown in sidebar with count badge + filter bar (dim / SEV / Fixed)
+  -> user can: Edit / Delete (undo buffer, 5s toast) / Move Pin / Comment / Challenge / Mark Fixed
+  -> Export filters by confidence + _removed + _fixed
+  -> PDF: findings sorted by severity
 ```
+
+### Annotation Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `_model` | string | Which vision model found this |
+| `_removed` | bool | Soft-delete with undo |
+| `_fixed` | bool | Mark as resolved |
+| `_confirmed` | bool | Challenge confirmed it |
+| `_challenged` | bool | Challenge in progress |
+| `_comment` | string | User note |
+| `_commentUrl` | string | Jira/Confluence link |
+| `_matrixNote` | string | Effort note in Priority Matrix |
+| `_effortOverride` | float | Manual effort 0-1 |
+| `_qualityOk` | bool | Quality Mode approved |
+| `_qualityRevised` | bool | Quality Mode revised |
 
 ---
 
@@ -184,21 +221,20 @@ AI generates finding
 
 | Page | Content | Condition |
 |------|---------|-----------|
-| 1 | Cover — title adapts to report type | Always |
+| 1 | Cover - title adapts to report type | Always |
+| 1b | Executive Summary - score, metrics, top 3 findings, next steps | Always |
 | 2 | Annotated screenshot | inclUXUI |
 | 3 | Score summary + legends | inclUXUI |
 | 4 | WCAG Contrast Analysis | inclAX |
-| 5 | AX Findings — impact summary + issues by category | inclAX + HTML provided |
-| 6–15 | One per Nielsen heuristic | inclUXUI |
-| Last | Best Practices & Quick Fixes | inclUXUI + BP loaded |
+| 5 | AX Findings | inclAX + HTML |
+| 6-15 | One per Nielsen heuristic | inclUXUI |
+| 16 | Best Practices & Quick Fixes | inclUXUI |
+| 17 | Priority Matrix - quadrant plot + legend | inclUXUI |
+| 18 | QA Test Cases | inclUXUI + test cases generated |
+| 19 | Jira Tickets appendix | full report only |
+| Last | Methodology & Transparency - tool, models, audit ID, disclaimer | Always |
 
 Report types: `full` (all), `uxui` (inclUXUI only), `ax` (inclAX only).
-
-### stripBP()
-Global function strips `<cite index="...">` and HTML tags from Best Practice API responses before jsPDF rendering.
-
-### pdfSet(size, weight, color)
-PDF style shorthand inside exportPDF — avoids repeating 3 `doc.set*` calls.
 
 ---
 
@@ -206,7 +242,21 @@ PDF style shorthand inside exportPDF — avoids repeating 3 `doc.set*` calls.
 
 | Key | Content |
 |-----|---------|
-| `uxaudit_keys` | `{ claude, groq, gemini, openai, apertus, github }` |
+| `uxaudit_keys` | `{ claude, groq, gemini, openai, apertus, github, bedrock }` |
+| `auditly_theme` | `'dark'` or `'light'` |
+| `auditly_onboarded` | `'1'` after first visit |
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+Enter` | Run Audit |
+| `Cmd+E` | Export PDF |
+| `Cmd+K` | Open Guide |
+| `Cmd+D` | Toggle Dark Mode |
+| `1-9` | Navigate to finding #N |
 
 ---
 
@@ -218,7 +268,9 @@ PDF style shorthand inside exportPDF — avoids repeating 3 `doc.set*` calls.
 | Groq/Apertus/GitHub via corsproxy.io | Acceptable for evaluators |
 | Apertus HF quota (402) | huggingface.co/settings/billing |
 | GitHub: Classic token only | Tokens (classic), no scopes |
+| Bedrock: no web_search tool | Pattern Research uses knowledge only |
+| Bedrock requires API Gateway proxy | Direct browser calls blocked by AWS CORS |
 | AX: only structural checks automated | Manual screenreader testing required |
-| Pin accuracy ±15% | Move Pin manually |
-| Gemini free tier 20 req/min | Paid tier or Claude only |
-| Single HTML ~215kb | Acceptable for GitHub Pages |
+| Claude Tier 1: 30k TPM | 8s delay for benchmark; upgrade to Tier 2 |
+| Single HTML ~323kb | Acceptable for GitHub Pages |
+| Pin accuracy ~15% | Move Pin manually |

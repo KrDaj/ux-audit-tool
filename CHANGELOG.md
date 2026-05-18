@@ -1,11 +1,91 @@
 # Changelog
 
-All notable changes to the UX / UI Audit Tool are documented here.  
-Format: `vMAJOR.MINOR` — minor increments by 0.01 per push.
+All notable changes to Auditly are documented here.
+Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
-## v0.71 — April 2026
+## v0.74 - May 2026
+
+### Added
+- **AWS Bedrock via API Gateway** - Lambda proxy (`bedrock-proxy-handler`) routes Bedrock calls via API Gateway with CORS support. Direct `fetch()` used (not corsproxy). Endpoint: `k1wa0n6ns6.execute-api.us-east-1.amazonaws.com/invoke`
+- **Bedrock as full Claude replacement** - all features work with Bedrock only: Vision, Evaluator, Quality Mode, Challenge Finding, Best Practice, Generate Fix, AX Visual Pass, Pattern Research, Feedback Analysis
+- **Bedrock-first routing** - when no Claude key present, Bedrock is placed first in vision pipeline
+
+### Fixed
+- **`howItWorksDesc`** - dead el() call removed (how-it-works strip was removed in v0.73)
+- **`descs.standard`** - fallback key corrected to `descs.uxui`
+- **`callWithRetry`** - was called but never defined; now implemented with 2 attempts and 1.5s delay
+- **Best Practice caching** - `_bpCache` stores results per heuristic+industry to avoid repeated API calls
+- **Pattern Research Confluence export** - `window._patternResults` stored after benchmark and included in Confluence wiki markup
+- **EVAL_PROMPT_TEXT** - Unicode dashes removed, scoring guidance improved with "Be sceptical: vision models over-report severity"
+- **visionSystem prompt -20% tokens** - redundant examples removed
+- **Country context blocks** - CH/DE/AT/EU/UK/US shortened from ~200 to ~30 tokens each
+- **Oblique block** - shortened from ~500 to ~50 tokens
+- **Image compression** - upload compression reduced to 900px/0.7 JPEG (was 1280px/0.85)
+- **Bedrock direct fetch** - all Bedrock calls use `fetch()` not `fetchCORS()` since API Gateway has CORS configured
+- **Rate limit retry** - 65s countdown shown when Claude 30k TPM limit hit
+- **Agentic loop for Pattern Research** - handles `web_search` multi-turn response correctly
+- **All Bedrock calls** - `model` field added to request body, Lambda response parsing handles both direct and wrapped formats
+
+---
+
+## v0.73 - May 2026
+
+### Renamed
+- **Tool renamed to Auditly** - new branding, updated title, nav logo, meta description, all internal references
+- **Nav subtitle** - "UX Research & Audit Platform"
+- **Logo** - triangle "A" SVG mark
+
+### Added
+- **Dark mode toggle** - manual `◐/◑` button in nav, persisted to localStorage (`auditly_theme`). `Cmd+D` shortcut
+- **Audit ID badge** - `AUD-YYYYMMDD-XXXX` generated after each audit, shown in nav and PDF methodology page
+- **Model badge on findings** - each finding shows which vision model found it (Claude / Gemini / GPT-4o / Bedrock)
+- **Keyboard shortcuts** - `Cmd+Enter` run, `Cmd+E` export, `Cmd+K` guide, `Cmd+D` dark mode, `1-9` navigate findings
+- **Onboarding modal** - 3-step welcome on first visit, localStorage flag `auditly_onboarded`
+- **Methodology PDF page** - last page of all reports: tool, version, audit ID, date, models used, disclaimer
+- **Key saved feedback** - `✓ Saved` appears green next to API key input on entry
+- **File type validation** - rejects non-image uploads with clear error message
+- **Mode badge in sticky bar** - shows active mode (Audit / Research / Analyse) in run bar
+- **Time estimate** - "Usually takes 20-40 seconds" shown during audit progress
+- **Finding count in sidebar** - "N findings" shown above filter buttons
+- **Copy button feedback** - `✓ Copied!` in green, 2 second duration
+- **Next steps bar** - green bar after audit with links to Priority Matrix, Jira, QA, Confluence
+- **AWS Bedrock support** - `BedrockAPIKey...` format, Claude Sonnet 4.6 via Bedrock as vision + evaluator
+- **Groq as free alternative** - shown prominently alongside Claude in Card 3 with Free badge
+- **Executive Summary PDF page** - overall score, key metrics, top 3 findings, recommended next steps
+- **Priority Matrix in PDF** - quadrant plot + legend in UX/UI and Full reports
+- **Usability Protocol replaced by QA Test Cases** - technical test cases for testing engineer (preconditions, steps, expected result, Pass/Fail)
+- **Confluence Export** - full wiki markup with findings table, priority matrix, AX findings, test protocol. `Confluence` button next to Export PDF
+
+### Improved
+- **Option D scoring** - confidence-weighted corrective + WCAG corrective + AX corrective chained in `renderResults`
+- **User story format** - Jira tickets now use Goals / Logic / Acceptance Criteria structure with testable, specific AC
+- **Priority Matrix** - effort override slider + notes field per finding. Notes appear in PDF and Confluence
+- **Priority Matrix dots** - collision detection with leader lines (SVG + PDF)
+- **Benchmark prompt** - short focused prompt (~200 tokens) for Pattern Research mode to avoid rate limits
+- **Mode separation** - Pattern Research and Test Analysis skip Nielsen evaluators, WCAG, AX, Priority Matrix, Jira, QA tabs
+- **Card 3 simplified** - Claude + Groq visible by default, other models in "Add more models" collapsible
+- **Card 2 simplified** - Industry + Country always visible, Product/Flow/Known issues in "+ Add context" collapsible
+- **Mode labels** - action-oriented: Audit / Research / Analyse
+- **Required/Optional badges** - Card 1 and 3 marked Required, Card 2 marked Optional
+- **Empty state** - "Ready when you are" shown before first audit
+- **How-it-works strip removed** - redundant with mode descriptions
+- **Help panel rewritten** - fixed template literal bug rendering as raw text, added modes section, keyboard shortcuts, QA test cases
+
+### Fixed
+- **Em-dashes** - all `—` replaced globally with `-` (jsPDF Helvetica compatibility)
+- **`_refreshSidebar`** - stale duplicate sidebar render function removed
+- **`productCtx`** - stale ID reference fixed to `contextProduct`
+- **`window.deleteAnnotation`** - old splice-based version removed; new version with undo buffer is sole handler
+- **Duplicate `deleteAnnotation`** - resolved
+- **`MAX_TOKENS`** - undefined reference in Bedrock calls fixed; aligned with Claude settings (2000 tokens, temperature 0)
+- **Bedrock fallback** - all Claude-only functions now fall back to Bedrock key (Pattern Research, Feedback Analysis, Best Practice, AX visual, Generate Fix, Challenge)
+- **Pattern Research rate limit** - 8s delay after vision call before research call; single model for non-uxui modes; image compressed to 600px/0.5 JPEG
+
+---
+
+
 
 ### Improved
 - **Quality Mode — multi-evaluator specialisation** — Groq, Apertus and GitHub Models now run as parallel specialists (Specificity / Relevance / Fixability); Claude synthesises all feedback in one revision call
