@@ -38,7 +38,8 @@ const GITHUB_MODEL  = 'meta/Llama-3.3-70B-Instruct'
 const BEDROCK_MODEL = 'anthropic.claude-sonnet-4-6'
 const HF_BASE       = 'https://router.huggingface.co/v1/chat/completions'
 const GITHUB_BASE   = 'https://models.github.ai/inference/chat/completions'
-const BEDROCK_BASE  = 'https://k1wa0n6ns6.execute-api.us-east-1.amazonaws.com/invoke' // API Gateway proxy
+const BEDROCK_BASE  = 'https://k1wa0n6ns6.execute-api.us-east-1.amazonaws.com/invoke'
+const BEDROCK_MODEL = 'arn:aws:bedrock:us-east-1:869425948913:inference-profile/global.anthropic.claude-sonnet-4-6'
 ```
 
 ### Model Roles

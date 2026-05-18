@@ -353,7 +353,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.74</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.75</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -1064,7 +1064,7 @@ const APERTUS_MODEL = 'swiss-ai/Apertus-8B-Instruct-2509'; // kept for reference
 const GITHUB_MODEL  = 'meta/Llama-3.3-70B-Instruct';
 const GITHUB_BASE   = 'https://models.github.ai/inference/chat/completions';
 const HF_BASE = 'https://router.huggingface.co/v1/chat/completions';
-const BEDROCK_MODEL = 'anthropic.claude-sonnet-4-6';
+const BEDROCK_MODEL = 'arn:aws:bedrock:us-east-1:869425948913:inference-profile/global.anthropic.claude-sonnet-4-6';
 const BEDROCK_BASE  = 'https://k1wa0n6ns6.execute-api.us-east-1.amazonaws.com/invoke';
 
 // Claude headers helper - avoids repeating 4 header keys every call

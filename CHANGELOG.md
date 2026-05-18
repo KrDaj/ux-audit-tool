@@ -5,6 +5,15 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.75 - May 2026
+
+### Fixed
+- **Bedrock Inference Profile ARN** - updated to `global.anthropic.claude-sonnet-4-6` inference profile (direct model ID not supported for cross-region inference)
+- **Lambda code** - uses `@aws-sdk/client-bedrock-runtime` (pre-installed in Node.js 24), removed external dependency on `@aws-crypto/sha256-js`
+- **BEDROCK_MODEL constant** - updated to full ARN: `arn:aws:bedrock:us-east-1:869425948913:inference-profile/global.anthropic.claude-sonnet-4-6`
+
+---
+
 ## v0.74 - May 2026
 
 ### Added
