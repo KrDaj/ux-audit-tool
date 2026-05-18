@@ -187,6 +187,7 @@
     .tab:hover{color:var(--text)}
     .tab.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
     .tab-panel{display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
     .tab-panel.active{display:block}
 
     /* ── Annotated wrap ── */
@@ -353,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.78</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.84</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -1543,6 +1544,8 @@ Respond ONLY as JSON:
   "description":"What you see in this screenshot",
   "recommendation":"How ${brands} solve this pattern differently",
   "zone":"top-center",
+  "x":0.5,
+  "y":0.15,
   "priority":"2",
   "confidence":85,
   "scores":[7,7,7,7,7,7,7,7,7,7]
@@ -2144,7 +2147,10 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
   const resultsEl=el('results');
   resultsEl.style.display='block';
   const emptyEl=el('emptyState'); if(emptyEl) emptyEl.style.display='none';
-  const nsBar=el('nextStepsBar'); if(nsBar) nsBar.style.display='flex';
+  const nsBar=el('nextStepsBar'); if(nsBar) nsBar.style.display=auditMode==='uxui'?'flex':'none';
+  // Hide export/report controls for non-uxui modes
+  const resultsHeader=document.querySelector('.results-header');
+  if(resultsHeader) resultsHeader.style.display=auditMode==='uxui'?'':'none';
   requestAnimationFrame(()=>requestAnimationFrame(()=>resultsEl.classList.add('visible')));
   resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
 
@@ -2176,8 +2182,20 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
     renderTestProtocol(annotations);
   }
   if(auditMode==='benchmark'){
-    const container=el('benchmarkResults');
-    if(container) container.innerHTML='<div style="padding:20px;color:var(--text3);font-size:13px">Pattern research starts in a moment - waiting for vision analysis to complete...</div>';
+    // Show tab immediately with loading state
+    const tabBench=el('tabBenchmark');
+    if(tabBench){
+      tabBench.style.display='';
+      tabBench.innerHTML='<span style="display:inline-flex;align-items:center;gap:5px">UX Patterns <span class="bench-spinner" style="width:10px;height:10px;border:2px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block"></span></span>';
+    }
+    const benchContainer=el('benchmarkResults');
+    if(benchContainer) benchContainer.innerHTML=`
+      <div style="padding:32px 20px;text-align:center;color:var(--text3)">
+        <div style="font-size:28px;margin-bottom:12px;animation:spin 1.2s linear infinite;display:inline-block">◌</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px">Researching UX patterns...</div>
+        <div style="font-size:11px">Claude is searching how reference products solve these design challenges.<br>This usually takes 20-40 seconds.</div>
+      </div>`;
+    switchTab('benchmark-results');
     setTimeout(()=>renderBenchmarkResults(annotations), 8000);
   }
   if(auditMode==='feedback') renderFeedbackResults(annotations);
@@ -2315,9 +2333,11 @@ async function startAudit(){
   const _cssCtx=el('cssInput').value.trim(); // cached once
   // Build visionIds - put bedrock first if no Claude key
   const rawVisionIds=activeIds.filter(id=>MODEL_META[id].vision);
+  // When both Claude + Bedrock present: Claude does vision, Bedrock does eval only
+  // This avoids parallel vision calls exceeding Claude rate limits
   const visionIds=keys.bedrock&&!keys.claude
-    ?['bedrock',...rawVisionIds.filter(id=>id!=='bedrock')]
-    :rawVisionIds;
+    ?['bedrock',...rawVisionIds.filter(id=>id!=='bedrock')]  // Bedrock-only: vision first
+    :rawVisionIds.filter(id=>id!=='bedrock');  // Claude present: Bedrock as eval only
   const textIds=activeIds.filter(id=>!MODEL_META[id].vision);
   // Bedrock runs both vision AND evaluation
   const bedrockEvalKey=keys.bedrock;
@@ -2334,6 +2354,7 @@ async function startAudit(){
   el('results').classList.remove('visible');
   const emSt=el('emptyState'); if(emSt) emSt.style.display='';
   const nsBarReset=el('nextStepsBar'); if(nsBarReset) nsBarReset.style.display='none';
+  const rhReset=document.querySelector('.results-header'); if(rhReset) rhReset.style.display=''
   // Reset sticky bar
   const stickyLabel=el('stickyLabel');
   const stickyRunBtn=el('stickyRunBtn');
@@ -2774,7 +2795,25 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 // ── Deduplicate annotations by title similarity ──
+const ZONE_XY={
+  'top-left':{x:0.15,y:0.15},'top-center':{x:0.5,y:0.15},'top-right':{x:0.85,y:0.15},
+  'middle-left':{x:0.15,y:0.5},'middle-center':{x:0.5,y:0.5},'middle-right':{x:0.85,y:0.5},
+  'bottom-left':{x:0.15,y:0.85},'bottom-center':{x:0.5,y:0.85},'bottom-right':{x:0.85,y:0.85},
+  'center':{x:0.5,y:0.5},'top':{x:0.5,y:0.15},'bottom':{x:0.5,y:0.85},
+  'left':{x:0.15,y:0.5},'right':{x:0.85,y:0.5}
+};
 function deduplicateAnnotations(anns){
+  // Ensure x/y coords from zone if missing
+  anns.forEach(ann=>{
+    if((ann.x==null||ann.y==null)&&ann.zone){
+      const zk=Object.keys(ZONE_XY).find(k=>ann.zone.toLowerCase().includes(k));
+      const coords=ZONE_XY[zk]||ZONE_XY['middle-center'];
+      ann.x=ann.x??coords.x;
+      ann.y=ann.y??coords.y;
+    }
+    if(ann.x==null) ann.x=0.5;
+    if(ann.y==null) ann.y=0.5;
+  });
   const seen=[];
   return anns.filter(ann=>{
     const t=(ann.title||'').toLowerCase().trim();
@@ -4478,14 +4517,14 @@ async function renderBenchmarkResults(annotations){
   if(!container) return;
 
   const claudeKey=el('key-claude')?.value.trim()||el('key-bedrock')?.value.trim();
-  const usesBedrock=!el('key-claude')?.value.trim()&&!!el('key-bedrock')?.value.trim();
   if(!claudeKey||!annotations.length){
     container.innerHTML='<div style="padding:20px;color:var(--text3);font-size:13px">Add a Claude or Bedrock key to load pattern research.</div>';
+    if(tab) tab.textContent='UX Patterns';
     return;
   }
 
   container.innerHTML='<div style="padding:20px;color:var(--text3);font-size:13px">Loading UX pattern research…</div>';
-  switchTab('benchmark-results');
+  // Don't auto-switch - user stays on annotated screenshot to see pins
 
   const brands=el('benchmarkBrandsMain')?.value.trim()||'Amazon, Galaxus, GOV.UK, Migros';
   const findingsSummary=annotations.filter(a=>!a._removed).slice(0,6).map((a,i)=>
@@ -4494,6 +4533,7 @@ async function renderBenchmarkResults(annotations){
   const product=el('contextProduct')?.value.trim()||'';
   const flow=el('contextFlow')?.value.trim()||'';
   const contextHint=product||flow?`\nContext: ${[product,flow].filter(Boolean).join(' - ')}`:''
+  const isBedrock=!el('key-claude')?.value.trim()&&!!el('key-bedrock')?.value.trim();
 
   const prompt=isBedrock
     ? `You are a UX/UI pattern researcher. For each finding below, identify the pattern category and how ${brands} solve it.
@@ -4530,7 +4570,6 @@ Respond ONLY as JSON:
 }]}`;
 
   try{
-    const isBedrock=!el('key-claude')?.value.trim()&&!!el('key-bedrock')?.value.trim();
     const endpoint=isBedrock?BEDROCK_BASE:'https://api.anthropic.com/v1/messages';
     const headers=isBedrock?{'Content-Type':'application/json'}:claudeHeaders(claudeKey);
 
@@ -4561,7 +4600,9 @@ Respond ONLY as JSON:
 
       // If stop_reason is end_turn, use whatever text we have
       if(d.stop_reason==='end_turn'){
-        text=textBlocks.join(' ')||'{}';
+        // Try all text blocks for any JSON
+        const allText=textBlocks.join('\n');
+        text=allText||'{}';
         break;
       }
 
@@ -4569,13 +4610,16 @@ Respond ONLY as JSON:
       const toolUseBlocks=(d.content||[]).filter(b=>b.type==='tool_use');
       if(toolUseBlocks.length===0) break;
 
-      // Return empty tool results to prompt Claude to synthesise
+      // Return tool results - tell Claude to now write the JSON
       const toolResults=toolUseBlocks.map(t=>({
         type:'tool_result',
         tool_use_id:t.id,
-        content:'Search completed. Now synthesise findings into the required JSON format.'
+        content:`Search results received for "${t.input?.query||'query'}". Now write the final JSON response with patterns array.`
       }));
-      messages.push({role:'user',content:toolResults});
+      messages.push({role:'user',content:[
+        ...toolResults,
+        {type:'text',text:'Based on the search results above, now respond with the complete JSON as requested. Start your response with {"patterns":'}
+      ]});
     }
     const data=parseJSON(text);
     if(!data?.patterns?.length) throw new Error('No patterns returned');
@@ -4622,9 +4666,12 @@ Respond ONLY as JSON:
 
     container.innerHTML=`
       <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">UX/UI Pattern Research</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:16px">Visual UI patterns only - not code. How ${brands} solve the same design challenges - with research citations</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px">Visual UI patterns only - not code. How ${brands} solve the same design challenges - with research citations. Findings are also pinned on the screenshot.</div>
       ${patternsHtml}`;
+    // Restore tab label (remove spinner)
+    if(tab) tab.textContent='UX Patterns';
   }catch(e){
+    if(tab) tab.textContent='UX Patterns';
     container.innerHTML=`<div style="padding:20px;color:var(--red);font-size:12px">Error: ${e.message}</div>`;
   }
 }

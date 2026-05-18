@@ -5,6 +5,50 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.84 - May 2026
+
+### Fixed
+- **Pattern Research pins** - findings from benchmark vision now correctly placed on screenshot. Added zone-to-xy coordinate fallback (`ZONE_XY` map) in `deduplicateAnnotations`. Benchmark prompt now includes `x`/`y` fields alongside `zone`.
+
+---
+
+## v0.83 - May 2026
+
+### Improved
+- **Claude + Bedrock role split** - when both keys present: Claude handles Vision + Pattern Research (with web_search), Bedrock handles Nielsen Evaluator scoring only. Avoids parallel vision calls that exceed Claude 30k TPM rate limit.
+
+---
+
+## v0.82 - May 2026
+
+### Improved
+- **Pattern Research loading UX** - UX Patterns tab now appears immediately with a spinning indicator. Switches to the tab right away showing "Researching UX patterns..." message with animated spinner. Tab label restores to "UX Patterns" when done. No more waiting wondering if anything is happening.
+
+---
+
+## v0.81 - May 2026
+
+### Fixed
+- **Export controls hidden for benchmark/feedback** - Min. confidence, Report Type, Export PDF, Confluence buttons now hidden for Pattern Research and Test Analysis modes
+- **Next steps bar** - only shown for UX/UI/AX Audit mode
+- **Pattern Research JSON parsing** - improved agentic loop: better tool_result messages, explicit JSON instruction after search, improved end_turn handling
+
+---
+
+## v0.80 - May 2026
+
+### Added
+- **Pattern Research pins on screenshot** - findings from vision analysis are now shown as pins on the annotated screenshot in benchmark mode. User stays on screenshot tab first, then switches to UX Patterns tab when research is ready.
+
+---
+
+## v0.79 - May 2026
+
+### Fixed
+- **`isBedrock` ReferenceError** - variable was used before declaration in `renderBenchmarkResults`; moved before `prompt` template literal
+
+---
+
 ## v0.78 - May 2026
 
 ### Fixed
