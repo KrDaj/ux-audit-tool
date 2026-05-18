@@ -5,6 +5,16 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.76 - May 2026
+
+### Fixed
+- **Bedrock CORS** - OPTIONS route added to API Gateway, Lambda Integration connected to OPTIONS/invoke
+- **Bedrock benchmark fetch** - `renderBenchmarkResults` uses direct `fetch()` for Bedrock instead of `fetchCORS`
+- **Lambda timeout** - increased to 30s (was 3s default); recommend 60s for vision calls with large screenshots
+- **Bedrock vision working** - findings returned correctly via AWS Bedrock proxy
+
+---
+
 ## v0.75 - May 2026
 
 ### Fixed

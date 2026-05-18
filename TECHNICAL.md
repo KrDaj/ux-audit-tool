@@ -273,5 +273,6 @@ Report types: `full` (all), `uxui` (inclUXUI only), `ax` (inclAX only).
 | Bedrock requires API Gateway proxy | Direct browser calls blocked by AWS CORS |
 | AX: only structural checks automated | Manual screenreader testing required |
 | Claude Tier 1: 30k TPM | 8s delay for benchmark; upgrade to Tier 2 |
+| Lambda timeout | Set to 60s for vision calls with large screenshots |
 | Single HTML ~323kb | Acceptable for GitHub Pages |
 | Pin accuracy ~15% | Move Pin manually |
