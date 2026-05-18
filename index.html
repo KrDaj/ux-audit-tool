@@ -353,7 +353,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.77</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.78</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -4495,7 +4495,15 @@ async function renderBenchmarkResults(annotations){
   const flow=el('contextFlow')?.value.trim()||'';
   const contextHint=product||flow?`\nContext: ${[product,flow].filter(Boolean).join(' - ')}`:''
 
-  const prompt=`You are a UX/UI pattern researcher. For each finding below, search for real examples and research.${contextHint}
+  const prompt=isBedrock
+    ? `You are a UX/UI pattern researcher. For each finding below, identify the pattern category and how ${brands} solve it.
+
+Context:${contextHint}
+Findings: ${findingsSummary}
+
+Respond ONLY as JSON:
+{"patterns":[{"id":1,"finding":"title","pattern_category":"name","references":[{"brand":"Brand","approach":"their approach","url":null}],"research":[],"recommendation":"actionable fix"}]}`
+    : `You are a UX/UI pattern researcher. For each finding below, search for real examples and research.${contextHint}
 
 Reference products: ${brands}
 
@@ -4527,7 +4535,7 @@ Respond ONLY as JSON:
     const headers=isBedrock?{'Content-Type':'application/json'}:claudeHeaders(claudeKey);
 
     const messages=[{role:'user',content:prompt}];
-    const bodyObj={model:isBedrock?BEDROCK_MODEL:CLAUDE_MODEL,max_tokens:3000,temperature:0,
+    const bodyObj={model:isBedrock?BEDROCK_MODEL:CLAUDE_MODEL,max_tokens:isBedrock?1500:3000,temperature:0,
       system:'You are a UX/UI pattern researcher. Respond ONLY with valid JSON.',
       messages};
     if(isBedrock) bodyObj.anthropic_version='bedrock-2023-05-31';

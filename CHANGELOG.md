@@ -5,6 +5,14 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.78 - May 2026
+
+### Fixed
+- **Bedrock Pattern Research** - shorter prompt for Bedrock (no research URLs, 1500 tokens vs 3000)
+- **Bedrock max_tokens** - reduced to 1500 for benchmark mode (was 3000, caused 503)
+
+---
+
 ## v0.77 - May 2026
 
 ### Fixed
