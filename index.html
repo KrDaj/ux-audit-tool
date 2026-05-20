@@ -354,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.93</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.94</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -4629,6 +4629,11 @@ Respond ONLY as JSON:
 
       // Check text blocks for JSON
       const textBlocks=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+      // DEBUG: show what we got
+      if(textBlocks.length){
+        const dbg=el('benchmarkResults');
+        if(dbg) dbg.innerHTML=`<pre style="font-size:9px;overflow:auto;max-height:200px;background:var(--bg2);padding:8px">[attempt ${attempts}] stop=${d.stop_reason} blocks=${d.content?.length}\n${textBlocks.join('\n').slice(0,500)}</pre>`+dbg.innerHTML;
+      }
       const jsonBlock=textBlocks.find(t=>t.includes('"patterns"'));
       if(jsonBlock){text=jsonBlock;break;}
 
@@ -4650,7 +4655,19 @@ Respond ONLY as JSON:
       }));
       messages.push({role:'user',content:toolResults});
     }
-    const data=parseJSON(text);
+
+    // If no JSON found yet, make one final call without tools to force clean JSON
+    if(text==='{}'||!text.includes('"patterns"')){
+      const finalMsg={role:'user',content:'Now respond with ONLY the JSON object using the patterns array format specified. No prose, no markdown, just the raw JSON starting with {"patterns":'};
+      const finalBody={...bodyObj,messages:[...messages,finalMsg]};
+      delete finalBody.tools; // no web_search - force text response
+      const rf=await (isBedrock?fetch:fetchCORS)(endpoint,{method:'POST',headers,body:JSON.stringify(finalBody)});
+      if(rf.ok){
+        const df=await rf.json();
+        const ft=(df.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+        if(ft.includes('"patterns"')) text=ft;
+      }
+    }
     if(!data?.patterns?.length) throw new Error('No patterns returned');
     window._patternResults=data; // Store for Confluence export
 

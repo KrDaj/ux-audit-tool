@@ -5,6 +5,13 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.94 - May 2026
+
+### Fixed
+- **No JSON found** - added final fallback call without web_search tool after agentic loop completes without valid JSON; forces Claude to output clean JSON using accumulated search context
+
+---
+
 ## v0.93 - May 2026
 
 ### Fixed
