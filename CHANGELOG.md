@@ -5,6 +5,14 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.93 - May 2026
+
+### Fixed
+- **`mode is not defined`** - `startAudit` used undefined `mode` variable; replaced with `auditMode` global
+- **No JSON found** - removed broken assistant prefill approach; simplified agentic loop tool_result message
+
+---
+
 ## v0.92 - May 2026
 
 ### Fixed

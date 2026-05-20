@@ -354,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.92</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.93</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -2378,10 +2378,10 @@ async function startAudit(){
   const stickyRunBtn=el('stickyRunBtn');
   if(stickyLabel) stickyLabel.style.display='';
   const runLabels={uxui:'Run Audit →',benchmark:'Run Research →',feedback:'Analyse Feedback →'};
-  const runLabel=runLabels[mode]||'Run Audit →';
+  const runLabel=runLabels[auditMode]||'Run Audit →';
   if(stickyRunBtn) stickyRunBtn.textContent=runLabel;
   const mainRunBtn=el('runBtn');
-  if(mainRunBtn) mainRunBtn.innerHTML=runLabel.replace('→','&rarr;');
+  if(mainRunBtn) mainRunBtn.textContent=runLabel;
   el('progressSection').style.display='block';
   setSteps(activeIds);
 
@@ -4627,22 +4627,14 @@ Respond ONLY as JSON:
       // Add assistant response to message history
       messages.push({role:'assistant',content:d.content});
 
-      // Check if we have JSON in text blocks - look for patterns key any format
+      // Check text blocks for JSON
       const textBlocks=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text);
-      const wasPrefilled=messages[messages.length-1]?.role==='assistant'&&
-        messages[messages.length-1]?.content==='{"patterns":[';
-      const jsonBlock=textBlocks.find(t=>
-        t.includes('"patterns"')||t.includes('"patterns":')
-      );
-      if(jsonBlock){
-        text=wasPrefilled?'{"patterns":['+jsonBlock:jsonBlock;
-        break;
-      }
+      const jsonBlock=textBlocks.find(t=>t.includes('"patterns"'));
+      if(jsonBlock){text=jsonBlock;break;}
 
-      // If stop_reason is end_turn, use all text we have
+      // end_turn - use all text
       if(d.stop_reason==='end_turn'){
-        const allText=textBlocks.join('\n');
-        text=wasPrefilled&&allText?'{"patterns":['+allText:allText||'{}';
+        text=textBlocks.join('\n')||'{}';
         break;
       }
 
@@ -4650,15 +4642,13 @@ Respond ONLY as JSON:
       const toolUseBlocks=(d.content||[]).filter(b=>b.type==='tool_use');
       if(toolUseBlocks.length===0) break;
 
-      // Return tool results and force JSON via assistant prefill
+      // Return tool results and continue
       const toolResults=toolUseBlocks.map(t=>({
         type:'tool_result',
         tool_use_id:t.id,
-        content:`Search completed for "${t.input?.query||'query'}".`
+        content:`Search completed for "${t.input?.query||'query'}". Now output ONLY the JSON object, no prose.`
       }));
       messages.push({role:'user',content:toolResults});
-      // Prefill assistant response to force JSON output
-      messages.push({role:'assistant',content:'{"patterns":['});
     }
     const data=parseJSON(text);
     if(!data?.patterns?.length) throw new Error('No patterns returned');
