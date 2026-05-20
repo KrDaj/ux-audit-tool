@@ -5,6 +5,24 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.91 - May 2026
+
+### Fixed
+- **No JSON found in response** - improved `parseJSON`: strips leading prose before JSON, last-resort raw parse attempt. Agentic loop now accepts `"patterns":` without space and collects all text on `end_turn` even without patterns key.
+
+---
+
+## v0.90 - May 2026
+
+### Fixed - Mode Consistency
+- **CSS / Figma section** - hidden for Pattern Research and Test Feedback (only relevant for UX/UI/AX)
+- **Quality Mode checkbox** - hidden for Pattern Research and Test Feedback
+- **Framework select** - hidden for Pattern Research and Test Feedback (code fix generation is uxui-only)
+- **Run button label** - now context-aware: "Run Audit →" / "Run Research →" / "Analyse Feedback →"
+- **Card 2 description** - improved benchmark context hint text
+
+---
+
 ## v0.89 - May 2026
 
 ### Improved

@@ -354,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.89</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.91</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -891,7 +891,7 @@ font-size: 14px;"></textarea>
           <option value="vue">Vue 3</option>
           <option value="svelte">Svelte</option>
         </select>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;white-space:nowrap" title="Quality mode: Claude generates findings, Groq critiques, Claude revises. ~2× API calls, higher accuracy.">
+        <label id="qualityModeLabel" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;white-space:nowrap" title="Quality mode: Claude generates findings, Groq critiques, Claude revises. ~2× API calls, higher accuracy.">
           <input type="checkbox" id="qualityMode" style="width:14px;height:14px;cursor:pointer;accent-color:var(--red)">
           Quality mode
           <span style="font-size:10px;color:var(--text3)">(slower · Claude↔Groq iteration)</span>
@@ -1370,22 +1370,28 @@ function applyAXCorrective(scores){
 }
 function parseJSON(raw){
   if(!raw) return null;
-  const clean=raw.replace(/```json|```/g,'').trim();
+  // Strip markdown code fences and common prose wrappers
+  const clean=raw
+    .replace(/```json\s*/gi,'').replace(/```\s*/g,'')
+    .replace(/^[^{[]*(?=[{[])/, '')  // strip leading prose before JSON
+    .trim();
   // Try clean parse first
   try{ return JSON.parse(clean); }catch(e){}
-  // Extract first { } block - handles prose/search wrapping
+  // Extract first complete { } block
   const m=clean.match(/\{[\s\S]*\}/);
   if(m){
     try{ return JSON.parse(m[0]); }catch(e){
-      // Try to repair truncated JSON - remove trailing incomplete element
+      // Repair truncated JSON
       const truncated=m[0].replace(/,\s*\{[^}]*$|\{[^}]*$/,'').replace(/,\s*\[[^\]]*$/,'');
       const closed=truncated
-        .replace(/([^}])\s*$/, (s)=>s+'}')  // close open objects
-        .replace(/\[\s*$/, '[]');             // close open arrays
+        .replace(/([^}])\s*$/, (s)=>s+'}')
+        .replace(/\[\s*$/, '[]');
       try{ return JSON.parse(closed+']}'); }catch(e2){}
       try{ return JSON.parse(closed+'}'); }catch(e3){}
     }
   }
+  // Last resort: try parsing the raw string directly
+  try{ return JSON.parse(raw.trim()); }catch(e){}
   throw new Error('No JSON found in response');
 }
 
@@ -2371,7 +2377,11 @@ async function startAudit(){
   const stickyLabel=el('stickyLabel');
   const stickyRunBtn=el('stickyRunBtn');
   if(stickyLabel) stickyLabel.style.display='';
-  if(stickyRunBtn) stickyRunBtn.textContent='Run Audit →';
+  const runLabels={uxui:'Run Audit →',benchmark:'Run Research →',feedback:'Analyse Feedback →'};
+  const runLabel=runLabels[mode]||'Run Audit →';
+  if(stickyRunBtn) stickyRunBtn.textContent=runLabel;
+  const mainRunBtn=el('runBtn');
+  if(mainRunBtn) mainRunBtn.innerHTML=runLabel.replace('→','&rarr;');
   el('progressSection').style.display='block';
   setSteps(activeIds);
 
@@ -4005,10 +4015,15 @@ function setAuditMode(mode){
 
   // Card 1 sections
   const show=(id,v)=>{ const e=el(id); if(e) e.style.display=v?'':'none'; };
-  show('axSection',    mode==='uxui');
-  show('cssSection',   mode!=='feedback');
-  show('feedbackSection', mode==='feedback');
-  show('benchmarkSection', mode==='benchmark');
+  show('axSection',       mode==='uxui');          // AX audit: uxui only
+  show('cssSection',      mode==='uxui');          // CSS/WCAG: uxui only
+  show('feedbackSection', mode==='feedback');      // Feedback textarea: feedback only
+  show('benchmarkSection',mode==='benchmark');     // Reference brands: benchmark only
+  show('qualityModeLabel',mode==='uxui');
+  show('frameworkSelect', mode==='uxui');   // Framework/fix gen: uxui only
+  // Confidence filter + report type: hide for feedback
+  const rh=document.querySelector('.results-header-controls');
+  if(rh) rh.style.display=mode==='feedback'?'none':'';
 
   // Card 2 - adapt title, desc, fields
   const card2Title=el('card2Title');
@@ -4030,7 +4045,7 @@ function setAuditMode(mode){
     if(severityRow) severityRow.style.display='';
   } else if(mode==='benchmark'){
     if(card2Title) card2Title.textContent='Benchmark Context';
-    if(card2Desc) card2Desc.textContent='Helps Claude focus the pattern search';
+    if(card2Desc) card2Desc.textContent='Helps Claude focus the pattern search on relevant user flows.';
     if(stdFields) stdFields.style.display='none';
     if(reducedNote) reducedNote.style.display='';
     if(reducedText) reducedText.textContent='In Benchmark mode, Known issues, Do not audit and Persona are not used - the reference brands in Card 1 define the scope.';
@@ -4612,16 +4627,18 @@ Respond ONLY as JSON:
       // Add assistant response to message history
       messages.push({role:'assistant',content:d.content});
 
-      // Check if we have JSON in text blocks
+      // Check if we have JSON in text blocks - look for patterns key any format
       const textBlocks=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text);
-      const jsonBlock=textBlocks.find(t=>t.includes('"patterns"'));
+      const jsonBlock=textBlocks.find(t=>
+        t.includes('"patterns"')||t.includes('"patterns":')
+      );
       if(jsonBlock){text=jsonBlock;break;}
 
-      // If stop_reason is end_turn, use whatever text we have
+      // If stop_reason is end_turn, use all text we have
       if(d.stop_reason==='end_turn'){
-        // Try all text blocks for any JSON
         const allText=textBlocks.join('\n');
-        text=allText||'{}';
+        // Even without "patterns" key, try to parse - might be valid JSON
+        if(allText.includes('{')){text=allText;}
         break;
       }
 
