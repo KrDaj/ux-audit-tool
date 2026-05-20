@@ -354,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.85</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.89</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -550,7 +550,7 @@
 
       <!-- ── Screenshot + URL (all modes) ── -->
       <div class="url-row" style="margin-bottom:10px">
-        <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)"/>
+        <input type="url" id="urlInput" placeholder="https://example.com (optional if uploading screenshot)" autocomplete="off"/>
       </div>
       <label class="upload-label">Screenshot - drag & drop or click</label>
       <div class="upload-area" id="uploadArea">
@@ -676,11 +676,11 @@ font-size: 14px;"></textarea>
           <div class="context-grid">
             <div class="context-row">
               <label class="context-label" style="font-size:10px">Product<span class="info-tip" data-tip="What does this page do? e.g. 'Building permit application form'">i</span></label>
-              <input type="text" class="context-input" id="contextProduct" placeholder="e.g. Building permit form, Canton Bern"/>
+              <input type="text" class="context-input" id="contextProduct" placeholder="e.g. Building permit form, Canton Bern" autocomplete="off"/>
             </div>
             <div class="context-row">
               <label class="context-label" style="font-size:10px">Step in flow<span class="info-tip" data-tip="Where is this page in the user journey?">i</span></label>
-              <input type="text" class="context-input" id="contextFlow" placeholder="e.g. Step 3 of 5 - document upload"/>
+              <input type="text" class="context-input" id="contextFlow" placeholder="e.g. Step 3 of 5 - document upload" autocomplete="off"/>
             </div>
           </div>
 
@@ -2154,7 +2154,7 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
   const nsBar=el('nextStepsBar'); if(nsBar) nsBar.style.display=auditMode==='uxui'?'flex':'none';
   // Hide export/report controls for non-uxui modes
   const resultsHeader=document.querySelector('.results-header');
-  if(resultsHeader) resultsHeader.style.display=auditMode==='uxui'?'':'none';
+  if(resultsHeader) resultsHeader.style.display=auditMode==='feedback'?'none':'';
   requestAnimationFrame(()=>requestAnimationFrame(()=>resultsEl.classList.add('visible')));
   resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
 
@@ -2193,14 +2193,22 @@ function renderResults(imgSrc,annotations,allScores,activeModelIds,modelErrors=[
       tabBench.innerHTML='<span style="display:inline-flex;align-items:center;gap:5px">UX Patterns <span class="bench-spinner" style="width:10px;height:10px;border:2px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block"></span></span>';
     }
     const benchContainer=el('benchmarkResults');
-    if(benchContainer) benchContainer.innerHTML=`
-      <div style="padding:32px 20px;text-align:center;color:var(--text3)">
-        <div style="font-size:28px;margin-bottom:12px;animation:spin 1.2s linear infinite;display:inline-block">◌</div>
-        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px">Researching UX patterns...</div>
-        <div style="font-size:11px">Claude is searching how reference products solve these design challenges.<br>This usually takes 20-40 seconds.</div>
-      </div>`;
+    const hasBedrockKey=!!el('key-bedrock')?.value.trim();
+    const benchDelay=hasBedrockKey?8000:65000;
+    let secsLeft=Math.round(benchDelay/1000);
+    const updateBenchMsg=()=>{
+      if(!el('benchmarkResults')) return;
+      el('benchmarkResults').innerHTML=`
+        <div style="padding:32px 20px;text-align:center;color:var(--text3)">
+          <div style="font-size:28px;margin-bottom:12px;animation:spin 1.2s linear infinite;display:inline-block">◌</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px">Researching UX patterns...</div>
+          <div style="font-size:11px">${secsLeft>0?`Starting in ${secsLeft}s...`:'Searching how reference products solve these challenges...'}<br>${hasBedrockKey?'Using Bedrock for research.':'Waiting for Claude rate limit window to clear.'}</div>
+        </div>`;
+    };
+    if(benchContainer) updateBenchMsg();
+    const bInterval=setInterval(()=>{secsLeft--;if(secsLeft>=0)updateBenchMsg();else clearInterval(bInterval);},1000);
     switchTab('benchmark-results');
-    setTimeout(()=>renderBenchmarkResults(annotations), 8000);
+    setTimeout(()=>renderBenchmarkResults(annotations), benchDelay);
   }
   if(auditMode==='feedback') renderFeedbackResults(annotations);
 }
@@ -4544,7 +4552,8 @@ async function renderBenchmarkResults(annotations){
   const product=el('contextProduct')?.value.trim()||'';
   const flow=el('contextFlow')?.value.trim()||'';
   const contextHint=product||flow?`\nContext: ${[product,flow].filter(Boolean).join(' - ')}`:''
-  const isBedrock=!el('key-claude')?.value.trim()&&!!el('key-bedrock')?.value.trim();
+  // Use Bedrock for research whenever available - saves Claude TPM for vision
+  const isBedrock=!!el('key-bedrock')?.value.trim();
 
   const prompt=isBedrock
     ? `You are a UX/UI pattern researcher. For each finding below, identify the pattern category and how ${brands} solve it.
@@ -4635,7 +4644,30 @@ Respond ONLY as JSON:
     if(!data?.patterns?.length) throw new Error('No patterns returned');
     window._patternResults=data; // Store for Confluence export
 
+    // Crop screenshot region for each finding
+    function cropFindingThumb(ann,size=200){
+      if(!ann||ann.x==null||ann.y==null) return null;
+      const img=el('annotatedImg');
+      if(!img?.naturalWidth) return null;
+      const canvas=document.createElement('canvas');
+      const sw=img.naturalWidth, sh=img.naturalHeight;
+      const half=size/2;
+      // Crop centered on finding, clamped to image bounds
+      const cx=Math.round(ann.x*sw), cy=Math.round(ann.y*sh);
+      const sx=Math.max(0,cx-half), sy=Math.max(0,cy-half);
+      const sw2=Math.min(size,sw-sx), sh2=Math.min(size,sh-sy);
+      canvas.width=sw2; canvas.height=sh2;
+      canvas.getContext('2d').drawImage(img,sx,sy,sw2,sh2,0,0,sw2,sh2);
+      return canvas.toDataURL('image/jpeg',0.8);
+    }
+
     const patternsHtml=data.patterns.map(p=>{
+      // Find matching annotation for this pattern
+      const ann=currentAnnotations.find(a=>
+        !a._removed&&(a.title===p.finding||(p.finding&&a.title&&a.title.toLowerCase().includes(p.finding.toLowerCase().slice(0,20))))
+      );
+      const thumb=cropFindingThumb(ann);
+      const thumbHtml=thumb?`<img src="${thumb}" style="width:100%;max-height:120px;object-fit:cover;object-position:center;border-bottom:1px solid var(--border)" alt="Screenshot region"/>`:'';
       // research can be array (new) or string (old format fallback)
       const researchHtml=Array.isArray(p.research)&&p.research.length
         ? p.research.map(r=>`
@@ -4649,6 +4681,7 @@ Respond ONLY as JSON:
         : p.research?`<div style="font-size:11px;color:var(--text3)">${p.research}</div>`:'';
 
       return`<div style="border:1px solid var(--border);margin-bottom:12px;background:var(--surface)">
+        ${thumbHtml}
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:10px;font-weight:700;padding:1px 6px;background:var(--amber-bg);color:var(--amber);border-radius:3px">${p.pattern_category}</span>
           <span style="font-size:13px;font-weight:700;color:var(--text)">${p.finding}</span>
@@ -5594,8 +5627,122 @@ async function exportPDF(){
 
   } // end inclUXUI (screenshot)
 
-  // ══════════════════════════════
-  // PAGE 3 - Scores summary (UX/UI only)
+  // ==============================
+  // BENCHMARK - Annotated Screenshot + Pattern Research
+  // ==============================
+  if(auditMode==='benchmark'){
+    newPage();
+    pdfSet(13,'bold',[26,26,24]);
+    doc.text('UX/UI Pattern Research',ML,y);y+=5;
+    doc.setDrawColor(220,0,24);doc.setLineWidth(0.5);
+    doc.line(ML,y,PW-MR,y);y+=6;
+    pdfSet(8,'normal',[80,78,74]);
+    doc.text('Visual UI patterns identified and how reference products solve the same design challenges.',ML,y);y+=10;
+
+    // Annotated screenshot with pins
+    const bImg=el('annotatedImg');
+    const bCanvas=el('annotationCanvas');
+    if(bImg?.src&&bImg.src!==''){
+      const bMc=document.createElement('canvas');
+      bMc.width=bCanvas.width||bImg.naturalWidth;
+      bMc.height=bCanvas.height||bImg.naturalHeight;
+      const bCtx=bMc.getContext('2d');
+      bCtx.drawImage(bImg,0,0);bCtx.drawImage(bCanvas,0,0);
+      const bMerged=bMc.toDataURL('image/jpeg',0.88);
+      const bRatio=bMc.height/bMc.width;
+      const bH=Math.min(CW*bRatio,80);
+      doc.setDrawColor(200,198,194);doc.setLineWidth(0.3);
+      doc.rect(ML,y,CW,bH);
+      doc.addImage(bMerged,'JPEG',ML,y,CW,bH);
+      y+=bH+8;
+    }
+
+    // Pattern findings
+    const patterns=window._patternResults?.patterns||[];
+    if(patterns.length>0){
+      patterns.forEach(p=>{
+        checkY(28);
+        // Pattern header
+        doc.setFillColor(255,244,230);
+        doc.rect(ML,y,CW,7,'F');
+        pdfSet(8,'bold',[224,93,0]);
+        doc.text(p.pattern_category||'Pattern',ML+3,y+4.5);
+        pdfSet(9,'bold',[26,26,24]);
+        doc.text(p.finding||'',ML+60,y+4.5,{maxWidth:CW-65});
+        y+=9;
+
+        // Finding crop in PDF - full width
+        const pAnn=currentAnnotations.find(a=>!a._removed&&(a.title===p.finding||(p.finding&&a.title&&a.title.toLowerCase().includes((p.finding||'').toLowerCase().slice(0,20)))));
+        if(pAnn&&pAnn.x!=null){
+          const pImg=el('annotatedImg');
+          if(pImg?.naturalWidth){
+            const pc=document.createElement('canvas');
+            const psz=400,ph=pImg.naturalHeight,pw=pImg.naturalWidth;
+            const pcx=Math.round(pAnn.x*pw),pcy=Math.round(pAnn.y*ph);
+            const psx=Math.max(0,pcx-psz/2),psy=Math.max(0,pcy-psz/2);
+            const psw=Math.min(psz,pw-psx),psh=Math.min(psz,ph-psy);
+            pc.width=psw;pc.height=psh;
+            pc.getContext('2d').drawImage(pImg,psx,psy,psw,psh,0,0,psw,psh);
+            const pThumb=pc.toDataURL('image/jpeg',0.85);
+            const thumbH=Math.min(50,CW*psh/psw);
+            checkY(thumbH+6);
+            doc.setDrawColor(200,198,194);doc.setLineWidth(0.3);
+            doc.rect(ML,y,CW,thumbH);
+            doc.addImage(pThumb,'JPEG',ML,y,CW,thumbH);
+            pdfSet(7,'normal',[150,148,144]);
+            doc.text('Screenshot region - '+( pAnn.zone||''),ML+2,y+thumbH-2);
+            y+=thumbH+6;
+          }
+        }
+
+        // References
+        (p.references||[]).forEach(ref=>{
+          checkY(10);
+          pdfSet(7,'bold',[60,58,54]);
+          doc.text(ref.brand||'',ML+3,y+3.5);
+          pdfSet(7,'normal',[80,78,74]);
+          doc.text((ref.approach||'').slice(0,90),ML+22,y+3.5,{maxWidth:CW-30});
+          if(ref.url){
+            pdfSet(7,'normal',[220,0,24]);
+            doc.textWithLink(ref.url.slice(0,60),ML+22,y+7,{url:ref.url});
+          }
+          y+=ref.url?11:7;
+        });
+
+        // Research links
+        if(p.research?.length){
+          checkY(6);
+          pdfSet(6,'bold',[100,98,94]);
+          doc.text('Research:',ML+3,y+3);
+          (p.research||[]).slice(0,2).forEach(r=>{
+            checkY(8);
+            pdfSet(6,'normal',[80,78,74]);
+            doc.text((r.title||'').slice(0,70),ML+3,y+3);
+            if(r.url){
+              pdfSet(6,'normal',[220,0,24]);
+              doc.textWithLink(r.url.slice(0,80),ML+3,y+7,{url:r.url});
+            }
+            y+=r.url?10:6;
+          });
+        }
+
+        // Recommendation
+        checkY(10);
+        doc.setFillColor(234,243,222);
+        const recL=doc.splitTextToSize(p.recommendation||'',CW-6);
+        doc.rect(ML,y,CW,recL.length*4+5,'F');
+        pdfSet(7,'bold',[26,122,74]);
+        doc.text('Recommendation:',ML+3,y+4);
+        pdfSet(7,'normal',[40,80,40]);
+        doc.text(recL,ML+3,y+8);
+        y+=recL.length*4+9;
+      });
+    } else {
+      pdfSet(8,'normal',[150,148,144]);
+      doc.text('No pattern research results available. Run Pattern Research mode first.',ML,y);
+      y+=8;
+    }
+  }
   // ══════════════════════════════
   if(inclUXUI){
   newPage();

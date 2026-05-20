@@ -5,6 +5,41 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.89 - May 2026
+
+### Improved
+- **Pattern Research PDF crop** - screenshot crop per finding now full-width in PDF (was 30mm, now full column width), with border and zone label
+
+---
+
+## v0.88 - May 2026
+
+### Added
+- **Pattern Research screenshot crops** - each finding card now shows a cropped region of the original screenshot centered on the finding pin. Helps identify which area of the interface the pattern refers to. Also included in PDF export.
+
+---
+
+## v0.87 - May 2026
+
+### Fixed
+- **URL field autocomplete** - added `autocomplete="off"` to URL, contextFlow and contextProduct fields to prevent browser from pre-filling with previous values
+
+### Added
+- **Pattern Research PDF export** - Export PDF button now visible for benchmark mode. PDF contains: annotated screenshot with pins + all pattern findings with brand references, research links (clickable), and recommendations
+
+---
+
+## v0.86 - May 2026
+
+### Fixed
+- **Pattern Research rate limit** - Bedrock key present: research starts after 8s (Bedrock handles it, no Claude TPM impact). Claude-only: waits 65s for rate limit window to clear. Countdown shown during wait.
+- **Bedrock preferred for research** - when Bedrock key present, Pattern Research always uses Bedrock (saves Claude TPM for Vision)
+
+### Improved
+- **Loading countdown** - shows "Starting in Ns..." during delay so user knows what's happening
+
+---
+
 ## v0.85 - May 2026
 
 ### Improved
