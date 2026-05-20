@@ -354,7 +354,7 @@
       </div>
     </a>
     <div class="nav-spacer"></div>
-    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.91</span>
+    <span style="font-size:10px;font-weight:600;padding:2px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid currentColor;border-radius:10px;opacity:0.85;letter-spacing:0.03em" title="AI-generated findings may contain errors. Always verify before acting on results.">Beta v0.92</span>
     <span class="nav-tag">Claude · Groq · Gemini · GPT-4o</span>
     <span id="auditIdBadge" style="display:none;font-size:10px;font-weight:600;padding:2px 8px;background:var(--bg2);color:var(--text3);border-radius:10px;letter-spacing:0.04em;font-family:monospace"></span>
     <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark mode" style="height:28px;width:28px;padding:0;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:14px;border-radius:var(--r)">◐</button>
@@ -4629,16 +4629,20 @@ Respond ONLY as JSON:
 
       // Check if we have JSON in text blocks - look for patterns key any format
       const textBlocks=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+      const wasPrefilled=messages[messages.length-1]?.role==='assistant'&&
+        messages[messages.length-1]?.content==='{"patterns":[';
       const jsonBlock=textBlocks.find(t=>
         t.includes('"patterns"')||t.includes('"patterns":')
       );
-      if(jsonBlock){text=jsonBlock;break;}
+      if(jsonBlock){
+        text=wasPrefilled?'{"patterns":['+jsonBlock:jsonBlock;
+        break;
+      }
 
       // If stop_reason is end_turn, use all text we have
       if(d.stop_reason==='end_turn'){
         const allText=textBlocks.join('\n');
-        // Even without "patterns" key, try to parse - might be valid JSON
-        if(allText.includes('{')){text=allText;}
+        text=wasPrefilled&&allText?'{"patterns":['+allText:allText||'{}';
         break;
       }
 
@@ -4646,16 +4650,15 @@ Respond ONLY as JSON:
       const toolUseBlocks=(d.content||[]).filter(b=>b.type==='tool_use');
       if(toolUseBlocks.length===0) break;
 
-      // Return tool results - tell Claude to now write the JSON
+      // Return tool results and force JSON via assistant prefill
       const toolResults=toolUseBlocks.map(t=>({
         type:'tool_result',
         tool_use_id:t.id,
-        content:`Search results received for "${t.input?.query||'query'}". Now write the final JSON response with patterns array.`
+        content:`Search completed for "${t.input?.query||'query'}".`
       }));
-      messages.push({role:'user',content:[
-        ...toolResults,
-        {type:'text',text:'Based on the search results above, now respond with the complete JSON as requested. Start your response with {"patterns":'}
-      ]});
+      messages.push({role:'user',content:toolResults});
+      // Prefill assistant response to force JSON output
+      messages.push({role:'assistant',content:'{"patterns":['});
     }
     const data=parseJSON(text);
     if(!data?.patterns?.length) throw new Error('No patterns returned');

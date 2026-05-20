@@ -5,6 +5,13 @@ Format: `vMAJOR.MINOR` - minor increments by 0.01 per push.
 
 ---
 
+## v0.92 - May 2026
+
+### Fixed
+- **No JSON found in response** - assistant prefill technique: after tool_results, adds `{"patterns":[` as assistant message prefix to force Claude to continue in JSON format instead of writing prose. Text is then prepended with the prefix before parsing.
+
+---
+
 ## v0.91 - May 2026
 
 ### Fixed
